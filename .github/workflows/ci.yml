@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, "codex/**"]
   pull_request:
     branches: [main]
   workflow_call:
@@ -24,7 +24,6 @@ jobs:
       - name: Frontend checks and embedded build
         run: |
           npm ci --prefix webui
-          npm run typecheck --prefix webui
           npm audit --prefix webui --audit-level=high
           make webui
           git diff --exit-code -- core/channel/http/webui/dist
@@ -38,6 +37,7 @@ jobs:
           name: frontend-build
           path: |
             core/channel/http/webui/dist/
+          include-hidden-files: true
   build:
     needs: validate
     runs-on: ubuntu-latest

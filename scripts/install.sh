@@ -1,122 +1,95 @@
-#!/bin/bash
-# APIGate installer script
-# Usage: curl -fsSL https://raw.githubusercontent.com/artpar/apigate/main/scripts/install.sh | bash
+#!/usr/bin/env bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/coolqoo/better-apigate/main/scripts/install.sh | bash
+set -euo pipefail
 
-set -e
+apigate_repo="${APIGATE_REPOSITORY:-coolqoo/better-apigate}"
+apigate_install_dir="${INSTALL_DIR:-/usr/local/bin}"
+apigate_version="${VERSION:-}"
+apigate_tmp=""
+trap 'if [[ -n "$apigate_tmp" ]]; then rm -rf -- "$apigate_tmp"; fi' EXIT
 
-REPO="artpar/apigate"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
-VERSION="${VERSION:-}"  # Can be set via environment variable
+apigate_os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+apigate_arch="$(uname -m)"
+case "$apigate_os" in
+  linux|darwin) ;;
+  mingw*|msys*|cygwin*) apigate_os=windows ;;
+  *) echo "Unsupported operating system: $apigate_os" >&2; exit 1 ;;
+esac
+case "$apigate_arch" in
+  x86_64|amd64) apigate_arch=amd64 ;;
+  aarch64|arm64) apigate_arch=arm64 ;;
+  *) echo "Unsupported architecture: $apigate_arch" >&2; exit 1 ;;
+esac
+if [[ "$apigate_os" == windows && "$apigate_arch" != amd64 ]]; then
+  echo "Windows releases currently support amd64." >&2; exit 1
+fi
 
-# Detect OS and architecture
-detect_platform() {
-    local os arch
+apigate_gh=false
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then apigate_gh=true; fi
+if [[ -z "$apigate_version" ]]; then
+  if [[ "$apigate_gh" == true ]]; then
+    apigate_version="$(gh release view --repo "$apigate_repo" --json tagName --jq .tagName)"
+  else
+    apigate_version="$(curl -fsSL "https://api.github.com/repos/$apigate_repo/releases/latest" | sed -nE 's/.*"tag_name": *"([^"]+)".*/\1/p')"
+  fi
+fi
+if [[ ! "$apigate_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][a-zA-Z0-9.-]+)?$ ]]; then
+  echo "Cannot resolve a release. Set VERSION to a published version such as v2.0.0." >&2; exit 1
+fi
 
-    os="$(uname -s | tr '[:upper:]' '[:lower:]')"
-    arch="$(uname -m)"
+apigate_platform="$apigate_os-$apigate_arch"
+apigate_extension=tar.gz
+apigate_suffix=""
+if [[ "$apigate_os" == windows ]]; then apigate_extension=zip; apigate_suffix=.exe; fi
+apigate_archive="apigate-$apigate_platform.$apigate_extension"
+apigate_tmp="$(mktemp -d)"
+if [[ "$apigate_gh" == true ]]; then
+  gh release download "$apigate_version" --repo "$apigate_repo" --dir "$apigate_tmp" --pattern "$apigate_archive" --pattern checksums.txt
+else
+  apigate_download="https://github.com/$apigate_repo/releases/download/$apigate_version"
+  curl -fsSL "$apigate_download/$apigate_archive" -o "$apigate_tmp/$apigate_archive"
+  curl -fsSL "$apigate_download/checksums.txt" -o "$apigate_tmp/checksums.txt"
+fi
+cd "$apigate_tmp"
+apigate_expected="$(awk -v target="$apigate_archive" '$2 == target || $2 == "*" target {print $1}' checksums.txt)"
+if [[ ! "$apigate_expected" =~ ^[[:xdigit:]]{64}$ ]]; then
+  echo "Release checksum is missing or ambiguous." >&2; exit 1
+fi
+if command -v sha256sum >/dev/null 2>&1; then
+  apigate_actual="$(sha256sum "$apigate_archive" | awk '{print $1}')"
+elif command -v shasum >/dev/null 2>&1; then
+  apigate_actual="$(shasum -a 256 "$apigate_archive" | awk '{print $1}')"
+else
+  echo "Install sha256sum or shasum before installing APIGate." >&2; exit 1
+fi
+if [[ "$apigate_actual" != "$apigate_expected" ]]; then
+  echo "Release checksum mismatch. Installation stopped." >&2; exit 1
+fi
 
-    case "$os" in
-        linux) os="linux" ;;
-        darwin) os="darwin" ;;
-        mingw*|msys*|cygwin*) os="windows" ;;
-        *) echo "Unsupported OS: $os" >&2; exit 1 ;;
-    esac
-
-    case "$arch" in
-        x86_64|amd64) arch="amd64" ;;
-        aarch64|arm64) arch="arm64" ;;
-        *) echo "Unsupported architecture: $arch" >&2; exit 1 ;;
-    esac
-
-    echo "${os}-${arch}"
-}
-
-# Get latest release version
-get_latest_version() {
-    curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
-        grep '"tag_name":' |
-        sed -E 's/.*"([^"]+)".*/\1/'
-}
-
-main() {
-    local platform version download_url tmp_dir
-
-    echo "Detecting platform..."
-    platform="$(detect_platform)"
-    echo "Platform: $platform"
-
-    if [ -n "$VERSION" ]; then
-        version="$VERSION"
-        echo "Using specified version: $version"
-    else
-        echo "Fetching latest version..."
-        version="$(get_latest_version)"
-        if [ -z "$version" ]; then
-            echo "Error: Could not determine latest version." >&2
-            echo "For private repos, set VERSION=v0.1.0 environment variable." >&2
-            exit 1
-        fi
-        echo "Latest version: $version"
-    fi
-
-    # Determine file extension
-    local ext="tar.gz"
-    if [[ "$platform" == windows-* ]]; then
-        ext="zip"
-    fi
-
-    download_url="https://github.com/${REPO}/releases/download/${version}/apigate-${platform}.${ext}"
-    echo "Downloading from: $download_url"
-
-    tmp_dir="$(mktemp -d)"
-    trap "rm -rf '$tmp_dir'" EXIT
-
-    cd "$tmp_dir"
-
-    # Try gh CLI first (works with private repos), fall back to curl
-    if command -v gh &> /dev/null && gh auth status &> /dev/null; then
-        echo "Using GitHub CLI for download..."
-        gh release download "$version" --repo "$REPO" --pattern "apigate-${platform}.${ext}"
-        if [[ "$ext" == "zip" ]]; then
-            unzip -q "apigate-${platform}.${ext}"
-        else
-            tar xzf "apigate-${platform}.${ext}"
-        fi
-    else
-        if [[ "$ext" == "zip" ]]; then
-            curl -fsSL "$download_url" -o apigate.zip
-            unzip -q apigate.zip
-        else
-            curl -fsSL "$download_url" | tar xz
-        fi
-    fi
-
-    # Find the binary
-    local binary
-    if [[ "$platform" == windows-* ]]; then
-        binary="apigate-${platform}.exe"
-    else
-        binary="apigate-${platform}"
-    fi
-
-    if [[ ! -f "$binary" ]]; then
-        echo "Error: Binary not found in archive" >&2
-        exit 1
-    fi
-
-    chmod +x "$binary"
-
-    # Install
-    echo "Installing to $INSTALL_DIR..."
-    if [[ -w "$INSTALL_DIR" ]]; then
-        mv "$binary" "$INSTALL_DIR/apigate"
-    else
-        sudo mv "$binary" "$INSTALL_DIR/apigate"
-    fi
-
-    echo ""
-    echo "APIGate ${version} installed successfully!"
-    echo "Run 'apigate --help' to get started."
-}
-
-main "$@"
+# CI archives contain the platform name; GoReleaser archives contain apigate.
+apigate_binary="apigate-$apigate_platform$apigate_suffix"
+if [[ "$apigate_extension" == zip ]]; then
+  apigate_entries="$(unzip -Z1 "$apigate_archive")"
+else
+  apigate_entries="$(tar -tzf "$apigate_archive")"
+fi
+if ! printf '%s\n' "$apigate_entries" | awk -v target="$apigate_binary" '$0==target {found=1} END {exit !found}'; then
+  apigate_binary="apigate$apigate_suffix"
+fi
+if ! printf '%s\n' "$apigate_entries" | awk -v target="$apigate_binary" '$0==target {found=1} END {exit !found}'; then
+  echo "Release archive does not contain the expected executable." >&2; exit 1
+fi
+if [[ "$apigate_extension" == zip ]]; then
+  unzip -p "$apigate_archive" "$apigate_binary" > "$apigate_binary"
+else
+  tar -xzf "$apigate_archive" -- "$apigate_binary"
+fi
+apigate_destination="$apigate_install_dir/apigate$apigate_suffix"
+if [[ -w "$apigate_install_dir" ]] || { [[ ! -e "$apigate_install_dir" ]] && [[ -w "$(dirname "$apigate_install_dir")" ]]; }; then
+  mkdir -p "$apigate_install_dir"
+  install -m 0755 "$apigate_binary" "$apigate_destination"
+else
+  sudo install -d "$apigate_install_dir"
+  sudo install -m 0755 "$apigate_binary" "$apigate_destination"
+fi
+printf 'Installed APIGate %s at %s\nConfigure PostgreSQL, Redis and deployment secrets before running apigate serve.\n' "$apigate_version" "$apigate_destination"

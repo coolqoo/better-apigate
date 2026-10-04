@@ -9,7 +9,7 @@
 set -e
 
 DRY_RUN=false
-if [ "$1" = "--dry-run" ]; then
+if [ "${1:-}" = "--dry-run" ]; then
     DRY_RUN=true
     echo "DRY RUN - No changes will be pushed"
 fi
@@ -24,7 +24,7 @@ if [ -d "$WIKI_DIR" ]; then
     git pull --rebase
 else
     echo "Cloning wiki..."
-    git clone git@github.com:artpar/apigate.wiki.git "$WIKI_DIR"
+    git clone https://github.com/${APIGATE_REPOSITORY:-coolqoo/better-apigate}.wiki.git "$WIKI_DIR"
     cd "$WIKI_DIR"
 fi
 

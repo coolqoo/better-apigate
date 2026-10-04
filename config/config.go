@@ -542,6 +542,9 @@ func setDefaults(cfg *Config) {
 }
 
 func validate(cfg *Config) error {
+	if cfg.Database.Driver != "postgres" || (!strings.HasPrefix(cfg.Database.DSN, "postgres://") && !strings.HasPrefix(cfg.Database.DSN, "postgresql://")) {
+		return fmt.Errorf("database must use PostgreSQL with a postgres:// or postgresql:// connection URL")
+	}
 	if cfg.Upstream.URL == "" {
 		return fmt.Errorf("upstream.url is required")
 	}

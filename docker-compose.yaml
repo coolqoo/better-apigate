@@ -1,6 +1,8 @@
 services:
   gateway:
+    image: ${APIGATE_IMAGE:-ghcr.io/coolqoo/better-apigate:latest}
     build: .
+    env_file: .env
     ports: ["${APIGATE_PORT:-8080}:8080"]
     environment:
       APIGATE_DATABASE_DSN: postgres://apigate:${POSTGRES_PASSWORD:?Run scripts/init-env.sh}@postgres:5432/apigate?sslmode=disable
@@ -53,8 +55,10 @@ services:
       retries: 15
     restart: unless-stopped
   gateway-two:
-    profiles: [loadtest]
+    profiles: [replica]
+    image: ${APIGATE_IMAGE:-ghcr.io/coolqoo/better-apigate:latest}
     build: .
+    env_file: .env
     ports: ["8082:8080"]
     environment:
       APIGATE_DATABASE_DSN: postgres://apigate:${POSTGRES_PASSWORD}@postgres:5432/apigate?sslmode=disable
@@ -65,6 +69,9 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
     stop_grace_period: 40s
 volumes:
   postgres-data:

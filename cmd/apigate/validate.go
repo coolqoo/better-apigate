@@ -21,7 +21,7 @@ Checks:
   - YAML syntax is valid
   - Required fields are present
   - Upstream is reachable (optional)
-  - Database is writable (optional)
+  - PostgreSQL is reachable (optional)
 
 Examples:
   apigate validate
@@ -38,7 +38,7 @@ func init() {
 	rootCmd.AddCommand(validateCmd)
 
 	validateCmd.Flags().BoolVar(&validateCheckUpstream, "check-upstream", false, "check if upstream is reachable")
-	validateCmd.Flags().BoolVar(&validateCheckDatabase, "check-database", false, "check if database is writable")
+	validateCmd.Flags().BoolVar(&validateCheckDatabase, "check-database", false, "check if PostgreSQL is reachable")
 }
 
 func runValidate(cmd *cobra.Command, args []string) error {
@@ -62,14 +62,14 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	// Show config summary
 	fmt.Printf("  %s Upstream: %s\n", checkMark, cfg.Upstream.URL)
 	fmt.Printf("  %s Auth mode: %s\n", checkMark, cfg.Auth.Mode)
-	fmt.Printf("  %s Database: %s (%s)\n", checkMark, cfg.Database.DSN, cfg.Database.Driver)
-	fmt.Printf("  %s Plans configured: %d\n", checkMark, len(cfg.Plans))
+	fmt.Printf("  %s PostgreSQL connection configured\n", checkMark)
+	fmt.Printf("  %s Configure plan pricing in the admin UI\n", checkMark)
 
 	// Optional: check upstream
 	if validateCheckUpstream {
 		if err := checkUpstreamReachable(cfg.Upstream.URL); err != nil {
 			fmt.Printf("  %s Upstream reachable\n", crossMark)
-			fmt.Printf("      Error: %v\n", err)
+			return fmt.Errorf("upstream connectivity check failed: %w", err)
 		} else {
 			fmt.Printf("  %s Upstream reachable\n", checkMark)
 		}
@@ -78,10 +78,10 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	// Optional: check database
 	if validateCheckDatabase {
 		if err := checkDatabaseWritable(cfg.Database.DSN); err != nil {
-			fmt.Printf("  %s Database writable\n", crossMark)
-			fmt.Printf("      Error: %v\n", err)
+			fmt.Printf("  %s PostgreSQL reachable\n", crossMark)
+			return fmt.Errorf("database connectivity check failed: %w", err)
 		} else {
-			fmt.Printf("  %s Database writable\n", checkMark)
+			fmt.Printf("  %s PostgreSQL reachable\n", checkMark)
 		}
 	}
 

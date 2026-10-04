@@ -4,7 +4,7 @@ This is a fresh-deployment release. PostgreSQL owns users, configuration, sessio
 
 ## Clean installation
 
-Requires Docker Engine and the Compose plugin. The pinned builds use Go 1.27.1 and Node 22.23.2. No SQLite runtime or C compiler is needed.
+Run these commands from the repository checkout. The v2 implementation currently lives on `codex/apigate-v2`. Requires Docker Engine and the Compose plugin. The pinned builds use Go 1.27.1 and Node 22.23.2. No SQLite runtime or C compiler is needed.
 
 ```sh
 scripts/init-env.sh
@@ -21,13 +21,21 @@ PostgreSQL migrations run under an advisory lock at startup. Each process has on
 
 The Compose database uses 1 GiB of shared buffers, a 4 GiB WAL size target and a background-writer limit of 1,000 pages per cycle. Keep at least 4 GiB available for PostgreSQL plus memory for the gateway and Redis. Set `POSTGRES_SHARED_BUFFERS` for the database's memory budget; PostgreSQL recommends starting around 25% of RAM on a dedicated server and increasing WAL capacity alongside buffers. Checkpoints retain the default five-minute interval, and fsync and synchronous commit remain enabled. Smaller memory allocations require a fresh sustained-load measurement. See [PostgreSQL memory and background writer settings](https://www.postgresql.org/docs/17/runtime-config-resource.html) and [WAL settings](https://www.postgresql.org/docs/17/runtime-config-wal.html).
 
+## Published images and native binaries
+
+Once a verified v2 release is published, set `APIGATE_IMAGE=ghcr.io/coolqoo/better-apigate:v2.0.0` to its actual version in `.env`, then run `docker compose up -d --no-build --wait`. The source deployment above builds from your checkout. Release images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed.
+
+`scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs only the expected executable. `VERSION` selects a published tag; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `apigate serve`. Use database and Redis URLs reachable from the native process; Docker service names resolve only inside the Compose network.
+
+For a second gateway, run `docker compose --profile replica up --build -d --wait` and put ports 8080 and 8082 behind the same public HTTPS origin. Both instances share database state, secrets and account limits. Include both pools in the database connection budget. A provider callback may reach either instance.
+
 ## Accounting and recovery
 
 USD amounts are integer millionths, returned as six-place decimal strings. One request consumes its route's integer unit cost, using included term units first and available wallet funds for the rest. The reservation commits before upstream dispatch. Upstream 2xx–4xx responses charge; verified upstream 5xx/transport failures release. A customer disconnect alone does not release funds. Public routes explicitly bypass paid admission.
 
 Plans have 30-day terms with no rollover or proration. Purchases enable auto-renew, which is disclosed in the portal. A plan change applies at the next term. Renewals spend available funds atomically with term creation. Insufficient funds, cancellation or an unavailable plan returns the account to the configured base plan. Later top-ups do not automatically reactivate an expired subscription.
 
-A crash can leave a pending reservation. Holds never expire automatically. In **Payments → Unresolved requests**, inspect upstream evidence and make an audited charge/release decision. Never directly edit a wallet or ledger row. Analytics and notification outboxes survive restarts; consumers acknowledge jobs transactionally and deduplicate by stable event IDs. External webhook delivery is at-least-once, so recipients must deduplicate `X-Event-ID`.
+A crash can leave a pending reservation. Holds never expire automatically. In **Payments → Unresolved requests**, inspect upstream evidence and make an audited charge/release decision. **Payments → Audit trail** shows the administrator, record, decision and reason. Both views have page controls, so older records remain reachable. Never directly edit a wallet or ledger row. Analytics and notification outboxes survive restarts; consumers acknowledge jobs transactionally and deduplicate by stable event IDs. External webhook delivery is at-least-once, so recipients must deduplicate `X-Event-ID`.
 
 Refunds and reversals remove available funds. If the credit was spent, a shortfall is recorded and paid access freezes. Top-ups and credits cover that shortfall before increasing spendable funds. An administrator explicitly unfreezes an account after reconciliation. For a provider without a signed reversal callback, record the verified reversal with its order, amount and evidence using the audited order-reversal action; initiating the external refund is a separate provider operation.
 
@@ -62,10 +70,10 @@ npm run typecheck --prefix webui
 
 Added test code, load tooling and validation reports are local files excluded from Git. CI builds the frontend, checks generated contracts and builds the Go targets without running that local test tooling.
 
-Before publishing a release, separately complete accounting, payment signatures/reversals, renewal, recovery/security, browser flows, provider sandbox smoke checks, a clean Docker installation, Go race/coverage checks and sustained-load reconciliation. The performance gate requires at least 1,000 accepted requests/second for ten minutes with many accounts and one concurrent account across two instances, with exact wallet/ledger agreement and no unresolved settlement backlog. Record the gateway revision, hardware, p95/p99 overhead and database contention for both scenarios. Set the repository variable `APIGATE_RELEASE_VERIFIED=true` only after those checks pass for the release revision; clear it before preparing another release.
+Before publishing a release, separately complete accounting, payment signatures/reversals, renewal, recovery/security, browser flows, provider sandbox smoke checks, a clean Docker installation, Go race/coverage checks and sustained-load reconciliation. The performance gate requires at least 1,000 accepted requests/second for ten minutes with many accounts and one concurrent account across two instances, with exact wallet/ledger agreement and no unresolved settlement backlog. Record the gateway revision, hardware, p95/p99 overhead and database contention for both scenarios. Set `APIGATE_RELEASE_VERIFIED_SHA` to the full Git commit SHA only after those checks pass for that exact release revision. The release workflow refuses a mismatched or missing SHA. This implementation push does not publish a release.
 
 ## Upstream credentials and monitoring
 
-Configure upstream authentication with an environment reference such as `${UPSTREAM_API_TOKEN}` in the API Configuration screen. Supply that variable to every gateway instance through your deployment secret manager or Compose environment. Only the reference is stored in PostgreSQL; the credential value is not returned to the browser. For Basic authentication, the environment value is the base64-encoded `username:password` string.
+Configure upstream authentication with an environment reference such as `${UPSTREAM_API_TOKEN}` in the API Configuration screen. Add `UPSTREAM_API_TOKEN` to the private `.env` or supply it through your deployment secret manager; Compose passes `.env` to both gateway instances. Recreate the gateway containers after changing deployment secrets. Only the reference is stored in PostgreSQL; the credential value is not returned to the browser. For Basic authentication, the environment value is the base64-encoded `username:password` string.
 
 When metrics are enabled in gateway settings, `/metrics` requires a current admin session or `Authorization: Bearer <APIGATE_METRICS_TOKEN>`. Configure a separate deployment-managed token with at least 32 characters for Prometheus scrapes. Avoid putting it in a URL.

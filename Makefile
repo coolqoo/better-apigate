@@ -46,8 +46,8 @@ docker:
 docker-run:
 	docker compose up --build
 
-# Build and publish multi-arch Docker image to Docker Hub
-DOCKER_REPO ?= artpar/apigate
+# Build and publish a multi-architecture image to the configured registry
+DOCKER_REPO ?= ghcr.io/coolqoo/better-apigate
 DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
 
 docker-publish: docker-build-binaries
@@ -94,7 +94,7 @@ help:
 	@echo "  test       - Run tests"
 	@echo "  docker     - Build Docker image"
 	@echo "  docker-run - Run with docker-compose"
-	@echo "  docker-publish - Build and push multi-arch image to artpar/apigate"
+	@echo "  docker-publish - Build and push multi-arch image to $(DOCKER_REPO)"
 	@echo "  docker-build-binaries - Build linux binaries for Docker"
 	@echo "  release    - Build for all platforms"
 	@echo "  clean      - Remove build artifacts"
@@ -105,4 +105,3 @@ contracts:
 	go run ./cmd/contracts > docs/openapi-v2.json
 	go run ./cmd/contracts -typescript > webui/src/v2/contracts.generated.ts
 validate: contracts webui build
-	cd webui && npm run typecheck

@@ -42,6 +42,7 @@ jobs:
         with:
           name: webui-dist
           path: core/channel/http/webui/dist/
+          include-hidden-files: true
 
   acceptance:
     name: Confirm release verification
@@ -50,10 +51,10 @@ jobs:
     steps:
       - name: Require separately completed release verification
         env:
-          RELEASE_VERIFIED: ${{ vars.APIGATE_RELEASE_VERIFIED }}
+          RELEASE_VERIFIED_SHA: ${{ vars.APIGATE_RELEASE_VERIFIED_SHA }}
         run: |
-          if [ "$RELEASE_VERIFIED" != "true" ]; then
-            echo "Complete the release checks documented in docs/deployment-v2.md before setting APIGATE_RELEASE_VERIFIED=true."
+          if [ "$RELEASE_VERIFIED_SHA" != "$GITHUB_SHA" ]; then
+            echo "Complete the release checks documented in docs/deployment-v2.md and set APIGATE_RELEASE_VERIFIED_SHA to this release commit."
             exit 1
           fi
 
@@ -309,24 +310,3 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  homebrew:
-    name: Update Homebrew
-    needs: release
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.ref, '-rc') && !contains(github.ref, '-beta') && !contains(github.ref, '-alpha') }}
-    steps:
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Update Homebrew formula
-        uses: mislav/bump-homebrew-formula-action@v3
-        with:
-          formula-name: apigate
-          formula-path: Formula/apigate.rb
-          homebrew-tap: artpar/homebrew-tap
-          download-url: https://github.com/artpar/apigate/releases/download/v${{ steps.version.outputs.VERSION }}/apigate-darwin-arm64.tar.gz
-        env:
-          COMMITTER_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        continue-on-error: true

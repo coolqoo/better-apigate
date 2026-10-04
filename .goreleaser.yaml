@@ -6,6 +6,7 @@ project_name: apigate
 before:
   hooks:
     - make contracts
+    - npm ci --prefix webui
     - make webui
 
 builds:
@@ -93,7 +94,7 @@ builds:
 archives:
   - id: default
     format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
@@ -103,7 +104,10 @@ archives:
       - .env.example
       - docker-compose.yaml
       - docs/deployment-v2.md
-      - scripts/*.sh
+      - scripts/init-env.sh
+      - scripts/backup.sh
+      - scripts/restore.sh
+      - scripts/install.sh
 
 checksum:
   name_template: 'checksums.txt'
@@ -121,85 +125,50 @@ changelog:
 
 release:
   github:
-    owner: artpar
-    name: apigate
+    owner: coolqoo
+    name: better-apigate
   prerelease: auto
   draft: false
   name_template: "{{.ProjectName}} v{{.Version}}"
 
-# Homebrew tap
-brews:
-  - name: apigate
-    repository:
-      owner: artpar
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    folder: Formula
-    homepage: "https://github.com/artpar/apigate"
-    description: "Self-hosted API gateway with usage metering and billing"
-    license: "MIT"
-    skip_upload: auto
-    test: |
-      system "#{bin}/apigate", "version"
-    install: |
-      bin.install "apigate"
-
-# Scoop bucket for Windows
-scoops:
-  - name: apigate
-    repository:
-      owner: artpar
-      name: scoop-bucket
-      token: "{{ .Env.SCOOP_BUCKET_TOKEN }}"
-    homepage: "https://github.com/artpar/apigate"
-    description: "Self-hosted API gateway with usage metering and billing"
-    license: "MIT"
-    skip_upload: auto
-
 # Docker images
 dockers:
   - image_templates:
-      - "ghcr.io/artpar/apigate:{{ .Version }}-amd64"
-      - "ghcr.io/artpar/apigate:latest-amd64"
+      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-amd64"
+      - "ghcr.io/coolqoo/better-apigate:latest-amd64"
     dockerfile: Dockerfile.goreleaser
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/artpar/apigate"
+      - "--label=org.opencontainers.image.source=https://github.com/coolqoo/better-apigate"
     goos: linux
     goarch: amd64
     ids:
       - linux-amd64
-    extra_files:
-      - migrations
-      - configs/apigate.example.yaml
 
   - image_templates:
-      - "ghcr.io/artpar/apigate:{{ .Version }}-arm64"
-      - "ghcr.io/artpar/apigate:latest-arm64"
+      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-arm64"
+      - "ghcr.io/coolqoo/better-apigate:latest-arm64"
     dockerfile: Dockerfile.goreleaser
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/artpar/apigate"
+      - "--label=org.opencontainers.image.source=https://github.com/coolqoo/better-apigate"
     goos: linux
     goarch: arm64
     ids:
       - linux-arm64
-    extra_files:
-      - migrations
-      - configs/apigate.example.yaml
 
 docker_manifests:
-  - name_template: "ghcr.io/artpar/apigate:{{ .Version }}"
+  - name_template: "ghcr.io/coolqoo/better-apigate:{{ .Version }}"
     image_templates:
-      - "ghcr.io/artpar/apigate:{{ .Version }}-amd64"
-      - "ghcr.io/artpar/apigate:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/artpar/apigate:latest"
+      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-amd64"
+      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/coolqoo/better-apigate:latest"
     image_templates:
-      - "ghcr.io/artpar/apigate:latest-amd64"
-      - "ghcr.io/artpar/apigate:latest-arm64"
+      - "ghcr.io/coolqoo/better-apigate:latest-amd64"
+      - "ghcr.io/coolqoo/better-apigate:latest-arm64"

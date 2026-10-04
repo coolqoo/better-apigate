@@ -6,7 +6,7 @@
 #   minor: 1.0.0 -> 1.1.0 (new features)
 #   patch: 1.0.0 -> 1.0.1 (bug fixes, default)
 
-set -e
+set -euo pipefail
 
 # Get bump type from argument, default to patch
 BUMP_TYPE=${1:-patch}
@@ -51,9 +51,12 @@ echo "New version: $NEW_VERSION"
 echo ""
 echo "Changes since $LATEST_TAG:"
 echo "----------------------------------------"
-git log --oneline "$LATEST_TAG"..HEAD
+if [[ "$LATEST_TAG" == v0.0.0 ]]; then git log --oneline -20; else git log --oneline "$LATEST_TAG"..HEAD; fi
 echo "----------------------------------------"
 echo ""
+
+# Verification applies to this exact commit, not to a previous release.
+echo "Set APIGATE_RELEASE_VERIFIED_SHA to $(git rev-parse HEAD) in repository variables only after completing release verification."
 
 # Confirm
 read -p "Create and push tag $NEW_VERSION? [y/N] " -n 1 -r
@@ -73,11 +76,9 @@ git push origin "$NEW_VERSION"
 echo ""
 echo "Release $NEW_VERSION created!"
 echo "GitHub Actions will now:"
-echo "  1. Run tests"
-echo "  2. Build binaries for all platforms"
-echo "  3. Create GitHub release with changelog"
+echo "  1. Build the frontend and verify generated contracts"
+echo "  2. Require release verification for the tagged commit"
+echo "  3. Build binaries and create the GitHub release"
 echo "  4. Build and push Docker image"
-echo "  5. Update Homebrew formula"
-echo "  6. Sync wiki from docs/spec"
 echo ""
-echo "Monitor progress: https://github.com/artpar/apigate/actions"
+echo "Monitor progress: https://github.com/coolqoo/better-apigate/actions"
