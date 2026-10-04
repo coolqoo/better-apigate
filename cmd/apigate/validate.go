@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/artpar/apigate/config"
 	"github.com/spf13/cobra"
 )
@@ -109,7 +109,7 @@ func checkUpstreamReachable(url string) error {
 }
 
 func checkDatabaseWritable(dsn string) error {
-	db, err := sqlite.Open(dsn)
+	db, err := postgres.Open(dsn)
 	if err != nil {
 		return err
 	}

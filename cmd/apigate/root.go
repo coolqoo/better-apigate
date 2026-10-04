@@ -26,8 +26,8 @@ Quick start:
   apigate serve     # Start the proxy server
 
 Management:
-  apigate users     # Manage users
-  apigate keys      # Manage API keys
+  apigate mod      # Manage gateway configuration from YAML modules
+  apigate admin    # Manage administrators
   apigate validate  # Validate configuration`,
 }
 

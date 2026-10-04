@@ -17,6 +17,7 @@ import (
 	_ "github.com/artpar/apigate/docs/swagger" // swagger docs
 	"github.com/artpar/apigate/domain/proxy"
 	"github.com/artpar/apigate/domain/streaming"
+	"github.com/artpar/apigate/domain/usage"
 	"github.com/artpar/apigate/pkg/jsonapi"
 	"github.com/artpar/apigate/ports"
 	"github.com/go-chi/chi/v5"
@@ -124,15 +125,15 @@ func (h *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Build proxy request
 	req := proxy.Request{
-		APIKey: authToken,
-		Method:       r.Method,
-		Path:         r.URL.Path,
-		Query:        r.URL.RawQuery,
-		Headers:      extractHeaders(r),
-		Body:         body,
-		RemoteIP:     extractIP(r),
-		UserAgent:    r.UserAgent(),
-		TraceID:      middleware.GetReqID(ctx),
+		APIKey:    authToken,
+		Method:    r.Method,
+		Path:      r.URL.Path,
+		Query:     r.URL.RawQuery,
+		Headers:   extractHeaders(r),
+		Body:      body,
+		RemoteIP:  extractIP(r),
+		UserAgent: r.UserAgent(),
+		TraceID:   middleware.GetReqID(ctx),
 	}
 
 	// Check if this should be a streaming request
@@ -187,6 +188,17 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	charge := false
+	status := 0
+	responseBytes := int64(0)
+	defer func() {
+		if result.Reservation != nil {
+			err := h.service.SettleReservation(result.Reservation, charge, usage.Event{Method: req.Method, Path: req.Path, StatusCode: status, RequestBytes: int64(len(req.Body)), ResponseBytes: responseBytes, LatencyMs: time.Since(start).Milliseconds(), IPAddress: req.RemoteIP, UserAgent: req.UserAgent, Timestamp: start})
+			if err != nil {
+				h.logger.Error().Err(err).Str("reservation", result.Reservation.ID).Msg("stream settlement pending reconciliation")
+			}
+		}
+	}()
 	// Use modified request (with path rewrites, transforms applied)
 	streamingReq := req
 	if result.ModifiedRequest != nil {
@@ -197,9 +209,9 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 	var streamResp ports.StreamingResponse
 	var err error
 	if result.RouteUpstream != nil {
-		streamResp, err = h.streamingUpstream.ForwardStreamingTo(ctx, streamingReq, result.RouteUpstream)
+		streamResp, err = h.streamingUpstream.ForwardStreamingTo(context.WithoutCancel(ctx), streamingReq, result.RouteUpstream)
 	} else {
-		streamResp, err = h.streamingUpstream.ForwardStreaming(ctx, streamingReq)
+		streamResp, err = h.streamingUpstream.ForwardStreaming(context.WithoutCancel(ctx), streamingReq)
 	}
 	if err != nil {
 		upstreamURL := ""
@@ -216,6 +228,8 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	status = streamResp.Status
+	charge = status >= 200 && status < 500
 	// Determine if we need to accumulate data for metering
 	// Only accumulate if there's a metering expression that might need the data
 	needsAccumulation := false
@@ -274,6 +288,7 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 		}
 		if readErr != nil {
 			if readErr != io.EOF {
+				charge = false
 				h.logger.Error().Err(readErr).Msg("error reading stream")
 			}
 			break
@@ -284,6 +299,7 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 
 	// Record usage with streaming metrics
 	streamMetrics := streamReader.GetMetrics()
+	responseBytes = streamMetrics.TotalBytes
 	meteringValue := 1.0 // Default metering
 
 	// Evaluate metering expression if configured
@@ -299,16 +315,18 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 		)
 	}
 
-	h.service.RecordStreamingUsage(
-		result.StreamingResponse,
-		streamResp.Status,
-		int64(len(req.Body)),
-		streamMetrics.TotalBytes,
-		latencyMs,
-		meteringValue,
-		req.RemoteIP,
-		req.UserAgent,
-	)
+	if result.Reservation == nil {
+		h.service.RecordStreamingUsage(
+			result.StreamingResponse,
+			streamResp.Status,
+			int64(len(req.Body)),
+			streamMetrics.TotalBytes,
+			latencyMs,
+			meteringValue,
+			req.RemoteIP,
+			req.UserAgent,
+		)
+	}
 
 	// Log streaming request
 	h.logger.Info().
@@ -412,7 +430,6 @@ func extractAPIKey(r *http.Request) string {
 
 	return ""
 }
-
 
 // extractHeaders extracts relevant headers from the request.
 // Note: Go stores the Host header in r.Host, not r.Header["Host"], so we extract it explicitly.
@@ -552,19 +569,19 @@ func Version(w http.ResponseWriter, r *http.Request) {
 // RouterConfig holds optional configuration for the router.
 type RouterConfig struct {
 	Metrics               *metrics.Collector
-	MetricsHandler        http.Handler  // Optional metrics exporter handler (for /metrics endpoint)
+	MetricsHandler        http.Handler // Optional metrics exporter handler (for /metrics endpoint)
 	EnableOpenAPI         bool
-	AdminHandler          http.Handler  // Optional admin API handler
-	AuthHandler           http.Handler  // Optional auth API handler (mounted at /auth as alias for /admin auth endpoints)
-	WebHandler            http.Handler  // Optional web UI handler (enabled by default if provided, unless WebUIEnabled is set to false)
-	WebUIEnabled          *bool         // Whether to enable web UI (default: true if WebHandler provided, false otherwise). Use pointer to distinguish between "not set" and "explicitly false"
-	WebUIBasePath         string        // Base path to mount web UI (default: "" = root)
-	PortalHandler         http.Handler  // Optional user portal handler
-	PortalAuthHandler     http.Handler  // Optional JSON API auth handler (mounted at /api/portal/auth for SPA frontends)
-	DocsHandler           http.Handler  // Optional developer documentation portal handler
-	ModuleHandler         http.Handler  // Optional declarative module handler (mounted at /api/v2)
-	PaymentWebhookHandler http.Handler  // Optional payment webhook handler for Stripe/Paddle/LemonSqueezy
-	MeterHandler          http.Handler  // Optional metering API handler (mounted at /api/v1/meter)
+	AdminHandler          http.Handler       // Optional admin API handler
+	AuthHandler           http.Handler       // Optional auth API handler (mounted at /auth as alias for /admin auth endpoints)
+	WebHandler            http.Handler       // Optional web UI handler (enabled by default if provided, unless WebUIEnabled is set to false)
+	WebUIEnabled          *bool              // Whether to enable web UI (default: true if WebHandler provided, false otherwise). Use pointer to distinguish between "not set" and "explicitly false"
+	WebUIBasePath         string             // Base path to mount web UI (default: "" = root)
+	PortalHandler         http.Handler       // Optional user portal handler
+	PortalAuthHandler     http.Handler       // Optional JSON API auth handler (mounted at /api/portal/auth for SPA frontends)
+	DocsHandler           http.Handler       // Optional developer documentation portal handler
+	ModuleHandler         http.Handler       // Optional declarative module handler (mounted at /api/v2)
+	PaymentWebhookHandler http.Handler       // Optional payment webhook handler for Stripe/Paddle/LemonSqueezy
+	MeterHandler          http.Handler       // Optional metering API handler (mounted at /api/v1/meter)
 	TokenService          *auth.TokenService // Optional JWT token service for role-based routing
 	IsSetup               func() bool        // Returns true if initial setup is complete (at least one user exists)
 	RouteService          interface{}        // Optional route service for priority-based routing (uses reflection to avoid circular dependency)
@@ -580,10 +597,10 @@ type RouterConfig struct {
 	MeterBasePath          string // Default: /api/v1/meter
 
 	// Handler enable/disable flags
-	DocsEnabled            bool // Default: true (if DocsHandler provided)
-	ModuleEnabled          bool // Default: true (if ModuleHandler provided)
-	PaymentWebhookEnabled  bool // Default: true (if PaymentWebhookHandler provided)
-	MeterEnabled           bool // Default: true (if MeterHandler provided)
+	DocsEnabled           bool // Default: true (if DocsHandler provided)
+	ModuleEnabled         bool // Default: true (if ModuleHandler provided)
+	PaymentWebhookEnabled bool // Default: true (if PaymentWebhookHandler provided)
+	MeterEnabled          bool // Default: true (if MeterHandler provided)
 }
 
 // normalizeBasePath ensures base path starts with / and doesn't end with /.
@@ -846,94 +863,93 @@ func mountWebUIAtRoot(r chi.Router, webHandler http.Handler, portalHandler http.
 		webHandler.ServeHTTP(w, req)
 	})
 
-		// Signup/register redirects to portal (UX: common URLs users might try)
-		r.Get("/signup", func(w http.ResponseWriter, req *http.Request) {
-			http.Redirect(w, req, "/portal/signup", http.StatusFound)
-		})
-		r.Get("/register", func(w http.ResponseWriter, req *http.Request) {
-			http.Redirect(w, req, "/portal/signup", http.StatusFound)
-		})
-		// Admin setup redirect (users might try /admin/setup)
-		r.Get("/admin/setup", func(w http.ResponseWriter, req *http.Request) {
-			http.Redirect(w, req, "/setup", http.StatusFound)
-		})
-		// Admin registration from invite link
-		r.Get("/admin/register/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/admin/register/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/login", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/login", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/logout", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/forgot-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/forgot-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/reset-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/reset-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Legal pages
-		r.Get("/terms", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/privacy", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/setup", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/setup", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/setup/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/setup/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/dashboard", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/users", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/users/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/users", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/users/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/users/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/keys", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/keys", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/keys/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Plans management
-		r.Get("/plans", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/plans/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/plans", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/plans/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/plans/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/usage", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/settings", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/settings", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Payment providers
-		r.Get("/payments", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/payments", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Email provider
-		r.Get("/email", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/email", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Webhooks management
-		r.Get("/webhooks", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/webhooks/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/webhooks", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/webhooks/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/webhooks/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/system", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Admin invites management
-		r.Get("/invites", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/invites", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/invites/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Entitlements management
-		r.Get("/entitlements", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/entitlements/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/entitlements", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/entitlements/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/entitlements/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Routes management
-		r.Get("/routes", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/routes", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// Upstreams management
-		r.Get("/upstreams", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/upstreams/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/upstreams", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/upstreams/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Delete("/upstreams/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		// API endpoints for UI features
-		r.Post("/api/expr/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Post("/api/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Get("/partials/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
-		r.Handle("/static/*", webHandler)
-	}
-
+	// Signup/register redirects to portal (UX: common URLs users might try)
+	r.Get("/signup", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, "/portal/signup", http.StatusFound)
+	})
+	r.Get("/register", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, "/portal/signup", http.StatusFound)
+	})
+	// Admin setup redirect (users might try /admin/setup)
+	r.Get("/admin/setup", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, "/setup", http.StatusFound)
+	})
+	// Admin registration from invite link
+	r.Get("/admin/register/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/admin/register/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/login", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/login", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/logout", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/forgot-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/forgot-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/reset-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/reset-password", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Legal pages
+	r.Get("/terms", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/privacy", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/setup", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/setup", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/setup/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/setup/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/dashboard", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/users", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/users/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/users", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/users/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/users/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/keys", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/keys", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/keys/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Plans management
+	r.Get("/plans", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/plans/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/plans", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/plans/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/plans/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/usage", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/settings", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/settings", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Payment providers
+	r.Get("/payments", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/payments", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Email provider
+	r.Get("/email", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/email", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Webhooks management
+	r.Get("/webhooks", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/webhooks/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/webhooks", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/webhooks/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/webhooks/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/system", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Admin invites management
+	r.Get("/invites", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/invites", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/invites/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Entitlements management
+	r.Get("/entitlements", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/entitlements/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/entitlements", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/entitlements/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/entitlements/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Routes management
+	r.Get("/routes", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/routes", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// Upstreams management
+	r.Get("/upstreams", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/upstreams/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/upstreams", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/upstreams/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Delete("/upstreams/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	// API endpoints for UI features
+	r.Post("/api/expr/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Post("/api/routes/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Get("/partials/*", func(w http.ResponseWriter, req *http.Request) { webHandler.ServeHTTP(w, req) })
+	r.Handle("/static/*", webHandler)
+}
 
 // NewMetricsMiddleware creates middleware that records request metrics.
 func NewMetricsMiddleware(m *metrics.Collector) func(next http.Handler) http.Handler {

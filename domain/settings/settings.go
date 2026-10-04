@@ -91,10 +91,10 @@ const (
 	KeyMeterBasePath          = "routes.meter_base_path"
 
 	// Optional handler enable/disable
-	KeyDocsEnabled            = "routes.docs_enabled"
-	KeyModuleEnabled          = "routes.module_enabled"
-	KeyPaymentWebhookEnabled  = "routes.payment_webhook_enabled"
-	KeyMeterEnabled           = "routes.meter_enabled"
+	KeyDocsEnabled           = "routes.docs_enabled"
+	KeyModuleEnabled         = "routes.module_enabled"
+	KeyPaymentWebhookEnabled = "routes.payment_webhook_enabled"
+	KeyMeterEnabled          = "routes.meter_enabled"
 
 	// Customization settings (HTML/CSS for branding)
 	KeyCustomDocsHomeHTML     = "custom.docs_home_html"      // Full HTML override for docs home page
@@ -124,17 +124,17 @@ const (
 	KeyEmailSESSecretKey = "email.ses.secret_key"
 
 	// Payment settings
-	KeyPaymentProvider           = "payment.provider" // stripe, paddle, lemonsqueezy, none
-	KeyPaymentStripeSecretKey    = "payment.stripe.secret_key"
-	KeyPaymentStripePublicKey    = "payment.stripe.public_key"
+	KeyPaymentProvider            = "payment.provider" // stripe, paddle, lemonsqueezy, none
+	KeyPaymentStripeSecretKey     = "payment.stripe.secret_key"
+	KeyPaymentStripePublicKey     = "payment.stripe.public_key"
 	KeyPaymentStripeWebhookSecret = "payment.stripe.webhook_secret"
-	KeyPaymentPaddleVendorID     = "payment.paddle.vendor_id"
-	KeyPaymentPaddleAPIKey       = "payment.paddle.api_key"
-	KeyPaymentPaddlePublicKey    = "payment.paddle.public_key"
+	KeyPaymentPaddleVendorID      = "payment.paddle.vendor_id"
+	KeyPaymentPaddleAPIKey        = "payment.paddle.api_key"
+	KeyPaymentPaddlePublicKey     = "payment.paddle.public_key"
 	KeyPaymentPaddleWebhookSecret = "payment.paddle.webhook_secret"
-	KeyPaymentLemonAPIKey        = "payment.lemonsqueezy.api_key"
-	KeyPaymentLemonStoreID       = "payment.lemonsqueezy.store_id"
-	KeyPaymentLemonWebhookSecret = "payment.lemonsqueezy.webhook_secret"
+	KeyPaymentLemonAPIKey         = "payment.lemonsqueezy.api_key"
+	KeyPaymentLemonStoreID        = "payment.lemonsqueezy.store_id"
+	KeyPaymentLemonWebhookSecret  = "payment.lemonsqueezy.webhook_secret"
 
 	// Auth settings
 	KeyAuthMode                     = "auth.mode"
@@ -150,9 +150,9 @@ const (
 	KeyRateLimitWindowSecs  = "ratelimit.window_secs"
 
 	// Upstream settings (default upstream when no route matches)
-	KeyUpstreamURL            = "upstream.url"
-	KeyUpstreamTimeout        = "upstream.timeout"
-	KeyUpstreamMaxIdleConns   = "upstream.max_idle_conns"
+	KeyUpstreamURL             = "upstream.url"
+	KeyUpstreamTimeout         = "upstream.timeout"
+	KeyUpstreamMaxIdleConns    = "upstream.max_idle_conns"
 	KeyUpstreamIdleConnTimeout = "upstream.idle_conn_timeout"
 
 	// Terminology settings (customize UI labels for different metering modes)
@@ -167,19 +167,19 @@ const (
 
 	// TLS settings
 	KeyTLSEnabled      = "tls.enabled"
-	KeyTLSMode         = "tls.mode"         // acme, manual, none
-	KeyTLSDomain       = "tls.domain"       // Domain for ACME
-	KeyTLSEmail        = "tls.acme_email"   // Contact email for ACME
-	KeyTLSCertPath     = "tls.cert_path"    // Manual mode: cert file
-	KeyTLSKeyPath      = "tls.key_path"     // Manual mode: key file
+	KeyTLSMode         = "tls.mode"       // acme, manual, none
+	KeyTLSDomain       = "tls.domain"     // Domain for ACME
+	KeyTLSEmail        = "tls.acme_email" // Contact email for ACME
+	KeyTLSCertPath     = "tls.cert_path"  // Manual mode: cert file
+	KeyTLSKeyPath      = "tls.key_path"   // Manual mode: key file
 	KeyTLSHTTPRedirect = "tls.http_redirect"
 	KeyTLSMinVersion   = "tls.min_version"  // TLS 1.2 or 1.3
 	KeyTLSACMEStaging  = "tls.acme_staging" // Use staging for testing
 
 	// OAuth settings
 	KeyOAuthEnabled           = "oauth.enabled"
-	KeyOAuthAutoLinkEmail     = "oauth.auto_link_email"     // Auto-link by email
-	KeyOAuthAllowRegistration = "oauth.allow_registration"  // Create new users via OAuth
+	KeyOAuthAutoLinkEmail     = "oauth.auto_link_email"    // Auto-link by email
+	KeyOAuthAllowRegistration = "oauth.allow_registration" // Create new users via OAuth
 
 	// Google OAuth
 	KeyOAuthGoogleEnabled      = "oauth.google.enabled"
@@ -193,11 +193,11 @@ const (
 
 	// Generic OIDC
 	KeyOAuthOIDCEnabled      = "oauth.oidc.enabled"
-	KeyOAuthOIDCName         = "oauth.oidc.name"          // Display name
-	KeyOAuthOIDCIssuerURL    = "oauth.oidc.issuer_url"    // Discovery URL
+	KeyOAuthOIDCName         = "oauth.oidc.name"       // Display name
+	KeyOAuthOIDCIssuerURL    = "oauth.oidc.issuer_url" // Discovery URL
 	KeyOAuthOIDCClientID     = "oauth.oidc.client_id"
 	KeyOAuthOIDCClientSecret = "oauth.oidc.client_secret"
-	KeyOAuthOIDCScopes       = "oauth.oidc.scopes"        // Space-separated
+	KeyOAuthOIDCScopes       = "oauth.oidc.scopes" // Space-separated
 )
 
 // SensitiveKeys returns keys that contain secrets and should be encrypted.
@@ -212,6 +212,7 @@ func SensitiveKeys() []string {
 		KeyPaymentPaddleAPIKey,
 		KeyPaymentPaddleWebhookSecret,
 		KeyPaymentLemonAPIKey,
+		"payment.epusdt.secret_key",
 		KeyPaymentLemonWebhookSecret,
 		KeyOAuthGoogleClientSecret,
 		KeyOAuthGitHubClientSecret,
@@ -232,14 +233,14 @@ func IsSensitive(key string) bool {
 // Defaults returns default values for settings.
 func Defaults() Settings {
 	return Settings{
-		KeyServerHost:                   "0.0.0.0",
-		KeyServerPort:                   "8080",
-		KeyServerReadTimeout:            "30s",
-		KeyServerWriteTimeout:           "60s",
-		KeyPortalEnabled:                "true",
-		KeyPortalAppName:                "APIGate",
-		KeyWebUIEnabled:                 "true", // Web UI enabled by default (backward compatible)
-		KeyWebUIBasePath:                "",     // Empty = root mount (backward compatible)
+		KeyServerHost:         "0.0.0.0",
+		KeyServerPort:         "8080",
+		KeyServerReadTimeout:  "30s",
+		KeyServerWriteTimeout: "60s",
+		KeyPortalEnabled:      "true",
+		KeyPortalAppName:      "APIGate",
+		KeyWebUIEnabled:       "true", // Web UI enabled by default (backward compatible)
+		KeyWebUIBasePath:      "",     // Empty = root mount (backward compatible)
 		// Handler paths (backward compatible)
 		KeyAdminBasePath:          "/admin",
 		KeyAuthBasePath:           "/auth",
@@ -250,24 +251,24 @@ func Defaults() Settings {
 		KeyPaymentWebhookBasePath: "/payment-webhooks",
 		KeyMeterBasePath:          "/api/v1/meter",
 		// Optional handlers (enabled by default)
-		KeyDocsEnabled:            "true",
-		KeyModuleEnabled:          "true",
-		KeyPaymentWebhookEnabled:  "true",
-		KeyMeterEnabled:           "true",
+		KeyDocsEnabled:                  "true",
+		KeyModuleEnabled:                "true",
+		KeyPaymentWebhookEnabled:        "true",
+		KeyMeterEnabled:                 "true",
 		KeyAuthRequireEmailVerification: "false",
-		KeyEmailProvider:       "none",
-		KeyPaymentProvider:     "none",
-		KeyAuthMode:            "local",
-		KeyAuthHeader:          "X-API-Key",
-		KeyAuthKeyPrefix:       "ak_",
-		KeyAuthSessionTTL:      "168h", // 7 days
-		KeyRateLimitEnabled:    "true",
-		KeyRateLimitBurstTokens: "5",
-		KeyRateLimitWindowSecs:  "60",
-		KeyUpstreamTimeout:      "30s",
-		KeyUpstreamMaxIdleConns: "100",
-		KeyUpstreamIdleConnTimeout: "90s",
-		KeyMeteringUnit:         "requests",
+		KeyEmailProvider:                "none",
+		KeyPaymentProvider:              "none",
+		KeyAuthMode:                     "local",
+		KeyAuthHeader:                   "X-API-Key",
+		KeyAuthKeyPrefix:                "ak_",
+		KeyAuthSessionTTL:               "168h", // 7 days
+		KeyRateLimitEnabled:             "true",
+		KeyRateLimitBurstTokens:         "5",
+		KeyRateLimitWindowSecs:          "60",
+		KeyUpstreamTimeout:              "30s",
+		KeyUpstreamMaxIdleConns:         "100",
+		KeyUpstreamIdleConnTimeout:      "90s",
+		KeyMeteringUnit:                 "requests",
 		// Groups defaults
 		KeyGroupsEnabled:         "true",
 		KeyGroupsMaxPerUser:      "10",

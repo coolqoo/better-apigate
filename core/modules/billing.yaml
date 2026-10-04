@@ -1,0 +1,19 @@
+module: billing
+meta:
+  description: Typed transactional prepaid actions. Generic CRUD is disabled.
+schema:
+  plan_id: {type: string, description: "Purchased plan identifier"}
+  operation: {type: string, description: "Idempotency key"}
+actions:
+  purchase:
+    auth: user
+    description: Purchase or schedule a 30-day term using available wallet funds.
+    input:
+      - {name: plan_id, type: string, required: true}
+      - {name: operation, type: string, required: true}
+  account:
+    auth: user
+    description: Read the authenticated customer's authoritative wallet.
+channels:
+  http:
+    serve: {enabled: false}

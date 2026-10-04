@@ -5,7 +5,6 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,7 +14,7 @@ import (
 type Claims struct {
 	UserID string `json:"uid"`
 	Email  string `json:"email"`
-	Role   string `json:"role"`   // "admin" or "user"
+	Role   string `json:"role"` // "admin" or "user"
 	PlanID string `json:"pid"`
 	jwt.RegisteredClaims
 }
@@ -80,22 +79,15 @@ func (s *TokenService) GenerateToken(userID, email, role, planID string) (string
 // ValidateToken validates a JWT token and returns the claims.
 func (s *TokenService) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
 		return s.secret, nil
-	})
+	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithIssuer(s.issuer))
 
 	if err != nil {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	return claims, nil
+	// ParseWithClaims preserves the supplied claim type and returns an error for invalid tokens.
+	return token.Claims.(*Claims), nil
 }
 
 // RefreshToken creates a new token with extended expiration.

@@ -24,7 +24,9 @@ import (
 
 // Runtime is the core execution environment for modules.
 type Runtime struct {
-	mu sync.RWMutex
+	mu               sync.RWMutex
+	typedActions     map[string]ActionHandler
+	protectedModules map[string]bool
 
 	// registry manages module registration and path routing
 	registry *registry.Registry
@@ -164,17 +166,19 @@ type HookEvent struct {
 // New creates a new runtime.
 func New(storage Storage, config Config) *Runtime {
 	r := &Runtime{
-		registry:     registry.New(),
-		storage:      storage,
-		analytics:    config.Analytics,
-		validator:    validation.New(make(map[string]convention.Derived)),
-		channels:     make(map[string]Channel),
-		hooks:        &HookDispatcher{handlers: make(map[string][]HookHandler)},
-		functions:    NewFunctionRegistry(),
-		events:       events.NewBus(config.Logger),
-		capabilities: make(map[string][]string),
-		logger:       config.Logger,
-		config:       config,
+		registry:         registry.New(),
+		typedActions:     make(map[string]ActionHandler),
+		protectedModules: make(map[string]bool),
+		storage:          storage,
+		analytics:        config.Analytics,
+		validator:        validation.New(make(map[string]convention.Derived)),
+		channels:         make(map[string]Channel),
+		hooks:            &HookDispatcher{handlers: make(map[string][]HookHandler)},
+		functions:        NewFunctionRegistry(),
+		events:           events.NewBus(config.Logger),
+		capabilities:     make(map[string][]string),
+		logger:           config.Logger,
+		config:           config,
 	}
 
 	// Initialize exporter registry with analytics store
@@ -300,6 +304,8 @@ func (r *Runtime) Execute(ctx context.Context, module, action string, input Acti
 func (r *Runtime) executeInternal(ctx context.Context, module, action string, input ActionInput) (ActionResult, error) {
 	r.mu.RLock()
 	derived, ok := r.registry.Get(module)
+	handler := r.typedActions[module+"."+action]
+	protected := r.protectedModules[module]
 	r.mu.RUnlock()
 
 	if !ok {
@@ -319,6 +325,12 @@ func (r *Runtime) executeInternal(ctx context.Context, module, action string, in
 		return ActionResult{}, fmt.Errorf("action %q not found in module %q", action, module)
 	}
 
+	if handler != nil {
+		return handler(ctx, input)
+	}
+	if protected {
+		return ActionResult{}, fmt.Errorf("module %q requires a typed transactional action", module)
+	}
 	// Create meta map for hooks to pass data back to caller
 	meta := make(map[string]any)
 

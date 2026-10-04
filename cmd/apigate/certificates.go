@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	cryptotls "crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"os"
 	"text/tabwriter"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/artpar/apigate/domain/tls"
 	"github.com/spf13/cobra"
 )
@@ -149,7 +151,7 @@ func runCertificatesList(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	certs, err := certStore.List(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to list certificates: %w", err)
@@ -201,7 +203,7 @@ func runCertificatesGet(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	cert, err := certStore.Get(context.Background(), args[0])
 	if err != nil {
 		return fmt.Errorf("certificate not found: %s", args[0])
@@ -218,7 +220,7 @@ func runCertificatesGetDomain(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	cert, err := certStore.GetByDomain(context.Background(), args[0])
 	if err != nil {
 		return fmt.Errorf("certificate not found for domain: %s", args[0])
@@ -254,16 +256,30 @@ func runCertificatesCreate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Parse expiration time
-	var expiresAt time.Time
+	certificatePEM := append(append([]byte{}, certPEM...), chainPEM...)
+	pair, err := cryptotls.X509KeyPair(certificatePEM, keyPEM)
+	if err != nil {
+		return fmt.Errorf("invalid certificate/key pair: %w", err)
+	}
+	leaf, err := x509.ParseCertificate(pair.Certificate[0])
+	if err != nil {
+		return err
+	}
+	if err = leaf.VerifyHostname(certDomain); err != nil {
+		return fmt.Errorf("certificate does not cover the configured domain: %w", err)
+	}
+	if !leaf.NotAfter.After(time.Now()) {
+		return fmt.Errorf("certificate has expired")
+	}
+	expiresAt := leaf.NotAfter
 	if certExpiresAt != "" {
 		expiresAt, err = time.Parse(time.RFC3339, certExpiresAt)
 		if err != nil {
 			return fmt.Errorf("invalid expires-at format (use RFC3339): %w", err)
 		}
-	} else {
-		// Default to 90 days from now
-		expiresAt = time.Now().UTC().AddDate(0, 0, 90)
+		if expiresAt.After(leaf.NotAfter) || !expiresAt.After(time.Now()) {
+			return fmt.Errorf("expires-at must be in the future and within the certificate's validity")
+		}
 	}
 
 	now := time.Now().UTC()
@@ -273,15 +289,15 @@ func runCertificatesCreate(cmd *cobra.Command, args []string) error {
 		CertPEM:   certPEM,
 		KeyPEM:    keyPEM,
 		ChainPEM:  chainPEM,
-		IssuedAt:  now,
+		IssuedAt:  leaf.NotBefore,
 		ExpiresAt: expiresAt,
-		Issuer:    "Manual",
+		Issuer:    leaf.Issuer.String(),
 		Status:    tls.StatusActive,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	if err := certStore.Create(context.Background(), cert); err != nil {
 		return fmt.Errorf("failed to create certificate: %w", err)
 	}
@@ -298,7 +314,7 @@ func runCertificatesExpiring(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	certs, err := certStore.ListExpiring(context.Background(), certExpiringDays)
 	if err != nil {
 		return fmt.Errorf("failed to list expiring certificates: %w", err)
@@ -335,7 +351,7 @@ func runCertificatesExpired(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	certs, err := certStore.ListExpired(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to list expired certificates: %w", err)
@@ -374,7 +390,7 @@ func runCertificatesRevoke(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	cert, err := certStore.Get(context.Background(), args[0])
 	if err != nil {
 		return fmt.Errorf("certificate not found: %s", args[0])
@@ -404,7 +420,7 @@ func runCertificatesDelete(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	certStore := sqlite.NewCertificateStore(db)
+	certStore := postgres.NewCertificateStore(db)
 	if err := certStore.Delete(context.Background(), args[0]); err != nil {
 		return fmt.Errorf("failed to delete certificate: %w", err)
 	}

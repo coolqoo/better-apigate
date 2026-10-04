@@ -10,15 +10,15 @@ import (
 
 	"github.com/artpar/apigate/adapters/auth"
 	"github.com/artpar/apigate/domain/entitlement"
+
 	"github.com/artpar/apigate/domain/key"
 	"github.com/artpar/apigate/domain/plan"
 	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/quota"
-	"github.com/artpar/apigate/domain/ratelimit"
+
 	"github.com/artpar/apigate/domain/route"
 	"github.com/artpar/apigate/domain/usage"
+	"github.com/artpar/apigate/domain/wallet"
 	"github.com/artpar/apigate/ports"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ProxyService handles incoming proxy requests.
@@ -42,7 +42,10 @@ type ProxyService struct {
 	tokens *auth.TokenService
 
 	// Static configuration (requires restart)
-	keyPrefix string
+	keyPrefix     string
+	keySecret     []byte
+	prepaid       ports.PrepaidStore
+	atomicLimiter ports.AtomicRateLimiter
 
 	// Dynamic configuration (hot-reloadable)
 	dynamicCfg atomic.Pointer[DynamicConfig]
@@ -60,6 +63,8 @@ type DynamicConfig struct {
 
 // ProxyDeps contains dependencies for ProxyService.
 type ProxyDeps struct {
+	Prepaid          ports.PrepaidStore
+	AtomicLimiter    ports.AtomicRateLimiter
 	Keys             ports.KeyStore
 	Users            ports.UserStore
 	RateLimit        ports.RateLimitStore
@@ -74,6 +79,7 @@ type ProxyDeps struct {
 
 // ProxyConfig contains configuration for ProxyService.
 type ProxyConfig struct {
+	KeySecret        []byte
 	KeyPrefix        string
 	Plans            []plan.Plan
 	Endpoints        []plan.Endpoint
@@ -87,6 +93,9 @@ type ProxyConfig struct {
 func NewProxyService(deps ProxyDeps, cfg ProxyConfig) *ProxyService {
 	s := &ProxyService{
 		keys:             deps.Keys,
+		keySecret:        cfg.KeySecret,
+		prepaid:          deps.Prepaid,
+		atomicLimiter:    deps.AtomicLimiter,
 		users:            deps.Users,
 		rateLimit:        deps.RateLimit,
 		quota:            deps.Quota,
@@ -151,7 +160,7 @@ type HandleResult struct {
 
 // Handle processes an incoming proxy request.
 // This method orchestrates pure domain functions with I/O operations.
-func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) HandleResult {
+func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) (result HandleResult) {
 	now := s.clock.Now()
 
 	// Get current dynamic config (hot-reloadable)
@@ -175,203 +184,34 @@ func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) HandleResu
 		return s.handlePublicRoute(ctx, req, matchedRoute, pathParams, originalPath, dynCfg)
 	}
 
-	// 3. Authenticate via JWT session token OR API key
-	// Detection: API keys start with configured prefix (e.g., "ak_"), JWTs don't
-	var user ports.User
-	var matchedKey key.Key
+	a, admissionErr := s.admit(ctx, req, matchedRoute)
+	if admissionErr != nil {
+		headers := map[string]string{}
+		if !a.rate.ResetAt.IsZero() {
+			headers["X-RateLimit-Remaining"] = "0"
+			headers["X-RateLimit-Reset"] = a.rate.ResetAt.Format(time.RFC3339)
+			headers["Retry-After"] = itoa(int(a.rate.ResetAt.Sub(now).Seconds()))
+		}
+		if a.quota.Limit > 0 {
+			headers["X-Quota-Used"] = strconv.FormatInt(a.quota.CurrentUsage, 10)
+			headers["X-Quota-Limit"] = strconv.FormatInt(a.quota.Limit, 10)
+			headers["X-Quota-Reset"] = a.periodEnd.Format(time.RFC3339)
+		}
+		return HandleResult{Error: admissionErr, Response: proxy.Response{Headers: headers}}
+	}
+	user, auth := a.user, a.auth
+	rlResult, quotaResult := a.rate, a.quota
+	periodEnd := a.periodEnd
 	var err error
-	var authEmail, authRole string
-
-	if req.APIKey == "" {
-		return HandleResult{Error: &proxy.ErrMissingKey}
-	}
-
-	// Check if token looks like an API key (has the expected prefix)
-	_, isAPIKeyFormat := key.ValidateFormat(req.APIKey, s.keyPrefix)
-
-	if !isAPIKeyFormat && s.tokens != nil {
-		// Token doesn't look like an API key - try JWT validation
-		var claims *auth.Claims
-		claims, err = s.tokens.ValidateToken(req.APIKey)
-		if err == nil {
-			matchedKey = key.Key{
-				ID:     "session:" + claims.UserID,
-				UserID: claims.UserID,
-			}
-			authEmail = claims.Email
-			authRole = claims.Role
-			// Try DB lookup; fallback to claims if user not in local DB
-			dbUser, dbErr := s.users.Get(ctx, claims.UserID)
-			if dbErr == nil {
-				if dbUser.Status != "active" {
-					return HandleResult{Error: &proxy.ErrorResponse{
-						Status:  403,
-						Code:    "user_suspended",
-						Message: "Account is suspended",
-					}}
-				}
-				user = dbUser
-			} else {
-				// User not in local DB — trust JWT claims (external auth)
-				user = ports.User{
-					ID:     claims.UserID,
-					Email:  claims.Email,
-					Role:   claims.Role,
-					PlanID: claims.PlanID,
-					Status: "active",
-				}
-			}
-		} else {
-			// JWT validation failed
-			return HandleResult{Error: &proxy.ErrInvalidKey}
-		}
-	} else {
-		// Token looks like an API key - use API key auth flow
-		prefix, valid := key.ValidateFormat(req.APIKey, s.keyPrefix)
-		if !valid {
-			return HandleResult{Error: &proxy.ErrInvalidKey}
-		}
-
-		// Lookup key (I/O)
-		var keys []key.Key
-		keys, err = s.keys.Get(ctx, prefix)
-		if err != nil || len(keys) == 0 {
-			return HandleResult{Error: &proxy.ErrInvalidKey}
-		}
-
-		// Find matching key by comparing hash (PURE comparison, I/O lookup)
-		found := false
-		for _, k := range keys {
-			if bcrypt.CompareHashAndPassword(k.Hash, []byte(req.APIKey)) == nil {
-				matchedKey = k
-				found = true
-				break
+	upstreamStatus := 0
+	defer func() {
+		if a.reservation != nil {
+			event := usage.Event{Method: req.Method, Path: originalPath, StatusCode: upstreamStatus, LatencyMs: s.clock.Now().Sub(now).Milliseconds(), RequestBytes: int64(len(req.Body)), ResponseBytes: int64(len(result.Response.Body)), IPAddress: req.RemoteIP, UserAgent: req.UserAgent, Timestamp: now}
+			if e := s.SettleReservation(a.reservation, upstreamStatus >= 200 && upstreamStatus < 500, event); e != nil {
+				result.Error = &errEnforcement
 			}
 		}
-		if !found {
-			return HandleResult{Error: &proxy.ErrInvalidKey}
-		}
-
-		// Validate key (PURE)
-		validation := key.Validate(matchedKey, now)
-		if !validation.Valid {
-			return HandleResult{Error: &proxy.ErrorResponse{
-				Status:  401,
-				Code:    validation.Reason,
-				Message: reasonToMessage(validation.Reason),
-			}}
-		}
-
-		// Get user and check status (I/O)
-		user, err = s.users.Get(ctx, matchedKey.UserID)
-		if err != nil {
-			return HandleResult{Error: &proxy.ErrInvalidKey}
-		}
-		if user.Status != "active" {
-			return HandleResult{Error: &proxy.ErrorResponse{
-				Status:  403,
-				Code:    "user_suspended",
-				Message: "Account is suspended",
-			}}
-		}
-		authEmail = user.Email
-	}
-
-	// 9. Get plan and rate limit config (PURE) - uses dynamic config
-	userPlan, _ := plan.FindPlan(dynCfg.Plans, user.PlanID)
-	rlConfig := ratelimit.Config{
-		Limit:       userPlan.RateLimitPerMinute,
-		Window:      time.Duration(dynCfg.RateWindow) * time.Second,
-		BurstTokens: dynCfg.RateBurst,
-	}
-	if rlConfig.Limit == 0 {
-		rlConfig.Limit = 60 // default
-	}
-
-	// 8.5. Check quota (PURE + I/O for state)
-	// Service accounts (quota_bypass=true) skip quota checks entirely
-	periodStart, periodEnd := quota.PeriodBounds(now)
-	var quotaResult quota.CheckResult
-	if s.quota != nil && userPlan.RequestsPerMonth >= 0 && !matchedKey.QuotaBypass { // Not unlimited and not service account
-		// Build quota config from plan
-		enforceMode := quota.EnforceHard
-		switch userPlan.QuotaEnforceMode {
-		case plan.QuotaEnforceWarn:
-			enforceMode = quota.EnforceWarn
-		case plan.QuotaEnforceSoft:
-			enforceMode = quota.EnforceSoft
-		}
-		gracePct := userPlan.QuotaGracePct
-		if gracePct == 0 {
-			gracePct = 0.05 // Default 5% grace
-		}
-		// Map plan.MeterType to quota.MeterType
-		meterType := quota.MeterTypeRequests
-		if userPlan.MeterType == plan.MeterTypeComputeUnits {
-			meterType = quota.MeterTypeComputeUnits
-		}
-		estimatedCost := userPlan.EstimatedCostPerReq
-		if estimatedCost <= 0 {
-			estimatedCost = 1.0
-		}
-		quotaCfg := quota.Config{
-			RequestsPerMonth: userPlan.RequestsPerMonth,
-			EnforceMode:      enforceMode,
-			GracePct:         gracePct,
-			MeterType:        meterType,
-			EstimatedCost:    estimatedCost,
-		}
-		quotaState, _ := s.quota.Get(ctx, matchedKey.UserID, periodStart)
-		// For compute_units mode, use estimated cost; for requests, use 1
-		increment := int64(1)
-		if meterType == quota.MeterTypeComputeUnits {
-			increment = int64(estimatedCost)
-		}
-		quotaResult = quota.Check(quotaState, quotaCfg, increment)
-
-		if !quotaResult.Allowed {
-			return HandleResult{
-				Error: &proxy.ErrQuotaExceeded,
-				Response: proxy.Response{
-					Headers: map[string]string{
-						"X-Quota-Used":  strconv.FormatInt(quotaResult.CurrentUsage, 10),
-						"X-Quota-Limit": strconv.FormatInt(quotaResult.Limit, 10),
-						"X-Quota-Reset": periodEnd.Format(time.RFC3339),
-						"Retry-After":   strconv.FormatInt(int64(periodEnd.Sub(now).Seconds()), 10),
-					},
-				},
-			}
-		}
-	}
-
-	// 9. Check rate limit (PURE + I/O for state)
-	rlState, _ := s.rateLimit.Get(ctx, matchedKey.ID)
-	rlResult, newRLState := ratelimit.Check(rlState, rlConfig, now)
-	s.rateLimit.Set(ctx, matchedKey.ID, newRLState)
-
-	if !rlResult.Allowed {
-		return HandleResult{
-			Error: &proxy.ErrRateLimited,
-			Response: proxy.Response{
-				Headers: map[string]string{
-					"X-RateLimit-Remaining": "0",
-					"X-RateLimit-Reset":     rlResult.ResetAt.Format("2006-01-02T15:04:05Z"),
-					"Retry-After":           itoa(int(rlResult.ResetAt.Sub(now).Seconds())),
-				},
-			},
-		}
-	}
-
-	// 10. Build auth context (PURE)
-	auth := proxy.AuthContext{
-		KeyID:     matchedKey.ID,
-		UserID:    matchedKey.UserID,
-		Email:     authEmail,
-		Role:      authRole,
-		PlanID:    user.PlanID,
-		RateLimit: rlConfig.Limit,
-		Scopes:    matchedKey.Scopes,
-	}
+	}()
 
 	// 10.5. Resolve entitlements for user's plan and add headers (PURE)
 	userEntitlements := entitlement.ResolveForPlan(
@@ -444,13 +284,15 @@ func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) HandleResu
 
 	// Forward to route's upstream if available, otherwise use default
 	if routeUpstream != nil {
-		resp, err = s.upstream.ForwardTo(ctx, req, routeUpstream)
+		resp, err = s.upstream.ForwardTo(context.WithoutCancel(ctx), req, routeUpstream)
 	} else {
-		resp, err = s.upstream.Forward(ctx, req)
+		resp, err = s.upstream.Forward(context.WithoutCancel(ctx), req)
 	}
 	if err != nil {
 		return HandleResult{Error: &proxy.ErrUpstreamError, Auth: &auth}
 	}
+
+	upstreamStatus = resp.Status
 
 	// 14. Apply response transform (PURE + Expr eval)
 	if matchedRoute != nil && matchedRoute.ResponseTransform != nil && s.transformService != nil {
@@ -459,71 +301,6 @@ func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) HandleResu
 			// Log error but continue with original response
 		}
 	}
-
-	// 15. Calculate cost/metering value (PURE + Expr eval)
-	var costMult float64 = 1.0
-
-	if matchedRoute != nil && matchedRoute.MeteringExpr != "" && s.transformService != nil {
-		// Build metering context with response data
-		meteringCtx := map[string]any{
-			"status":        resp.Status,
-			"responseBytes": int64(len(resp.Body)),
-			"requestBytes":  int64(len(req.Body)),
-			"path":          originalPath,
-			"method":        req.Method,
-			"userID":        auth.UserID,
-			"planID":        auth.PlanID,
-			"keyID":         auth.KeyID,
-			"email":         auth.Email,
-			"role":          auth.Role,
-		}
-		// Try to parse response body as JSON for metering expressions
-		if len(resp.Body) > 0 {
-			var respBody any
-			if jsonErr := json.Unmarshal(resp.Body, &respBody); jsonErr == nil {
-				meteringCtx["respBody"] = respBody
-			}
-		}
-
-		if val, err := s.transformService.EvalFloat(ctx, matchedRoute.MeteringExpr, meteringCtx); err == nil {
-			costMult = val
-		}
-	} else {
-		// Fallback to static endpoint cost multiplier
-		costMult = plan.GetCostMultiplier(dynCfg.Endpoints, req.Method, originalPath)
-	}
-
-	// 16. Record usage event (async I/O)
-	bytesTotal := int64(len(req.Body)) + int64(len(resp.Body))
-	event := usage.Event{
-		ID:             s.idGen.New(),
-		KeyID:          matchedKey.ID,
-		UserID:         matchedKey.UserID,
-		Method:         req.Method,
-		Path:           originalPath, // Use original path for tracking
-		StatusCode:     resp.Status,
-		LatencyMs:      resp.LatencyMs,
-		RequestBytes:   int64(len(req.Body)),
-		ResponseBytes:  int64(len(resp.Body)),
-		CostMultiplier: costMult,
-		IPAddress:      req.RemoteIP,
-		UserAgent:      req.UserAgent,
-		Timestamp:      now,
-	}
-	s.usage.Record(event)
-
-	// 16.5. Increment quota counter (I/O)
-	if s.quota != nil {
-		s.quota.Increment(ctx, matchedKey.UserID, periodStart, 1, costMult, bytesTotal)
-	}
-
-	// 17. Update last used (async I/O)
-	// Use background context since request context may be cancelled
-	go func() {
-		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		s.keys.UpdateLastUsed(bgCtx, matchedKey.ID, now)
-	}()
 
 	// 18. Add rate limit and quota headers to response (PURE)
 	if resp.Headers == nil {
@@ -644,9 +421,9 @@ func (s *ProxyService) handlePublicRoute(
 
 	// Forward to route's upstream if available, otherwise use default
 	if routeUpstream != nil {
-		resp, err = s.upstream.ForwardTo(ctx, req, routeUpstream)
+		resp, err = s.upstream.ForwardTo(context.WithoutCancel(ctx), req, routeUpstream)
 	} else {
-		resp, err = s.upstream.Forward(ctx, req)
+		resp, err = s.upstream.Forward(context.WithoutCancel(ctx), req)
 	}
 	if err != nil {
 		return HandleResult{Error: &proxy.ErrUpstreamError}
@@ -799,6 +576,7 @@ func (s *ProxyService) handlePublicStreamingRoute(
 
 	// Return streaming context with modified request and upstream for public route
 	return StreamingHandleResult{
+
 		StreamingResponse: &StreamingResponseContext{
 			Headers:      make(map[string]string),
 			MatchedRoute: matchedRoute,
@@ -816,11 +594,12 @@ func (s *ProxyService) handlePublicStreamingRoute(
 // StreamingHandleResult represents the outcome of handling a streaming request.
 type StreamingHandleResult struct {
 	StreamingResponse *StreamingResponseContext
-	ModifiedRequest   *proxy.Request     // Request after transforms/rewrites
-	RouteUpstream     *route.Upstream    // Route's upstream (if different from default)
+	ModifiedRequest   *proxy.Request  // Request after transforms/rewrites
+	RouteUpstream     *route.Upstream // Route's upstream (if different from default)
 	Error             *proxy.ErrorResponse
 	Auth              *proxy.AuthContext
 	Headers           map[string]string // Rate limit headers to add
+	Reservation       *wallet.Reservation
 }
 
 // StreamingResponseContext contains everything needed to stream a response.
@@ -866,8 +645,7 @@ func (s *ProxyService) ShouldStream(req proxy.Request) bool {
 // The caller is responsible for streaming the response body and closing it.
 func (s *ProxyService) HandleStreaming(ctx context.Context, req proxy.Request, streamingUpstream interface {
 	ForwardStreaming(ctx context.Context, req proxy.Request) (interface{ Status() int }, error)
-}) StreamingHandleResult {
-	now := s.clock.Now()
+}) (result StreamingHandleResult) {
 
 	// Get current dynamic config (hot-reloadable)
 	dynCfg := s.getDynamicConfig()
@@ -891,152 +669,26 @@ func (s *ProxyService) HandleStreaming(ctx context.Context, req proxy.Request, s
 		return s.handlePublicStreamingRoute(ctx, req, matchedRoute, pathParams, originalPath, dynCfg)
 	}
 
-	// 3. Authenticate via JWT session token OR API key
-	// Detection: API keys start with configured prefix (e.g., "ak_"), JWTs don't
-	var user ports.User
-	var matchedKey key.Key
-	var err error
-	var authEmail, authRole string
-
-	if req.APIKey == "" {
-		return StreamingHandleResult{Error: &proxy.ErrMissingKey}
+	a, admissionErr := s.admit(ctx, req, matchedRoute)
+	if admissionErr != nil {
+		return StreamingHandleResult{Error: admissionErr}
 	}
-
-	// Check if token looks like an API key (has the expected prefix)
-	_, isAPIKeyFormat := key.ValidateFormat(req.APIKey, s.keyPrefix)
-
-	if !isAPIKeyFormat && s.tokens != nil {
-		// Token doesn't look like an API key - try JWT validation
-		var claims *auth.Claims
-		claims, err = s.tokens.ValidateToken(req.APIKey)
-		if err == nil {
-			matchedKey = key.Key{
-				ID:     "session:" + claims.UserID,
-				UserID: claims.UserID,
-			}
-			authEmail = claims.Email
-			authRole = claims.Role
-			// Try DB lookup; fallback to claims if user not in local DB
-			dbUser, dbErr := s.users.Get(ctx, claims.UserID)
-			if dbErr == nil {
-				if dbUser.Status != "active" {
-					return StreamingHandleResult{Error: &proxy.ErrorResponse{
-						Status:  403,
-						Code:    "user_suspended",
-						Message: "Account is suspended",
-					}}
-				}
-				user = dbUser
-			} else {
-				// User not in local DB — trust JWT claims (external auth)
-				user = ports.User{
-					ID:     claims.UserID,
-					Email:  claims.Email,
-					Role:   claims.Role,
-					PlanID: claims.PlanID,
-					Status: "active",
-				}
-			}
-		} else {
-			// JWT validation failed
-			return StreamingHandleResult{Error: &proxy.ErrInvalidKey}
+	matchedKey, auth := a.key, a.auth
+	rlResult := a.rate
+	defer func() {
+		if a.reservation != nil && result.Error != nil {
+			_ = s.SettleReservation(a.reservation, false, usage.Event{Method: req.Method, Path: originalPath, StatusCode: result.Error.Status})
 		}
-	} else {
-		// Token looks like an API key - use API key auth flow
-		prefix, valid := key.ValidateFormat(req.APIKey, s.keyPrefix)
-		if !valid {
-			return StreamingHandleResult{Error: &proxy.ErrInvalidKey}
-		}
-
-		// Lookup key
-		var keys []key.Key
-		keys, err = s.keys.Get(ctx, prefix)
-		if err != nil || len(keys) == 0 {
-			return StreamingHandleResult{Error: &proxy.ErrInvalidKey}
-		}
-
-		// Find matching key
-		found := false
-		for _, k := range keys {
-			if bcrypt.CompareHashAndPassword(k.Hash, []byte(req.APIKey)) == nil {
-				matchedKey = k
-				found = true
-				break
-			}
-		}
-		if !found {
-			return StreamingHandleResult{Error: &proxy.ErrInvalidKey}
-		}
-
-		// Validate key
-		validation := key.Validate(matchedKey, now)
-		if !validation.Valid {
-			return StreamingHandleResult{Error: &proxy.ErrorResponse{
-				Status:  401,
-				Code:    validation.Reason,
-				Message: reasonToMessage(validation.Reason),
-			}}
-		}
-
-		// Get user and check status
-		user, err = s.users.Get(ctx, matchedKey.UserID)
-		if err != nil {
-			return StreamingHandleResult{Error: &proxy.ErrInvalidKey}
-		}
-		if user.Status != "active" {
-			return StreamingHandleResult{Error: &proxy.ErrorResponse{
-				Status:  403,
-				Code:    "user_suspended",
-				Message: "Account is suspended",
-			}}
-		}
-		authEmail = user.Email
-	}
-
-	// 8. Get plan and rate limit config
-	userPlan, _ := plan.FindPlan(dynCfg.Plans, user.PlanID)
-	rlConfig := ratelimit.Config{
-		Limit:       userPlan.RateLimitPerMinute,
-		Window:      time.Duration(dynCfg.RateWindow) * time.Second,
-		BurstTokens: dynCfg.RateBurst,
-	}
-	if rlConfig.Limit == 0 {
-		rlConfig.Limit = 60
-	}
-
-	// 9. Check rate limit
-	rlState, _ := s.rateLimit.Get(ctx, matchedKey.ID)
-	rlResult, newRLState := ratelimit.Check(rlState, rlConfig, now)
-	if setErr := s.rateLimit.Set(ctx, matchedKey.ID, newRLState); setErr != nil {
-		// Log but don't fail
-	}
-
-	if !rlResult.Allowed {
-		return StreamingHandleResult{
-			Error: &proxy.ErrRateLimited,
-			Headers: map[string]string{
-				"X-RateLimit-Remaining": "0",
-				"X-RateLimit-Reset":     rlResult.ResetAt.Format("2006-01-02T15:04:05Z"),
-				"Retry-After":           itoa(int(rlResult.ResetAt.Sub(now).Seconds())),
-			},
-		}
-	}
-
-	// 10. Build auth context
-	auth := proxy.AuthContext{
-		KeyID:     matchedKey.ID,
-		UserID:    matchedKey.UserID,
-		Email:     authEmail,
-		Role:      authRole,
-		PlanID:    user.PlanID,
-		RateLimit: rlConfig.Limit,
-		Scopes:    matchedKey.Scopes,
-	}
+	}()
 
 	// 10.6. Inject identity headers for upstream
 	if req.Headers == nil {
 		req.Headers = make(map[string]string)
 	}
+	for k, v := range entitlement.ToHeaders(entitlement.ResolveForPlan(auth.PlanID, dynCfg.Entitlements, dynCfg.PlanEntitlements)) {
+		req.Headers[k] = v
+	}
+
 	if auth.UserID != "" {
 		req.Headers["X-User-ID"] = auth.UserID
 	}
@@ -1088,16 +740,9 @@ func (s *ProxyService) HandleStreaming(ctx context.Context, req proxy.Request, s
 		}
 	}
 
-	// Update last used
-	// Use background context since request context may be cancelled
-	go func() {
-		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		s.keys.UpdateLastUsed(bgCtx, matchedKey.ID, now)
-	}()
-
 	// Return streaming context with modified request and upstream
 	return StreamingHandleResult{
+		Reservation: a.reservation,
 		StreamingResponse: &StreamingResponseContext{
 			Headers:      make(map[string]string),
 			MatchedRoute: matchedRoute,

@@ -5,7 +5,8 @@ project_name: apigate
 
 before:
   hooks:
-    - go mod tidy
+    - make contracts
+    - make webui
 
 builds:
   # Linux AMD64
@@ -17,13 +18,11 @@ builds:
     goarch:
       - amd64
     env:
-      - CGO_ENABLED=1
-      - CC=x86_64-linux-gnu-gcc
+      - CGO_ENABLED=0
     flags:
       - -trimpath
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.buildDate={{.Date}}
-      - -extldflags "-static"
     tags:
       - netgo
       - osusergo
@@ -37,13 +36,11 @@ builds:
     goarch:
       - arm64
     env:
-      - CGO_ENABLED=1
-      - CC=aarch64-linux-gnu-gcc
+      - CGO_ENABLED=0
     flags:
       - -trimpath
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.buildDate={{.Date}}
-      - -extldflags "-static"
     tags:
       - netgo
       - osusergo
@@ -57,7 +54,7 @@ builds:
     goarch:
       - amd64
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     flags:
       - -trimpath
     ldflags:
@@ -72,7 +69,7 @@ builds:
     goarch:
       - arm64
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     flags:
       - -trimpath
     ldflags:
@@ -87,8 +84,7 @@ builds:
     goarch:
       - amd64
     env:
-      - CGO_ENABLED=1
-      - CC=x86_64-w64-mingw32-gcc
+      - CGO_ENABLED=0
     flags:
       - -trimpath
     ldflags:
@@ -104,8 +100,10 @@ archives:
     files:
       - README.md
       - LICENSE*
-      - configs/apigate.example.yaml
-      - migrations/*
+      - .env.example
+      - docker-compose.yaml
+      - docs/deployment-v2.md
+      - scripts/*.sh
 
 checksum:
   name_template: 'checksums.txt'

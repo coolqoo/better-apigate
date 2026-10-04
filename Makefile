@@ -14,22 +14,22 @@ webui:
 	cd webui && npm run build
 	@echo "Syncing webui to embed location..."
 	rm -rf core/channel/http/webui/dist
-	cp -r webui/dist core/channel/http/webui/
+	cp -r webui/build core/channel/http/webui/dist
 	@echo "Webui build complete"
 
 # Install webui dependencies
 webui-install:
-	cd webui && npm install
+	cd webui && npm ci
 
 # Build Go binary (embeds webui assets)
 build:
-	CGO_ENABLED=1 go build $(LDFLAGS) -o bin/apigate ./cmd/apigate
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/apigate ./cmd/apigate
 
 run: build
-	./bin/apigate -config configs/apigate.example.yaml
+	./bin/apigate serve
 
 dev:
-	go run ./cmd/apigate -config configs/apigate.example.yaml
+	go run ./cmd/apigate serve
 
 test:
 	go test -v ./...
@@ -37,7 +37,7 @@ test:
 clean:
 	rm -rf bin/
 	rm -f apigate
-	rm -rf webui/dist
+	rm -rf webui/build
 	rm -rf core/channel/http/webui/dist
 
 docker:
@@ -63,7 +63,7 @@ docker-publish: docker-build-binaries
 	@echo "Published $(DOCKER_REPO):$(VERSION) and $(DOCKER_REPO):latest"
 
 # Build binaries for Docker (pre-build to avoid memory issues in buildx)
-docker-build-binaries:
+docker-build-binaries: webui
 	@echo "Building binaries for Docker..."
 	@mkdir -p build/linux/amd64 build/linux/arm64
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o build/linux/amd64/apigate ./cmd/apigate
@@ -71,7 +71,7 @@ docker-build-binaries:
 	@echo "Binaries built in build/linux/"
 
 # Create a release
-release:
+release: contracts webui
 	@echo "Building for multiple platforms..."
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-linux-amd64 ./cmd/apigate
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-linux-arm64 ./cmd/apigate
@@ -98,3 +98,11 @@ help:
 	@echo "  docker-build-binaries - Build linux binaries for Docker"
 	@echo "  release    - Build for all platforms"
 	@echo "  clean      - Remove build artifacts"
+
+# Go models are the source of OpenAPI and frontend contracts.
+.PHONY: contracts validate
+contracts:
+	go run ./cmd/contracts > docs/openapi-v2.json
+	go run ./cmd/contracts -typescript > webui/src/v2/contracts.generated.ts
+validate: contracts webui build
+	cd webui && npm run typecheck

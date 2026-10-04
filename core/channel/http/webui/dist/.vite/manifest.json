@@ -1,18 +1,34 @@
 {
-  "_vendor-Cqz2NN3K.js": {
-    "file": "assets/vendor-Cqz2NN3K.js",
-    "name": "vendor"
-  },
   "index.html": {
-    "file": "assets/index-B-PFhODd.js",
+    "file": "assets/index-BKLSSgB6.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
-    "imports": [
-      "_vendor-Cqz2NN3K.js"
+    "dynamicImports": [
+      "src/v2/customer.tsx",
+      "src/v2/admin.tsx"
     ],
     "css": [
-      "assets/index-B-7hG22K.css"
+      "assets/index-DAgF9NNG.css"
+    ]
+  },
+  "src/v2/admin.tsx": {
+    "file": "assets/admin-DYQLa8J5.js",
+    "name": "admin",
+    "src": "src/v2/admin.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "src/v2/customer.tsx"
+    ]
+  },
+  "src/v2/customer.tsx": {
+    "file": "assets/customer-BPCbsAYF.js",
+    "name": "customer",
+    "src": "src/v2/customer.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
     ]
   }
 }

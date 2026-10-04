@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/artpar/apigate/bootstrap"
 	"github.com/artpar/apigate/core/channel/tty"
 	"github.com/rs/zerolog"
@@ -43,16 +44,11 @@ func runShell(cmd *cobra.Command, args []string) error {
 	// Get database path
 	dsn := os.Getenv("APIGATE_DATABASE_DSN")
 	if dsn == "" {
-		dsn = "apigate.db"
-	}
-
-	// Check if database exists
-	if _, err := os.Stat(dsn); os.IsNotExist(err) {
-		return err
+		return fmt.Errorf("APIGATE_DATABASE_DSN is required")
 	}
 
 	// Open database
-	db, err := sqlite.Open(dsn)
+	db, err := postgres.Open(dsn)
 	if err != nil {
 		return err
 	}

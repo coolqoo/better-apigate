@@ -6,14 +6,17 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
+	"net/mail"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/artpar/apigate/adapters/hasher"
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/artpar/apigate/domain/key"
 	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/ports"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +27,10 @@ var initCmd = &cobra.Command{
 
 This will:
   1. Ask for your upstream API URL
-  2. Configure database location
+  2. Configure a PostgreSQL connection URL
   3. Create initial configuration file
   4. Create admin user (optional)
-  5. Generate admin API key
+  5. Generate an optional API key using the deployment key secret
 
 Examples:
   apigate init
@@ -47,7 +50,7 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 
 	initCmd.Flags().StringVar(&initUpstream, "upstream", "", "upstream API URL")
-	initCmd.Flags().StringVar(&initDatabase, "database", "apigate.db", "database file path")
+	initCmd.Flags().StringVar(&initDatabase, "database", "", "PostgreSQL connection URL")
 	initCmd.Flags().StringVar(&initAdminEmail, "admin-email", "", "admin user email")
 	initCmd.Flags().StringVar(&initAdminPassword, "admin-password", "", "admin user password (auto-generated if not provided)")
 	initCmd.Flags().BoolVar(&initNonInteractive, "non-interactive", false, "run without prompts (requires --upstream)")
@@ -82,8 +85,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Get database location
 	database := initDatabase
-	if !initNonInteractive && initDatabase == "apigate.db" {
-		database = prompt(reader, "Database location", "apigate.db")
+	if database == "" {
+		database = os.Getenv("APIGATE_DATABASE_DSN")
+	}
+	if !initNonInteractive && database == "" {
+		database = prompt(reader, "PostgreSQL URL", "postgres://apigate@localhost:5432/apigate?sslmode=disable")
 	}
 
 	// Create admin user?
@@ -111,17 +117,30 @@ func runInit(cmd *cobra.Command, args []string) error {
 		adminPassword = generatePassword()
 	}
 
+	u, err := url.Parse(upstream)
+	if err != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return fmt.Errorf("use an absolute HTTP upstream URL")
+	}
+	if createAdmin {
+		address, err := mail.ParseAddress(adminEmail)
+		if err != nil || address.Address != adminEmail || len(adminPassword) < 12 || len(adminPassword) > 72 {
+			return fmt.Errorf("use a valid administrator email and password of 12–72 characters")
+		}
+		if len(os.Getenv("APIGATE_API_KEY_SECRET")) < 32 {
+			return fmt.Errorf("APIGATE_API_KEY_SECRET requires at least 32 characters")
+		}
+	}
 	// Generate config
 	configContent := generateConfig(upstream, database)
 
 	// Write config file
-	if err := os.WriteFile(cfgFile, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(cfgFile, []byte(configContent), 0600); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 	fmt.Printf("\n%s Generated %s\n", checkMark, cfgFile)
 
 	// Create database and run migrations
-	db, err := sqlite.Open(database)
+	db, err := postgres.Open(database)
 	if err != nil {
 		return fmt.Errorf("failed to create database: %w", err)
 	}
@@ -130,10 +149,10 @@ func runInit(cmd *cobra.Command, args []string) error {
 	if err := db.Migrate(); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
-	fmt.Printf("%s Created database %s\n", checkMark, database)
+	fmt.Printf("%s Initialized PostgreSQL database\n", checkMark)
 
 	// Save upstream URL and other settings to database
-	settingsStore := sqlite.NewSettingsStore(db)
+	settingsStore := postgres.NewSettingsStore(db)
 	ctx := context.Background()
 
 	// Save upstream URL
@@ -163,11 +182,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println()
-	fmt.Println("Run 'apigate serve' to start the proxy server.")
+	fmt.Println("Set APIGATE_DATABASE_DSN, APIGATE_REDIS_URL, APIGATE_API_KEY_SECRET and APIGATE_PUBLIC_URL, then run 'apigate serve'.")
 	fmt.Println()
 	fmt.Println("Access points:")
 	fmt.Println("  Admin Dashboard: http://localhost:8080/login")
-	fmt.Println("  User Portal:     http://localhost:8080/portal/")
+	fmt.Println("  User Portal:     http://localhost:8080/portal")
 	fmt.Println("  API Proxy:       http://localhost:8080/ (requires API key)")
 
 	return nil
@@ -206,12 +225,12 @@ server:
   port: 8080
 
 upstream:
-  url: "%s"
+  url: %s
   timeout: 30s
 
 database:
-  driver: sqlite
-  dsn: "%s"
+  driver: postgres
+  dsn: %s
 
 auth:
   mode: local
@@ -222,17 +241,6 @@ rate_limit:
   burst_tokens: 10
   window_secs: 60
 
-plans:
-  - id: free
-    name: "Free"
-    rate_limit_per_minute: 60
-    requests_per_month: 1000
-
-  - id: pro
-    name: "Pro"
-    rate_limit_per_minute: 600
-    requests_per_month: 100000
-
 logging:
   level: info
   format: console
@@ -242,42 +250,37 @@ metrics:
 
 openapi:
   enabled: true
-`, upstream, database)
+`, strconv.Quote(upstream), strconv.Quote(database))
 }
 
-func createAdminUser(db *sqlite.DB, email, password string) (string, error) {
+func createAdminUser(db *postgres.DB, email, password string) (string, error) {
+	address, err := mail.ParseAddress(email)
+	secret := []byte(os.Getenv("APIGATE_API_KEY_SECRET"))
+	if err != nil || address.Address != email || len(password) < 12 || len(password) > 72 || len(secret) < 32 {
+		return "", fmt.Errorf("valid email, password and deployment key secret are required")
+	}
 	ctx := context.Background()
 
-	// Create user store and key store
-	userStore := sqlite.NewUserStore(db)
-	keyStore := sqlite.NewKeyStore(db)
-
-	// Hash the password
 	h := hasher.NewBcrypt(10)
 	passwordHash, err := h.Hash(password)
 	if err != nil {
 		return "", fmt.Errorf("hash password: %w", err)
 	}
-
-	// Create admin user with password
-	user := ports.User{
-		ID:           generateID(),
-		Email:        email,
-		PasswordHash: passwordHash,
-		Role:         "admin",
-		PlanID:       "free",
-		Status:       "active",
+	rawKey, keyData := key.Generate("ak_", secret)
+	userID := generateID()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", err
 	}
-
-	if err := userStore.Create(ctx, user); err != nil {
+	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, "INSERT INTO users(id,email,name,password_hash,role,plan_id,status,email_verified) VALUES(?,?,?,?,'admin','paygo','active',TRUE)", userID, strings.ToLower(email), "Administrator", passwordHash); err != nil {
 		return "", fmt.Errorf("create user: %w", err)
 	}
-
-	// Generate and create API key
-	rawKey, keyData := key.Generate("ak_")
-
-	if err := keyStore.Create(ctx, keyData.WithUserID(user.ID)); err != nil {
+	if _, err = tx.ExecContext(ctx, "INSERT INTO api_keys(id,user_id,hash,prefix,name) VALUES(?,?,?,?,?)", keyData.ID, userID, keyData.Hash, keyData.Prefix, "Initial API key"); err != nil {
 		return "", fmt.Errorf("create key: %w", err)
+	}
+	if err = tx.Commit(); err != nil {
+		return "", err
 	}
 
 	return rawKey, nil
@@ -290,6 +293,6 @@ func generatePassword() string {
 }
 
 func generateID() string {
-	// Simple ID generation - in production would use UUID
-	return fmt.Sprintf("user_%d", os.Getpid())
+	// Use a unique identifier across independently initialized deployments.
+	return uuid.NewString()
 }

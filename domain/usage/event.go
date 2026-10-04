@@ -24,6 +24,7 @@ type Event struct {
 	LatencyMs      int64
 	RequestBytes   int64
 	ResponseBytes  int64
+	Units          int64   // Authoritative prepaid usage units
 	CostMultiplier float64 // For endpoint-specific pricing
 	IPAddress      string
 	UserAgent      string
@@ -107,14 +108,14 @@ func NewExternalEvent(id, userID, eventType, resourceID, resourceType, sourceNam
 
 // ValidEventTypes defines the allowed event types for external events.
 var ValidEventTypes = map[string]bool{
-	"api.request":          true,
-	"deployment.created":   true,
-	"deployment.started":   true,
-	"deployment.stopped":   true,
-	"deployment.deleted":   true,
-	"compute.minutes":      true,
-	"storage.gb_hours":     true,
-	"bandwidth.gb":         true,
+	"api.request":        true,
+	"deployment.created": true,
+	"deployment.started": true,
+	"deployment.stopped": true,
+	"deployment.deleted": true,
+	"compute.minutes":    true,
+	"storage.gb_hours":   true,
+	"bandwidth.gb":       true,
 }
 
 // IsValidEventType checks if the event type is valid.
@@ -132,15 +133,15 @@ func IsValidEventType(eventType string) bool {
 
 // Summary represents aggregated usage for a period (value type).
 type Summary struct {
-	UserID        string
-	PeriodStart   time.Time
-	PeriodEnd     time.Time
-	RequestCount  int64
-	ComputeUnits  float64 // Weighted by cost multipliers
-	BytesIn       int64
-	BytesOut      int64
-	ErrorCount    int64 // 4xx + 5xx responses
-	AvgLatencyMs  int64
+	UserID       string
+	PeriodStart  time.Time
+	PeriodEnd    time.Time
+	RequestCount int64
+	ComputeUnits float64 // Weighted by cost multipliers
+	BytesIn      int64
+	BytesOut     int64
+	ErrorCount   int64 // 4xx + 5xx responses
+	AvgLatencyMs int64
 }
 
 // Quota represents usage limits for a plan (value type).
@@ -151,12 +152,12 @@ type Quota struct {
 
 // QuotaStatus represents current quota usage (value type).
 type QuotaStatus struct {
-	RequestsUsed     int64
-	RequestsLimit    int64
-	RequestsPercent  float64
-	BytesUsed        int64
-	BytesLimit       int64
-	BytesPercent     float64
-	IsOverQuota      bool
-	OverageRequests  int64
+	RequestsUsed    int64
+	RequestsLimit   int64
+	RequestsPercent float64
+	BytesUsed       int64
+	BytesLimit      int64
+	BytesPercent    float64
+	IsOverQuota     bool
+	OverageRequests int64
 }

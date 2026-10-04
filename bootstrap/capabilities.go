@@ -15,10 +15,10 @@ type CapabilityConfig struct {
 	Logger   zerolog.Logger
 
 	// Optional pre-configured providers
-	Cache       ports.CacheProvider
-	Payment     ports.PaymentProvider
-	Email       ports.EmailSender
-	Hasher      ports.Hasher
+	Cache   ports.CacheProvider
+	Payment ports.PaymentProvider
+	Email   ports.EmailSender
+	Hasher  ports.Hasher
 }
 
 // NewCapabilityContainer creates and initializes the capability container.

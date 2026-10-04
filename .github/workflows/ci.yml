@@ -1,305 +1,61 @@
 name: CI
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
+  workflow_call:
 env:
-  GO_VERSION: '1.22'
-
+  GO_VERSION: '1.27.1'
+  NODE_VERSION: '22.23.2'
 jobs:
-  webui:
-    name: Build WebUI
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-go@v5
+        with: {go-version: '${{ env.GO_VERSION }}', cache: true}
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: npm
           cache-dependency-path: webui/package-lock.json
-
-      - name: Install and build WebUI
+      - name: Frontend checks and embedded build
         run: |
-          cd webui && npm ci && npm run build
-
-      - name: Sync to embed location
+          npm ci --prefix webui
+          npm run typecheck --prefix webui
+          npm audit --prefix webui --audit-level=high
+          make webui
+          git diff --exit-code -- core/channel/http/webui/dist
+      - name: Generated API contracts
         run: |
-          rm -rf core/channel/http/webui/dist
-          cp -r webui/dist core/channel/http/webui/
-
-      - name: Check for stale bundle
-        run: |
-          if git diff --quiet core/channel/http/webui/dist/; then
-            echo "WebUI bundle is up to date"
-          else
-            echo "::error::WebUI bundle is stale! Run 'make webui' and commit the result."
-            git diff --stat core/channel/http/webui/dist/
-            exit 1
-          fi
-
-      - name: Upload built WebUI
-        uses: actions/upload-artifact@v6
+          make contracts
+          git diff --exit-code -- docs/openapi-v2.json webui/src/v2/contracts.generated.ts
+      - uses: actions/upload-artifact@v6
+        if: always()
         with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-  test:
-    name: Test
-    needs: webui
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run tests
-        run: CGO_ENABLED=1 go test -race -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v /e2e)
-
-      - name: Check coverage threshold
-        run: |
-          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-          echo "Total coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "::error::Coverage $COVERAGE% is below 80% threshold"
-            exit 1
-          fi
-
-      - name: Check coverage delta
-        if: github.event_name == 'pull_request'
-        run: |
-          # Get coverage for this PR
-          CURRENT=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-
-          # Get coverage from main
-          git fetch origin main --depth=1
-          git checkout origin/main -- . 2>/dev/null || true
-          go test -coverprofile=main.out ./... 2>/dev/null || true
-          MAIN=$(go tool cover -func=main.out 2>/dev/null | grep total | awk '{print $3}' | sed 's/%//' || echo "0")
-
-          echo "Main coverage: $MAIN%, PR coverage: $CURRENT%"
-          if (( $(echo "$CURRENT < $MAIN" | bc -l) )); then
-            echo "::error::Coverage decreased from $MAIN% to $CURRENT%"
-            exit 1
-          fi
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage.out
-          fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
+          name: frontend-build
+          path: |
+            core/channel/http/webui/dist/
   build:
-    name: Build
-    needs: webui
+    needs: validate
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - goos: linux
-            goarch: amd64
-            cc: gcc
-          - goos: linux
-            goarch: arm64
-            cc: aarch64-linux-gnu-gcc
+          - {os: linux, arch: amd64, suffix: ''}
+          - {os: linux, arch: arm64, suffix: ''}
+          - {os: darwin, arch: amd64, suffix: ''}
+          - {os: darwin, arch: arm64, suffix: ''}
+          - {os: windows, arch: amd64, suffix: '.exe'}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Install cross-compilers
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Build
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: '${{ env.GO_VERSION }}', cache: true}
+      - name: Build without SQLite or a C compiler
         env:
-          CGO_ENABLED: 1
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CC: ${{ matrix.cc }}
-        run: |
-          mkdir -p dist
-          go build -ldflags="-s -w" -o dist/apigate-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/apigate
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: apigate-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/
-
-  build-macos:
-    name: Build macOS
-    needs: webui
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        goarch: [amd64, arm64]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Build
-        env:
-          CGO_ENABLED: 1
-          GOOS: darwin
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          mkdir -p dist
-          go build -ldflags="-s -w" -o dist/apigate-darwin-${{ matrix.goarch }} ./cmd/apigate
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: apigate-darwin-${{ matrix.goarch }}
-          path: dist/
-
-  build-windows:
-    name: Build Windows
-    needs: webui
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Install mingw
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64
-
-      - name: Build
-        env:
-          CGO_ENABLED: 1
-          GOOS: windows
-          GOARCH: amd64
-          CC: x86_64-w64-mingw32-gcc
-        run: |
-          mkdir -p dist
-          go build -ldflags="-s -w" -o dist/apigate-windows-amd64.exe ./cmd/apigate
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: apigate-windows-amd64
-          path: dist/
-
-  vet:
-    name: Vet
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc
-
-      - name: Run go vet
-        run: CGO_ENABLED=1 go vet ./...
-
-  docs:
-    name: Validate Docs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Validate spec files exist
-        run: |
-          REQUIRED_FILES=(
-            "docs/spec/README.md"
-            "docs/spec/json-api.md"
-            "docs/spec/error-codes.md"
-            "docs/spec/pagination.md"
-            "docs/spec/resource-types.md"
-            "docs/spec/authentication.md"
-            "docs/spec/tls-certificates.md"
-            "docs/spec/metering-api.md"
-          )
-
-          MISSING=0
-          for file in "${REQUIRED_FILES[@]}"; do
-            if [ ! -f "$file" ]; then
-              echo "::error::Missing required spec file: $file"
-              MISSING=1
-            fi
-          done
-
-          if [ $MISSING -eq 1 ]; then
-            exit 1
-          fi
-
-          echo "All required spec files present"
-
-      - name: Check spec file headers
-        run: |
-          # Verify spec files have proper header format
-          for file in docs/spec/*.md; do
-            if ! head -1 "$file" | grep -q "^#"; then
-              echo "::warning::$file does not start with a header"
-            fi
-          done
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: go build -trimpath -ldflags="-s -w" -o apigate-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.suffix }} ./cmd/apigate

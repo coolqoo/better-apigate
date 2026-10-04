@@ -1,0 +1,8 @@
+# The release image receives only the prebuilt Linux executables.
+**
+!build/
+!build/linux/
+!build/linux/amd64/
+!build/linux/arm64/
+!build/linux/amd64/apigate
+!build/linux/arm64/apigate

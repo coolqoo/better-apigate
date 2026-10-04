@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/spf13/cobra"
 )
 
@@ -68,12 +68,12 @@ func init() {
 	usageRecentCmd.Flags().IntVar(&usageLimit, "limit", 20, "number of requests to show")
 }
 
-func resolveUserID(db *sqlite.DB) (string, error) {
+func resolveUserID(db *postgres.DB) (string, error) {
 	if usageUserID != "" {
 		return usageUserID, nil
 	}
 	if usageEmail != "" {
-		userStore := sqlite.NewUserStore(db)
+		userStore := postgres.NewUserStore(db)
 		user, err := userStore.GetByEmail(context.Background(), usageEmail)
 		if err != nil {
 			return "", fmt.Errorf("user not found: %s", usageEmail)
@@ -95,7 +95,7 @@ func runUsageSummary(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	usageStore := sqlite.NewUsageStore(db)
+	usageStore := postgres.NewUsageStore(db)
 	now := time.Now().UTC()
 	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 
@@ -128,7 +128,7 @@ func runUsageHistory(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	usageStore := sqlite.NewUsageStore(db)
+	usageStore := postgres.NewUsageStore(db)
 	summaries, err := usageStore.GetHistory(context.Background(), userID, usagePeriods)
 	if err != nil {
 		return fmt.Errorf("failed to get usage history: %w", err)
@@ -171,7 +171,7 @@ func runUsageRecent(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	usageStore := sqlite.NewUsageStore(db)
+	usageStore := postgres.NewUsageStore(db)
 	events, err := usageStore.GetRecentRequests(context.Background(), userID, usageLimit)
 	if err != nil {
 		return fmt.Errorf("failed to get recent requests: %w", err)

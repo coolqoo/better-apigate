@@ -6,13 +6,15 @@ on:
       - 'v*'
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.27.1'
 
 permissions:
   contents: write
   packages: write
 
 jobs:
+  validation:
+    uses: ./.github/workflows/ci.yml
   webui:
     name: Build WebUI
     runs-on: ubuntu-latest
@@ -23,7 +25,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22.23.2'
           cache: 'npm'
           cache-dependency-path: webui/package-lock.json
 
@@ -33,7 +35,7 @@ jobs:
       - name: Sync to embed location
         run: |
           rm -rf core/channel/http/webui/dist
-          cp -r webui/dist core/channel/http/webui/
+          cp -r webui/build core/channel/http/webui/dist
 
       - name: Upload built WebUI
         uses: actions/upload-artifact@v6
@@ -41,35 +43,23 @@ jobs:
           name: webui-dist
           path: core/channel/http/webui/dist/
 
-  test:
-    name: Test before release
-    needs: webui
+  acceptance:
+    name: Confirm release verification
+    needs: [validation, webui]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc
-
-      - name: Run tests
-        run: CGO_ENABLED=1 go test -race $(go list ./... | grep -v /e2e)
+      - name: Require separately completed release verification
+        env:
+          RELEASE_VERIFIED: ${{ vars.APIGATE_RELEASE_VERIFIED }}
+        run: |
+          if [ "$RELEASE_VERIFIED" != "true" ]; then
+            echo "Complete the release checks documented in docs/deployment-v2.md before setting APIGATE_RELEASE_VERIFIED=true."
+            exit 1
+          fi
 
   build-linux:
     name: Build Linux
-    needs: [test, webui]
+    needs: [acceptance, webui]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -94,24 +84,18 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
-      - name: Install cross-compilers
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
           GOOS: linux
           GOARCH: ${{ matrix.goarch }}
-          CC: ${{ matrix.cc }}
         run: |
           go build -trimpath \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }} -extldflags '-static'" \
+            -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
             -tags 'netgo osusergo' \
             -o apigate-linux-${{ matrix.goarch }} \
             ./cmd/apigate
@@ -124,7 +108,7 @@ jobs:
 
   build-macos:
     name: Build macOS
-    needs: [test, webui]
+    needs: [acceptance, webui]
     runs-on: macos-latest
     strategy:
       matrix:
@@ -151,7 +135,7 @@ jobs:
 
       - name: Build
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
           GOOS: darwin
           GOARCH: ${{ matrix.goarch }}
         run: |
@@ -168,7 +152,7 @@ jobs:
 
   build-windows:
     name: Build Windows
-    needs: [test, webui]
+    needs: [acceptance, webui]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -186,21 +170,15 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
-      - name: Install mingw
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64
-
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build
         env:
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
           GOOS: windows
           GOARCH: amd64
-          CC: x86_64-w64-mingw32-gcc
         run: |
           go build -trimpath \
             -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \

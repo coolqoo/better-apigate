@@ -8,6 +8,7 @@ package bootstrap
 
 import (
 	"context"
+	"os"
 
 	"github.com/artpar/apigate/adapters/hasher"
 	"github.com/artpar/apigate/core/runtime"
@@ -156,15 +157,6 @@ func registerBuiltinFunctions(rt *runtime.Runtime, logger zerolog.Logger) {
 		return nil
 	})
 
-	// sync_to_stripe - syncs plan to Stripe after create/update
-	rt.RegisterFunction("sync_to_stripe", func(ctx context.Context, event runtime.HookEvent) error {
-		logger.Debug().
-			Str("module", event.Module).
-			Msg("sync_to_stripe called (not yet implemented)")
-		// TODO: Integrate with payment adapter
-		return nil
-	})
-
 	// reload_plans - reloads plans into proxy service after plan changes
 	rt.RegisterFunction("reload_plans", func(ctx context.Context, event runtime.HookEvent) error {
 		logger.Info().
@@ -179,7 +171,7 @@ func registerBuiltinFunctions(rt *runtime.Runtime, logger zerolog.Logger) {
 	})
 
 	logger.Debug().
-		Int("count", 5).
+		Int("count", 4).
 		Msg("built-in functions registered")
 }
 
@@ -188,10 +180,10 @@ func registerBuiltinFunctions(rt *runtime.Runtime, logger zerolog.Logger) {
 func apiKeyBeforeCreate(logger zerolog.Logger) runtime.HookHandler {
 	return func(ctx context.Context, event runtime.HookEvent) error {
 		// Generate the API key with "ak_" prefix
-		rawKey, k := key.Generate("ak_")
+		rawKey, k := key.Generate("ak_", []byte(os.Getenv("APIGATE_API_KEY_SECRET")))
 
 		// Set the hash in the data (will be stored in database)
-		// Keep as []byte for proper BLOB storage - bcrypt hashes are ASCII-safe
+		// Store the indexed HMAC digest as PostgreSQL BYTEA.
 		event.Data["hash"] = k.Hash
 
 		// Set the prefix for lookup

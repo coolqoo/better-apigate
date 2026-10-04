@@ -2,6 +2,7 @@ package email
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/artpar/apigate/domain/settings"
 	"github.com/artpar/apigate/ports"
@@ -13,16 +14,23 @@ func NewSender(s settings.Settings) (ports.EmailSender, error) {
 
 	switch provider {
 	case "smtp":
+		port := s.GetInt(settings.KeyEmailSMTPPort, 587)
+		useTLS := true
+		if s.Get(settings.KeyEmailSMTPUseTLS) != "" {
+			useTLS = s.GetBool(settings.KeyEmailSMTPUseTLS)
+		}
 		config := SMTPConfig{
-			Host:       s.Get(settings.KeyEmailSMTPHost),
-			Port:       s.GetInt(settings.KeyEmailSMTPPort, 587),
-			Username:   s.Get(settings.KeyEmailSMTPUsername),
-			Password:   s.Get(settings.KeyEmailSMTPPassword),
-			From:       s.Get(settings.KeyEmailFromAddress),
-			FromName:   s.Get(settings.KeyEmailFromName),
-			UseTLS:     s.GetBool(settings.KeyEmailSMTPUseTLS),
-			BaseURL:    s.Get(settings.KeyPortalBaseURL),
-			AppName:    s.GetOrDefault(settings.KeyPortalAppName, "APIGate"),
+			Host:        s.Get(settings.KeyEmailSMTPHost),
+			Port:        port,
+			Username:    s.Get(settings.KeyEmailSMTPUsername),
+			Password:    s.Get(settings.KeyEmailSMTPPassword),
+			From:        s.Get(settings.KeyEmailFromAddress),
+			FromName:    s.Get(settings.KeyEmailFromName),
+			UseTLS:      useTLS,
+			UseImplicit: port == 465,
+			Timeout:     30 * time.Second,
+			BaseURL:     s.Get(settings.KeyPortalBaseURL),
+			AppName:     s.GetOrDefault(settings.KeyPortalAppName, "APIGate"),
 		}
 		if config.Host == "" {
 			return nil, fmt.Errorf("SMTP host is required")

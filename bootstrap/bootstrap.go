@@ -20,24 +20,29 @@ import (
 	"github.com/artpar/apigate/adapters/email"
 	"github.com/artpar/apigate/adapters/hasher"
 	apihttp "github.com/artpar/apigate/adapters/http"
-	"github.com/artpar/apigate/adapters/http/admin"
+	v1 "github.com/artpar/apigate/adapters/http/v1"
 	"github.com/artpar/apigate/adapters/idgen"
 	"github.com/artpar/apigate/adapters/metrics"
-	"github.com/artpar/apigate/adapters/payment"
-	"github.com/artpar/apigate/adapters/sqlite"
+	redisadapter "github.com/artpar/apigate/adapters/redis"
+	modulehttp "github.com/artpar/apigate/core/channel/http"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/artpar/apigate/adapters/postgres"
 	adapterstls "github.com/artpar/apigate/adapters/tls"
 	"github.com/artpar/apigate/app"
 	"github.com/artpar/apigate/core/capability"
 	capAdapters "github.com/artpar/apigate/core/capability/adapters"
-	"github.com/artpar/apigate/core/convention"
+
 	"github.com/artpar/apigate/core/events"
-	"github.com/artpar/apigate/core/openapi"
+
 	"github.com/artpar/apigate/domain/entitlement"
 	"github.com/artpar/apigate/domain/plan"
 	"github.com/artpar/apigate/domain/settings"
 	"github.com/artpar/apigate/domain/webhook"
 	"github.com/artpar/apigate/ports"
-	"github.com/artpar/apigate/web"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -70,7 +75,7 @@ const (
 // App represents the running application.
 type App struct {
 	Logger     zerolog.Logger
-	DB         *sqlite.DB
+	DB         *postgres.DB
 	HTTPServer *http.Server
 	Metrics    *metrics.Collector
 	Settings   *app.SettingsService
@@ -98,6 +103,10 @@ type App struct {
 	upstream        *apihttp.UpstreamClient
 	paymentProvider ports.PaymentProvider
 	emailSender     ports.EmailSender
+	redis           *redisadapter.Client
+	wallet          *postgres.WalletStore
+	workersCancel   context.CancelFunc
+	workersDone     chan struct{}
 	webhookService  *app.WebhookService
 }
 
@@ -130,11 +139,26 @@ func NewWithConfig(cfg Config) (*App, error) {
 		return nil, fmt.Errorf("init database: %w", err)
 	}
 
+	initialized := false
+	defer func() {
+		if !initialized {
+			_ = a.Shutdown()
+		}
+	}()
 	// Load settings from database
-	settingsStore := sqlite.NewSettingsStore(a.DB)
-	a.Settings = app.NewSettingsService(settingsStore, logger)
+	settingsStore := postgres.NewSettingsStore(a.DB)
+	redisURL := os.Getenv("APIGATE_REDIS_URL")
+	if redisURL == "" {
+		return nil, fmt.Errorf("APIGATE_REDIS_URL is required")
+	}
+	client, err := redisadapter.Open(redisURL)
+	if err != nil {
+		return nil, fmt.Errorf("connect Redis: %w", err)
+	}
+	a.redis = client
+	a.Settings = app.NewSettingsService(redisadapter.CachedSettings(settingsStore, client, os.Getenv(EnvDatabaseDSN)), logger)
 	if err := a.Settings.Load(context.Background()); err != nil {
-		logger.Warn().Err(err).Msg("failed to load settings, using defaults")
+		return nil, fmt.Errorf("load settings: %w", err)
 	}
 
 	// Initialize metrics if enabled
@@ -156,9 +180,9 @@ func NewWithConfig(cfg Config) (*App, error) {
 	}
 
 	// Initialize module runtime if root command provided
-	if cfg.RootCmd != nil {
+	{
 		if err := a.InitModuleRuntime(cfg.RootCmd); err != nil {
-			logger.Warn().Err(err).Msg("failed to initialize module runtime")
+			return nil, fmt.Errorf("init modules: %w", err)
 		}
 	}
 
@@ -184,6 +208,7 @@ func NewWithConfig(cfg Config) (*App, error) {
 		return nil, fmt.Errorf("init tls: %w", err)
 	}
 
+	initialized = true
 	return a, nil
 }
 
@@ -199,6 +224,12 @@ func (a *App) InitModuleRuntime(rootCmd interface{}) error {
 		}
 	}
 
+	// Reinitialization is used by CLI registration; stop the previous consumers.
+	if a.ModuleRuntime != nil {
+		if err := a.ModuleRuntime.Stop(context.Background()); err != nil {
+			return err
+		}
+	}
 	// Create module runtime
 	mr, err := NewModuleRuntime(a.DB.DB, cobraCmd, a.Logger, ModuleConfig{})
 	if err != nil {
@@ -209,12 +240,13 @@ func (a *App) InitModuleRuntime(rootCmd interface{}) error {
 	ctx := context.Background()
 	if err := mr.LoadModules(ctx, ModuleConfig{
 		EmbeddedModules: CoreModules(),
-		ModulesDir:      CoreModulesDir(),
 	}); err != nil {
-		a.Logger.Warn().Err(err).Msg("failed to load some modules")
+		_ = mr.Stop(ctx)
+		return fmt.Errorf("load modules: %w", err)
 	}
 
 	a.ModuleRuntime = mr
+	mr.Runtime.ProtectModule("billing")
 
 	// Log loaded modules
 	for _, mod := range mr.Modules() {
@@ -231,10 +263,10 @@ func (a *App) InitModuleRuntime(rootCmd interface{}) error {
 func (a *App) initDatabase() error {
 	dsn := os.Getenv(EnvDatabaseDSN)
 	if dsn == "" {
-		dsn = "apigate.db"
+		return fmt.Errorf("APIGATE_DATABASE_DSN is required")
 	}
 
-	db, err := sqlite.Open(dsn)
+	db, err := postgres.Open(dsn)
 	if err != nil {
 		return err
 	}
@@ -245,7 +277,7 @@ func (a *App) initDatabase() error {
 	}
 
 	a.DB = db
-	a.Logger.Info().Str("dsn", dsn).Msg("database initialized")
+	a.Logger.Info().Msg("PostgreSQL database initialized")
 	return nil
 }
 
@@ -263,6 +295,7 @@ func (a *App) initHTTPServer() error {
 	plans := a.loadPlans(ctx)
 	ents, planEnts := a.loadEntitlements(ctx)
 	proxyCfg := app.ProxyConfig{
+		KeySecret:        []byte(os.Getenv("APIGATE_API_KEY_SECRET")),
 		KeyPrefix:        s.GetOrDefault(settings.KeyAuthKeyPrefix, "ak_"),
 		Plans:            plans,
 		Endpoints:        nil, // Load from database if needed
@@ -276,8 +309,8 @@ func (a *App) initHTTPServer() error {
 	a.proxyService = app.NewProxyService(deps, proxyCfg)
 
 	// Create and wire route service for dynamic routing
-	routeStore := sqlite.NewRouteStore(a.DB)
-	upstreamStore := sqlite.NewUpstreamStore(a.DB)
+	routeStore := postgres.NewRouteStore(a.DB)
+	upstreamStore := postgres.NewUpstreamStore(a.DB)
 	a.routeService = app.NewRouteService(
 		routeStore,
 		upstreamStore,
@@ -335,293 +368,62 @@ func (a *App) initHTTPServer() error {
 	proxyHandler.SetStreamingUpstream(a.upstream)
 	healthHandler := apihttp.NewHealthHandler(a.upstream)
 
-	// Create shared stores for admin and web handlers
-	usageStore := sqlite.NewUsageStore(a.DB)
-	planStore := sqlite.NewPlanStore(a.DB)
-	SetPlanStore(planStore) // Wire plan store for clear_other_defaults function
-	bcryptHasher := hasher.NewBcrypt(0)
-	tokenStore := sqlite.NewTokenStore(a.DB)
-
-	// Create email sender (used by both admin and portal)
+	// Retain YAML configuration through an authenticated administrative boundary.
+	planStore := postgres.NewPlanStore(a.DB)
+	SetPlanStore(planStore)
 	emailSender, err := email.NewSender(s)
 	if err != nil {
-		a.Logger.Warn().Err(err).Msg("failed to create email sender, email features disabled")
-		emailSender = email.NewNoopSender()
+		return fmt.Errorf("email configuration: %w", err)
 	}
 	a.emailSender = emailSender
-	SetEmailSender(emailSender) // Wire email sender for hook functions
-
-	// Register email provider with capability container
+	SetEmailSender(emailSender)
+	bcryptHasher := hasher.NewBcrypt(0)
 	if a.Capabilities != nil {
-		emailAdapter := capAdapters.WrapEmail("default", emailSender)
-		if err := a.Capabilities.RegisterEmail("default", emailAdapter, true); err != nil {
-			a.Logger.Debug().Err(err).Msg("email already registered in capability container")
-		}
+		_ = a.Capabilities.RegisterHasher("bcrypt", capAdapters.WrapHasher("bcrypt", bcryptHasher), true)
 	}
-
-	// Create webhook stores and service
-	webhookStore := sqlite.NewWebhookStore(a.DB.DB)
-	deliveryStore := sqlite.NewDeliveryStore(a.DB.DB)
-	a.webhookService = app.NewWebhookService(webhookStore, deliveryStore, a.Logger)
-
-	// Create subscription store for payment webhooks
-	subscriptionStore := sqlite.NewSubscriptionStore(a.DB)
-
-	// Create admin invite store
-	inviteStore := sqlite.NewInviteStore(a.DB.DB)
-
-	// Start webhook retry worker (checks for failed deliveries every minute)
-	a.webhookService.StartRetryWorker(ctx, time.Minute)
-	a.Logger.Info().Msg("webhook service initialized with retry worker")
-
-	// Create OpenAPI service for unified documentation (before admin handler for cache invalidation)
-	openAPIService := openapi.NewService(openapi.ServiceConfig{
-		RouteStore:    routeStore,
-		UpstreamStore: upstreamStore,
-		ModuleGetter: func() map[string]convention.Derived {
-			result := make(map[string]convention.Derived)
-			if a.ModuleRuntime != nil {
-				for _, mod := range a.ModuleRuntime.Modules() {
-					result[mod.Name] = convention.Derive(mod)
-				}
-			}
-			return result
-		},
-		AppName: s.GetOrDefault(settings.KeyPortalAppName, "APIGate"),
-		Logger:  a.Logger,
-	})
-
-	// Create admin handler with cache invalidation and reload callbacks
-	adminHandler := admin.NewHandler(admin.Deps{
-		Users:         deps.Users,
-		Keys:          deps.Keys,
-		Usage:         usageStore,
-		Routes:        routeStore,
-		Upstreams:     upstreamStore,
-		Plans:         planStore,
-		Logger:        a.Logger,
-		Hasher:        bcryptHasher,
-		JWTSecret:     jwtSecret, // Use the local var, not stale snapshot — s was copied before secret was generated
-		OnRouteChange: openAPIService.InvalidateCache,
-		ReloadCallback: func(ctx context.Context) error {
-			// Reload routes and upstreams from database
-			if a.routeService != nil {
-				if err := a.routeService.Reload(ctx); err != nil {
-					return fmt.Errorf("reload routes: %w", err)
-				}
-			}
-			// Invalidate OpenAPI cache
-			if openAPIService != nil {
-				openAPIService.InvalidateCache()
-			}
-			return nil
-		},
-	})
-
-	// Create web UI handler
-	webHandler, err := web.NewHandler(web.Deps{
-		Users:          deps.Users,
-		Keys:           deps.Keys,
-		Usage:          usageStore,
-		Routes:         routeStore,
-		Upstreams:      upstreamStore,
-		Plans:          planStore,
-		Settings:       a.Settings.Store(),
-		AuthTokens:     tokenStore,
-		EmailSender:    emailSender,
-		Webhooks:            webhookStore,
-		Deliveries:          deliveryStore,
-		WebhookService:      a.webhookService,
-		Invites:             inviteStore,
-		Entitlements:        deps.Entitlements,
-		PlanEntitlements:    deps.PlanEntitlements,
-		EntitlementReloader: a,
-		AppSettings: web.AppSettings{
-			UpstreamURL:     s.Get(settings.KeyUpstreamURL),
-			UpstreamTimeout: s.GetOrDefault(settings.KeyUpstreamTimeout, "30s"),
-			AuthMode:        s.GetOrDefault(settings.KeyAuthMode, "local"),
-			AuthHeader:      s.GetOrDefault(settings.KeyAuthHeader, "X-API-Key"),
-			DatabaseDSN:     os.Getenv(EnvDatabaseDSN),
-		},
-		Logger:        a.Logger,
-		Hasher:        bcryptHasher,
-		JWTSecret:     jwtSecret,
-		ExprValidator: a.transformService,
-		RouteTester:   a.routeService,
-		IsSetup: func() bool {
-			users, err := deps.Users.List(context.Background(), 1, 0)
-			return err == nil && len(users) > 0
-		},
-		OnPlanChange: func(ctx context.Context) error {
-			return a.ReloadPlans(ctx)
-		},
-		OnRouteChange: func(ctx context.Context) error {
-			if a.routeService != nil {
-				return a.routeService.Reload(ctx)
-			}
-			return nil
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("create web handler: %w", err)
+	publicURL := os.Getenv("APIGATE_PUBLIC_URL")
+	if publicURL == "" {
+		publicURL = "http://localhost:8080"
 	}
-
-	// Create payment provider (if configured)
-	paymentProvider, err := payment.NewProvider(s)
-	if err != nil {
-		a.Logger.Warn().Err(err).Msg("failed to create payment provider")
-		paymentProvider = payment.NewNoopProvider()
-	}
-	a.paymentProvider = paymentProvider
-
-	// Create user portal handler (if enabled)
-	var portalRouter http.Handler
-	if s.GetBool(settings.KeyPortalEnabled) {
-		portalHandler, err := web.NewPortalHandler(web.PortalDeps{
-			Users:            deps.Users,
-			Keys:             deps.Keys,
-			Usage:            usageStore,
-			Plans:            planStore,
-			AuthTokens:       tokenStore,
-			EmailSender:      emailSender,
-			Settings:         a.Settings.Store(),
-			Entitlements:     deps.Entitlements,
-			PlanEntitlements: deps.PlanEntitlements,
-			Webhooks:         webhookStore,
-			Deliveries:       deliveryStore,
-			Logger:           a.Logger,
-			Hasher:           bcryptHasher,
-			IDGen:            deps.IDGen,
-			Payment:          paymentProvider,
-			OpenAPIService:   openAPIService,
-			IsSetup: func() bool {
-				users, err := deps.Users.List(context.Background(), 1, 0)
-				return err == nil && len(users) > 0
-			},
-			JWTSecret:        jwtSecret,
-			BaseURL:          s.Get(settings.KeyPortalBaseURL),
-			AppName:          s.GetOrDefault(settings.KeyPortalAppName, "APIGate"),
-		})
-		if err != nil {
-			return fmt.Errorf("create portal handler: %w", err)
-		}
-		portalRouter = portalHandler.Router()
-		portalPath := s.GetOrDefault(settings.KeyPortalBasePath, "/portal")
-		a.Logger.Info().Str("path", portalPath).Msg("user portal enabled")
-	}
-
-	// Register payment provider with capability container
-	if a.Capabilities != nil {
-		paymentAdapter := capAdapters.WrapPayment(paymentProvider)
-		if err := a.Capabilities.RegisterPayment("default", paymentAdapter, true); err != nil {
-			a.Logger.Debug().Err(err).Msg("payment already registered in capability container")
-		}
-	}
-
-	// Create payment webhook service (handles incoming webhooks from Stripe/Paddle/LemonSqueezy)
-	paymentWebhookService := app.NewPaymentWebhookService(
-		deps.Users,
-		subscriptionStore,
-		planStore,
-		idgen.UUID{},
-		a.Logger,
-	)
-
-	// Create payment webhook HTTP handler
-	paymentWebhookHandler := web.NewPaymentWebhookHandler(
-		paymentProvider,
-		paymentWebhookService,
-		a.Logger,
-	)
-
-	// Register hasher with capability container
-	if a.Capabilities != nil {
-		hasherAdapter := capAdapters.WrapHasher("bcrypt", bcryptHasher)
-		if err := a.Capabilities.RegisterHasher("bcrypt", hasherAdapter, true); err != nil {
-			a.Logger.Debug().Err(err).Msg("hasher already registered in capability container")
-		}
-	}
-
-	// Create developer documentation portal handler (always enabled for self-service)
-	docsHandler := web.NewDocsHandler(web.DocsDeps{
-		OpenAPIService: openAPIService,
-		Settings:       a.Settings.Store(),
-		Logger:         a.Logger,
-		AppName:        s.GetOrDefault(settings.KeyPortalAppName, "APIGate"),
-	})
-	docsRouter := docsHandler.Router()
-	docsPath := s.GetOrDefault(settings.KeyDocsBasePath, "/docs")
-	a.Logger.Info().Str("path", docsPath).Msg("developer documentation portal enabled")
-
-	// Create router
-	// Create pointer for WebUIEnabled to distinguish between "not set" and "explicitly false"
-	webUIEnabled := s.GetBool(settings.KeyWebUIEnabled)
-
-	routerCfg := apihttp.RouterConfig{
-		Metrics:               a.Metrics,
-		EnableOpenAPI:         s.GetBool("openapi.enabled"),
-		AdminHandler:          adminHandler.Router(),
-		AuthHandler:           adminHandler.AuthRouter(),
-		WebHandler:            webHandler.Router(),
-		WebUIEnabled:          &webUIEnabled,
-		WebUIBasePath:         s.Get(settings.KeyWebUIBasePath),
-		PortalHandler:         portalRouter,
-		DocsHandler:           docsRouter,
-		PaymentWebhookHandler: paymentWebhookHandler,
-		MeterHandler:          adminHandler.MeterRouter(),
-		TokenService:          tokenService,
-		RouteService:          a.routeService, // Enable priority-based routing
-		IsSetup: func() bool {
-			users, err := deps.Users.List(context.Background(), 1, 0)
-			return err == nil && len(users) > 0
-		},
-
-		// Configurable handler paths (with backward-compatible defaults)
-		AdminBasePath:          s.GetOrDefault(settings.KeyAdminBasePath, "/admin"),
-		AuthBasePath:           s.GetOrDefault(settings.KeyAuthBasePath, "/auth"),
-		PortalBasePath:         s.GetOrDefault(settings.KeyPortalBasePath, "/portal"),
-		PortalAuthBasePath:     s.GetOrDefault(settings.KeyPortalAuthBasePath, "/api/portal/auth"),
-		DocsBasePath:           s.GetOrDefault(settings.KeyDocsBasePath, "/docs"),
-		ModuleBasePath:         s.GetOrDefault(settings.KeyModuleBasePath, "/mod"),
-		PaymentWebhookBasePath: s.GetOrDefault(settings.KeyPaymentWebhookBasePath, "/payment-webhooks"),
-		MeterBasePath:          s.GetOrDefault(settings.KeyMeterBasePath, "/api/v1/meter"),
-
-		// Handler enable/disable flags (default to true for backward compatibility)
-		DocsEnabled:            s.GetBool(settings.KeyDocsEnabled),
-		ModuleEnabled:          s.GetBool(settings.KeyModuleEnabled),
-		PaymentWebhookEnabled:  s.GetBool(settings.KeyPaymentWebhookEnabled),
-		MeterEnabled:           s.GetBool(settings.KeyMeterEnabled),
-	}
-
-	// Add portal auth handler for SPA frontends (if module runtime is initialized)
+	var modules http.Handler
 	if a.ModuleRuntime != nil {
-		routerCfg.PortalAuthHandler = a.ModuleRuntime.AuthHandler()
-		a.Logger.Info().Str("path", routerCfg.PortalAuthBasePath).Msg("portal JSON API auth endpoints enabled")
+		modules = a.ModuleRuntime.Handler()
 	}
-	a.Logger.Info().Str("path", routerCfg.PaymentWebhookBasePath).Msg("payment webhook endpoints enabled")
-	if adminHandler.MeterRouter() != nil {
-		a.Logger.Info().Str("path", routerCfg.MeterBasePath).Msg("metering API enabled")
-	}
-
-	// Add module handler if runtime is initialized
-	if a.ModuleRuntime != nil {
-		routerCfg.ModuleHandler = a.ModuleRuntime.Handler()
-		a.Logger.Info().Str("path", routerCfg.ModuleBasePath).Msg("module handler mounted")
-
-		// Add metrics handler from exporter
-		if metricsHandler := a.ModuleRuntime.MetricsHandler(); metricsHandler != nil {
-			routerCfg.MetricsHandler = metricsHandler
-			a.Logger.Info().Msg("prometheus metrics handler mounted at /metrics")
+	api, err := v1.New(v1.Deps{Actions: a.ModuleRuntime.Runtime, DB: a.DB, Wallet: a.wallet, Keys: deps.Keys, Users: deps.Users, Settings: a.Settings, Email: emailSender, Limiter: a.redis, KeySecret: proxyCfg.KeySecret, SetupToken: os.Getenv("APIGATE_SETUP_TOKEN"), MetricsToken: os.Getenv("APIGATE_METRICS_TOKEN"), PublicURL: publicURL, Modules: modules, Tokens: tokenService, Logger: a.Logger, OnConfigChange: func(ctx context.Context) error {
+		if err := a.ReloadPlans(ctx); err != nil {
+			return err
 		}
-
-		// Bridge event bus to webhook service
-		// Events emitted by YAML hooks (emit:) are forwarded to the webhook dispatcher
-		if a.webhookService != nil {
-			a.subscribeWebhooksToEvents()
-		}
+		return a.routeService.Reload(ctx)
+	}})
+	if err != nil {
+		return err
 	}
-
-	router := apihttp.NewRouterWithConfig(proxyHandler, healthHandler, a.Logger, routerCfg)
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID, middleware.Recoverer)
+	router.Get("/health", healthHandler.Liveness)
+	router.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if a.DB.PingContext(ctx) != nil || a.redis.Ping(ctx).Err() != nil {
+			http.Error(w, "dependencies unavailable", 503)
+			return
+		}
+		w.Write([]byte("ok"))
+	})
+	router.Mount("/api/v1", api.Router())
+	if a.Metrics != nil {
+		router.Handle("/metrics", api.MetricsAccess(promhttp.Handler()))
+	}
+	ui := modulehttp.WebUIHandler()
+	for _, path := range []string{"/portal", "/admin", "/docs", "/login", "/signup", "/setup", "/forgot-password", "/reset-password", "/verify", "/favicon.svg", "/assets"} {
+		router.Handle(path, ui)
+		router.Handle(path+"/*", ui)
+	}
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/portal", http.StatusTemporaryRedirect)
+	})
+	router.NotFound(proxyHandler.ServeHTTP)
+	a.startBillingWorkers()
 
 	// Get server config from env (bootstrap) or settings
 	host := os.Getenv(EnvServerHost)
@@ -784,7 +586,7 @@ func (a *App) initACMETLS(s settings.Settings, minVersion uint16) error {
 	}
 
 	// Create certificate store
-	certStore := sqlite.NewCertificateStore(a.DB)
+	certStore := postgres.NewCertificateStore(a.DB)
 
 	// Create ACME provider
 	provider, err := adapterstls.NewACMEProvider(certStore, adapterstls.ACMEConfig{
@@ -848,22 +650,25 @@ func (a *App) buildDependencies(s settings.Settings) (app.ProxyDeps, error) {
 	deps.IDGen = idgen.UUID{}
 
 	// Key store (always local for now)
-	deps.Keys = sqlite.NewKeyStore(a.DB)
+	if len(os.Getenv("APIGATE_API_KEY_SECRET")) < 32 {
+		return deps, fmt.Errorf("APIGATE_API_KEY_SECRET requires at least 32 characters")
+	}
+	client := a.redis
+	deps.AtomicLimiter = client
+	keys := postgres.NewKeyStore(a.DB)
+	deps.Keys = redisadapter.CachedKeys(keys, keys, client)
+	a.wallet = postgres.NewWalletStore(a.DB)
+	if a.ModuleRuntime != nil {
+		RegisterBillingActions(a.ModuleRuntime.Runtime, a.wallet)
+	}
+	deps.Prepaid = a.wallet
 
 	// User store
-	deps.Users = sqlite.NewUserStore(a.DB)
-
-	// Rate limit store (SQLite for persistence across restarts)
-	// This ensures rate limits survive application restarts
-	deps.RateLimit = sqlite.NewRateLimitStore(a.DB)
+	deps.Users = postgres.NewUserStore(a.DB)
 
 	// Usage recorder
-	usageStore := sqlite.NewUsageStore(a.DB)
 
-	// Quota store (SQLite for persistence across restarts)
-	// This ensures quota state survives server restarts - users don't get "free" requests back
-	deps.Quota = sqlite.NewQuotaStore(a.DB)
-	deps.Usage = NewLocalUsageRecorder(usageStore, 100, 1*time.Second) // Reduced from 10s to minimize data loss on crash
+	deps.Usage = NewDurableUsageRecorder(a.DB, a.Logger)
 	a.usageRecorder = deps.Usage
 
 	// Upstream client
@@ -885,81 +690,36 @@ func (a *App) buildDependencies(s settings.Settings) (app.ProxyDeps, error) {
 	a.upstream = upstream
 
 	// Entitlement stores
-	deps.Entitlements = sqlite.NewEntitlementStore(a.DB)
-	deps.PlanEntitlements = sqlite.NewPlanEntitlementStore(a.DB)
+	deps.Entitlements = postgres.NewEntitlementStore(a.DB)
+	deps.PlanEntitlements = postgres.NewPlanEntitlementStore(a.DB)
 
 	return deps, nil
 }
 
 func (a *App) loadPlans(ctx context.Context) []plan.Plan {
-	// Load plans from database (with quota fields using COALESCE for backwards compatibility)
-	rows, err := a.DB.DB.QueryContext(ctx, `
-		SELECT id, name, rate_limit_per_minute, requests_per_month, price_monthly, overage_price,
-		       COALESCE(quota_enforce_mode, 'hard') as quota_enforce_mode,
-		       COALESCE(quota_grace_pct, 0.05) as quota_grace_pct,
-		       COALESCE(meter_type, 'requests') as meter_type,
-		       COALESCE(estimated_cost_per_req, 1.0) as estimated_cost_per_req
-		FROM plans WHERE enabled = 1
-	`)
+	rows, err := a.DB.QueryContext(ctx, "SELECT id,name,rate_limit_per_minute,included_units FROM plans WHERE enabled=1")
 	if err != nil {
-		a.Logger.Warn().Err(err).Msg("failed to load plans, using default")
-		return []plan.Plan{{
-			ID:                  "free",
-			Name:                "Free",
-			RateLimitPerMinute:  60,
-			RequestsPerMonth:    1000,
-			QuotaEnforceMode:    plan.QuotaEnforceHard,
-			QuotaGracePct:       0.05,
-			MeterType:           plan.MeterTypeRequests,
-			EstimatedCostPerReq: 1.0,
-		}}
+		a.Logger.Error().Err(err).Msg("plan lookup unavailable")
+		return nil
 	}
 	defer rows.Close()
-
 	var plans []plan.Plan
 	for rows.Next() {
 		var p plan.Plan
-		var enforceMode, meterType string
-		if err := rows.Scan(&p.ID, &p.Name, &p.RateLimitPerMinute, &p.RequestsPerMonth, &p.PriceMonthly, &p.OveragePrice, &enforceMode, &p.QuotaGracePct, &meterType, &p.EstimatedCostPerReq); err != nil {
-			continue
-		}
-		// Convert enforce mode string to type
-		switch enforceMode {
-		case "warn":
-			p.QuotaEnforceMode = plan.QuotaEnforceWarn
-		case "soft":
-			p.QuotaEnforceMode = plan.QuotaEnforceSoft
-		default:
-			p.QuotaEnforceMode = plan.QuotaEnforceHard
-		}
-		// Convert meter type string to type
-		switch meterType {
-		case "compute_units":
-			p.MeterType = plan.MeterTypeComputeUnits
-		default:
-			p.MeterType = plan.MeterTypeRequests
+		if err = rows.Scan(&p.ID, &p.Name, &p.RateLimitPerMinute, &p.RequestsPerMonth); err != nil {
+			return nil
 		}
 		plans = append(plans, p)
 	}
-
-	if len(plans) == 0 {
-		return []plan.Plan{{
-			ID:                  "free",
-			Name:                "Free",
-			RateLimitPerMinute:  60,
-			RequestsPerMonth:    1000,
-			QuotaEnforceMode:    plan.QuotaEnforceHard,
-			QuotaGracePct:       0.05,
-			MeterType:           plan.MeterTypeRequests,
-			EstimatedCostPerReq: 1.0,
-		}}
+	if rows.Err() != nil {
+		return nil
 	}
 	return plans
 }
 
 func (a *App) loadEntitlements(ctx context.Context) ([]entitlement.Entitlement, []entitlement.PlanEntitlement) {
-	entStore := sqlite.NewEntitlementStore(a.DB)
-	peStore := sqlite.NewPlanEntitlementStore(a.DB)
+	entStore := postgres.NewEntitlementStore(a.DB)
+	peStore := postgres.NewPlanEntitlementStore(a.DB)
 
 	ents, err := entStore.ListEnabled(ctx)
 	if err != nil {
@@ -1178,6 +938,13 @@ func (a *App) Shutdown() error {
 		}
 	}
 
+	if a.workersCancel != nil {
+		a.workersCancel()
+		<-a.workersDone
+	}
+	if a.redis != nil {
+		_ = a.redis.Close()
+	}
 	// Close database
 	if a.DB != nil {
 		if err := a.DB.Close(); err != nil {

@@ -51,7 +51,7 @@ type UpstreamConfig struct {
 type AuthConfig struct {
 	Mode      string       `yaml:"mode"` // "local" or "remote"
 	KeyPrefix string       `yaml:"key_prefix"`
-	Header    string       `yaml:"header"` // Header name for API key (default: X-API-Key)
+	Header    string       `yaml:"header"`               // Header name for API key (default: X-API-Key)
 	JWTSecret string       `yaml:"jwt_secret,omitempty"` // Secret for JWT signing (web UI auth)
 	Remote    RemoteConfig `yaml:"remote,omitempty"`
 }
@@ -93,7 +93,7 @@ type RemoteConfig struct {
 
 // DatabaseConfig configures the database.
 type DatabaseConfig struct {
-	Driver string `yaml:"driver"` // "sqlite" or "postgres" (future)
+	Driver string `yaml:"driver"` // Runtime storage uses PostgreSQL.
 	DSN    string `yaml:"dsn"`
 }
 
@@ -133,15 +133,15 @@ type OpenAPIConfig struct {
 
 // PortalConfig configures the user self-service portal.
 type PortalConfig struct {
-	Enabled bool   `yaml:"enabled"` // Enable user portal
+	Enabled bool   `yaml:"enabled"`  // Enable user portal
 	BaseURL string `yaml:"base_url"` // Base URL for email links (e.g., https://api.example.com)
 	AppName string `yaml:"app_name"` // Application name shown in portal
 }
 
 // EmailConfig configures email sending.
 type EmailConfig struct {
-	Provider   string          `yaml:"provider"` // "smtp", "mock", or "none"
-	SMTP       SMTPConfig      `yaml:"smtp,omitempty"`
+	Provider string     `yaml:"provider"` // "smtp", "mock", or "none"
+	SMTP     SMTPConfig `yaml:"smtp,omitempty"`
 }
 
 // SMTPConfig configures SMTP email sending.
@@ -150,8 +150,8 @@ type SMTPConfig struct {
 	Port        int           `yaml:"port"`
 	Username    string        `yaml:"username"`
 	Password    string        `yaml:"password"`
-	From        string        `yaml:"from"`         // Sender email
-	FromName    string        `yaml:"from_name"`    // Sender display name
+	From        string        `yaml:"from"`      // Sender email
+	FromName    string        `yaml:"from_name"` // Sender display name
 	UseTLS      bool          `yaml:"use_tls"`
 	UseImplicit bool          `yaml:"use_implicit"` // Implicit TLS (port 465)
 	SkipVerify  bool          `yaml:"skip_verify"`  // Skip TLS cert verification
@@ -205,7 +205,7 @@ func Load(path string) (*Config, error) {
 // Environment variables:
 //
 //	APIGATE_UPSTREAM_URL       - Upstream API URL (required)
-//	APIGATE_DATABASE_DSN       - Database path (default: apigate.db)
+//	APIGATE_DATABASE_DSN       - Required PostgreSQL connection URL
 //	APIGATE_SERVER_HOST        - Server host (default: 0.0.0.0)
 //	APIGATE_SERVER_PORT        - Server port (default: 8080)
 //	APIGATE_AUTH_MODE          - Auth mode: local or remote (default: local)
@@ -484,10 +484,10 @@ func setDefaults(cfg *Config) {
 	}
 
 	if cfg.Database.Driver == "" {
-		cfg.Database.Driver = "sqlite"
+		cfg.Database.Driver = "postgres"
 	}
 	if cfg.Database.DSN == "" {
-		cfg.Database.DSN = "apigate.db"
+		cfg.Database.DSN = os.Getenv("APIGATE_DATABASE_DSN")
 	}
 
 	if cfg.Logging.Level == "" {

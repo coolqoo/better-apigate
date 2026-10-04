@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/artpar/apigate/bootstrap"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -12,6 +12,7 @@ import (
 
 var modCmd *cobra.Command
 var moduleRuntime *bootstrap.ModuleRuntime
+var moduleDB *postgres.DB
 
 func init() {
 	modCmd = &cobra.Command{
@@ -29,6 +30,9 @@ Available subcommands are generated from loaded modules.`,
 			// Flush and close analytics when command completes
 			if moduleRuntime != nil {
 				moduleRuntime.Stop(context.Background())
+				if moduleDB != nil {
+					moduleDB.Close()
+				}
 			}
 		},
 	}
@@ -36,28 +40,29 @@ Available subcommands are generated from loaded modules.`,
 
 	// Try to initialize modules at startup for help text
 	// This is best-effort - errors are silently ignored
-	tryInitModules()
+	if len(os.Args) > 1 && os.Args[1] == "mod" {
+		tryInitModules()
+	}
 }
 
 func tryInitModules() {
 	// Setup quiet logger
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	logger := zerolog.New(os.Stdout).Level(zerolog.ErrorLevel).With().Timestamp().Logger()
 
 	// Get database path
 	dsn := os.Getenv("APIGATE_DATABASE_DSN")
 	if dsn == "" {
-		dsn = "apigate.db"
-	}
-
-	// Check if database exists - if not, skip silently
-	if _, err := os.Stat(dsn); os.IsNotExist(err) {
 		return
 	}
 
 	// Open database
-	db, err := sqlite.Open(dsn)
+	db, err := postgres.Open(dsn)
 	if err != nil {
+		return
+	}
+
+	if err := db.Migrate(); err != nil {
+		db.Close()
 		return
 	}
 
@@ -77,5 +82,6 @@ func tryInitModules() {
 		return
 	}
 
+	moduleDB = db
 	moduleRuntime = mr
 }

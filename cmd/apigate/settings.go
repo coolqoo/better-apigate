@@ -6,7 +6,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/spf13/cobra"
 )
 
@@ -70,7 +70,7 @@ func runSettingsList(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	settingsStore := sqlite.NewSettingsStore(db)
+	settingsStore := postgres.NewSettingsStore(db)
 	settings, err := settingsStore.GetAll(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to list settings: %w", err)
@@ -105,7 +105,7 @@ func runSettingsGet(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	settingsStore := sqlite.NewSettingsStore(db)
+	settingsStore := postgres.NewSettingsStore(db)
 	setting, err := settingsStore.Get(context.Background(), args[0])
 	if err != nil {
 		return fmt.Errorf("setting not found: %s", args[0])
@@ -122,7 +122,7 @@ func runSettingsSet(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	settingsStore := sqlite.NewSettingsStore(db)
+	settingsStore := postgres.NewSettingsStore(db)
 	if err := settingsStore.Set(context.Background(), args[0], args[1], settingEncrypted); err != nil {
 		return fmt.Errorf("failed to set setting: %w", err)
 	}
@@ -138,7 +138,7 @@ func runSettingsDelete(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	settingsStore := sqlite.NewSettingsStore(db)
+	settingsStore := postgres.NewSettingsStore(db)
 	if err := settingsStore.Delete(context.Background(), args[0]); err != nil {
 		return fmt.Errorf("failed to delete setting: %w", err)
 	}

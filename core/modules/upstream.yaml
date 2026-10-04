@@ -17,7 +17,12 @@ schema:
   # Authentication injection
   auth_type:        { type: enum, values: [none, header, bearer, basic], default: none, description: "Type of authentication to inject into upstream requests" }
   auth_header:      { type: string, default: "", description: "Custom header name for authentication (when auth_type is header)" }
-  auth_value_encrypted: { type: bytes, default: null, description: "Encrypted authentication credentials" }
+  auth_reference:
+    type: string
+    default: ""
+    description: 'Deployment secret reference, for example ${UPSTREAM_API_TOKEN}. The secret value stays in the server environment.'
+    constraints:
+      - { type: pattern, value: '^(\$\{[A-Z_][A-Z0-9_]*\})?$', message: 'Use an environment variable reference such as ${UPSTREAM_API_TOKEN}.' }
 
   # State
   enabled:          { type: bool, default: true, description: "Whether this upstream is available for routing" }
@@ -35,12 +40,6 @@ actions:
     description: Check if the upstream is reachable
     internal: false
 
-  set_auth:
-    input:
-      - { name: auth_type, type: enum, values: [none, header, bearer, basic], required: true }
-      - { name: auth_header, type: string }
-      - { name: auth_value, type: secret, prompt: true }
-    description: Configure upstream authentication
 
 channels:
   http:
@@ -74,7 +73,7 @@ channels:
             - { param: timeout_ms, name: timeout, type: int, default: "30000" }
             - { param: auth_type, name: auth, default: none }
             - { param: auth_header }
-            - { param: auth_value, prompt: true }
+            - { param: auth_reference }
         - action: update
           args:
             - { name: id, required: true }

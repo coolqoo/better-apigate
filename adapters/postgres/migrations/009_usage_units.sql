@@ -1,0 +1,1 @@
+ALTER TABLE usage_events ADD COLUMN units BIGINT NOT NULL DEFAULT 0 CHECK (units >= 0);

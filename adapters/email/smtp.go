@@ -135,6 +135,11 @@ func (s *SMTPSender) Send(ctx context.Context, msg ports.EmailMessage) error {
 
 // sendSTARTTLS sends email using STARTTLS (port 587/25).
 func (s *SMTPSender) sendSTARTTLS(ctx context.Context, addr, to string, message []byte) error {
+	if s.config.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.config.Timeout)
+		defer cancel()
+	}
 	// Create dialer with timeout
 	dialer := &net.Dialer{Timeout: s.config.Timeout}
 
@@ -144,6 +149,8 @@ func (s *SMTPSender) sendSTARTTLS(ctx context.Context, addr, to string, message 
 		return fmt.Errorf("dial: %w", err)
 	}
 	defer conn.Close()
+	stop := context.AfterFunc(ctx, func() { conn.Close() })
+	defer stop()
 
 	// Create SMTP client
 	client, err := smtp.NewClient(conn, s.config.Host)
@@ -154,14 +161,15 @@ func (s *SMTPSender) sendSTARTTLS(ctx context.Context, addr, to string, message 
 
 	// STARTTLS if required
 	if s.config.UseTLS {
-		if ok, _ := client.Extension("STARTTLS"); ok {
-			tlsConfig := &tls.Config{
-				ServerName:         s.config.Host,
-				InsecureSkipVerify: s.config.SkipVerify,
-			}
-			if err := client.StartTLS(tlsConfig); err != nil {
-				return fmt.Errorf("starttls: %w", err)
-			}
+		if ok, _ := client.Extension("STARTTLS"); !ok {
+			return fmt.Errorf("SMTP server does not support required STARTTLS")
+		}
+		tlsConfig := &tls.Config{
+			ServerName:         s.config.Host,
+			InsecureSkipVerify: s.config.SkipVerify,
+		}
+		if err := client.StartTLS(tlsConfig); err != nil {
+			return fmt.Errorf("starttls: %w", err)
 		}
 	}
 
@@ -198,6 +206,11 @@ func (s *SMTPSender) sendSTARTTLS(ctx context.Context, addr, to string, message 
 
 // sendImplicitTLS sends email using implicit TLS (port 465).
 func (s *SMTPSender) sendImplicitTLS(ctx context.Context, addr, to string, message []byte) error {
+	if s.config.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.config.Timeout)
+		defer cancel()
+	}
 	tlsConfig := &tls.Config{
 		ServerName:         s.config.Host,
 		InsecureSkipVerify: s.config.SkipVerify,
@@ -214,6 +227,8 @@ func (s *SMTPSender) sendImplicitTLS(ctx context.Context, addr, to string, messa
 		return fmt.Errorf("dial tls: %w", err)
 	}
 	defer conn.Close()
+	stop := context.AfterFunc(ctx, func() { conn.Close() })
+	defer stop()
 
 	// Create SMTP client
 	client, err := smtp.NewClient(conn, s.config.Host)

@@ -1,42 +1,27 @@
-# Build stage
-FROM golang:1.25-alpine AS builder
+FROM node:22.23.2-bookworm-slim AS frontend
+WORKDIR /src/webui
+COPY webui/package*.json ./
+RUN npm ci
+COPY webui/ ./
+RUN npm run build
 
+FROM golang:1.27.1-alpine3.23 AS backend
 ARG VERSION=dev
-ARG TARGETOS
-ARG TARGETARCH
-
-RUN apk add --no-cache gcc musl-dev
-
-WORKDIR /app
-
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
+COPY --from=frontend /src/webui/build ./core/channel/http/webui/dist
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /apigate ./cmd/apigate
 
-RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
-    go build -ldflags="-s -w -X main.version=${VERSION}" -o apigate ./cmd/apigate
-
-# Runtime stage
 FROM alpine:3.23
-
-RUN apk add --no-cache ca-certificates tzdata
-
+RUN apk add --no-cache ca-certificates tzdata && addgroup -S apigate && adduser -S -G apigate apigate
 WORKDIR /app
-
-COPY --from=builder /app/apigate .
-COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/configs/apigate.example.yaml ./apigate.example.yaml
-
-# Create data directory
-RUN mkdir -p /app/data
-
-# Default ports
-EXPOSE 8080 8081 8082
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
-
-ENTRYPOINT ["./apigate"]
-CMD ["-config", "/app/apigate.yaml"]
+COPY --from=backend /apigate /app/apigate
+USER apigate
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s CMD wget -q -O /dev/null http://127.0.0.1:8080/ready || exit 1
+ENTRYPOINT ["/app/apigate"]
+CMD ["serve"]

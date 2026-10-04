@@ -12,7 +12,7 @@ schema:
 
   # Billing integration
   stripe_id:     { type: string, internal: true, description: "Stripe customer ID for payment processing" }
-  plan_id:       { type: ref, to: plan, default: "free", description: "Reference to the user's pricing plan" }
+  plan_id:       { type: ref, to: plan, default: "paygo", description: "Reference to the user's pricing plan" }
 
   # Account state
   status:        { type: enum, values: [pending, active, suspended, cancelled], default: active, description: "Current account status controlling access" }

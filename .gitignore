@@ -43,3 +43,29 @@ coverage.out
 # Conversation exports
 2025-*.txt
 subprojects/
+
+.env
+*.dump
+webui/node_modules/
+webui/dist/
+webui/playwright-report/
+webui/test-results/
+
+webui/build/
+__pycache__/
+*.pyc
+
+# Local validation code and reports (excluded from the implementation delivery)
+.local-tests/
+*_test.go
+*.test.ts
+*.test.tsx
+/cmd/loadtest/
+/internal/testinfra/
+/docs/validation/
+/scripts/check-coverage.py
+/scripts/check-coverage.sh
+/scripts/check-release-evidence.py
+/scripts/test_check_coverage.py
+/webui/src/test-setup.ts
+/webui/vitest.config.ts

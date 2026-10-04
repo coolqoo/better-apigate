@@ -61,9 +61,9 @@ type Route struct {
 	HostMatchType HostMatchType // How to interpret host pattern; empty = match any host
 
 	// Path matching criteria
-	PathPattern string    // Pattern to match: "/api/v1/*", "/users/{id}", regex
-	MatchType   MatchType // How to interpret pattern
-	Methods     []string  // HTTP methods to match; empty = all methods
+	PathPattern string        // Pattern to match: "/api/v1/*", "/users/{id}", regex
+	MatchType   MatchType     // How to interpret pattern
+	Methods     []string      // HTTP methods to match; empty = all methods
 	Headers     []HeaderMatch // Optional header-based matching conditions
 
 	// Target configuration
@@ -74,6 +74,8 @@ type Route struct {
 	// Transformations (stored as JSON, parsed into Transform structs)
 	RequestTransform  *Transform // Applied before forwarding
 	ResponseTransform *Transform // Applied after receiving response
+
+	UnitCost int64 // Fixed prepaid units consumed by an authenticated request.
 
 	// Metering configuration
 	MeteringExpr string // Expr to extract usage value from response
@@ -87,7 +89,7 @@ type Route struct {
 	AuthRequired bool // If false, requests to this route skip API key validation (public route)
 
 	// Metadata
-	Priority  int  // Higher = evaluated first (for overlapping patterns)
+	Priority  int // Higher = evaluated first (for overlapping patterns)
 	Enabled   bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -133,7 +135,7 @@ type Upstream struct {
 	// Authentication injection (added to every request)
 	AuthType   AuthType // none, header, bearer, basic
 	AuthHeader string   // Header name for AuthType=header
-	AuthValue  string   // Value (encrypted at rest), supports ${ENV_VAR}
+	AuthValue  string   // Deployment credential reference, expanded from ${ENV_VAR}
 
 	// Metadata
 	Enabled   bool

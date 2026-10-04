@@ -47,8 +47,7 @@ npm run build
 		// Get path and strip prefixes
 		// The path may be /mod/ui/... or /ui/... depending on how routing works
 		urlPath := r.URL.Path
-		urlPath = strings.TrimPrefix(urlPath, "/mod")
-		urlPath = strings.TrimPrefix(urlPath, "/ui")
+
 		urlPath = path.Clean(urlPath)
 		if urlPath == "/" || urlPath == "" || urlPath == "." {
 			urlPath = "index.html"

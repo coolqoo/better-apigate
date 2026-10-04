@@ -1,35 +1,17 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
 export default defineConfig({
-  plugins: [react()],
-  // Base path for production - WebUI is served at /mod/ui/
-  base: '/mod/ui/',
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    // Generate manifest for Go embedding
-    manifest: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-        },
-      },
-    },
-  },
+  plugins: [react(), tailwindcss()],
+  base: "/",
+  resolve: { alias: { "@": path.resolve(import.meta.dirname, "./src") } },
+  build: { outDir: "build", assetsDir: "assets", manifest: true },
   server: {
+    host: "127.0.0.1",
     proxy: {
-      '/mod': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
+      "/api": { target: "http://localhost:8080", changeOrigin: false },
+      "/ready": { target: "http://localhost:8080" },
     },
   },
-})
+});

@@ -1,0 +1,244 @@
+package postgres
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"time"
+
+	"github.com/artpar/apigate/domain/key"
+	"github.com/artpar/apigate/ports"
+)
+
+// KeyStore implements ports.KeyStore using PostgreSQL.
+type KeyStore struct {
+	db *DB
+}
+
+// NewKeyStore creates a new PostgreSQL key store.
+func NewKeyStore(db *DB) *KeyStore {
+	return &KeyStore{db: db}
+}
+
+// GetByDigest uses the unique digest index; raw credentials never reach SQL.
+func (s *KeyStore) GetByDigest(ctx context.Context, digest []byte) (key.Key, error) {
+	return scanKey(s.db.QueryRowContext(ctx, `SELECT id,user_id,hash,prefix,name,scopes,quota_bypass,expires_at,revoked_at,created_at,last_used FROM api_keys WHERE hash=?`, digest))
+}
+
+// Get retrieves keys matching a prefix.
+func (s *KeyStore) Get(ctx context.Context, prefix string) ([]key.Key, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, user_id, hash, prefix, name, scopes, quota_bypass, expires_at, revoked_at, created_at, last_used
+		FROM api_keys
+		WHERE prefix = ?
+	`, prefix)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []key.Key
+	for rows.Next() {
+		k, err := scanKey(rows)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
+}
+
+// Create stores a new key.
+func (s *KeyStore) Create(ctx context.Context, k key.Key) error {
+	scopes, err := json.Marshal(k.Scopes)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.ExecContext(ctx, `
+		INSERT INTO api_keys (id, user_id, hash, prefix, name, scopes, quota_bypass, expires_at, revoked_at, created_at, last_used)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, k.ID, k.UserID, k.Hash, k.Prefix, k.Name, string(scopes), k.QuotaBypass,
+		nullTime(k.ExpiresAt), nullTime(k.RevokedAt), k.CreatedAt, nullTime(k.LastUsed))
+	return err
+}
+
+// Revoke marks a key as revoked.
+func (s *KeyStore) Revoke(ctx context.Context, id string, at time.Time) error {
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE api_keys SET revoked_at = ? WHERE id = ?
+	`, at, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// List returns all keys.
+func (s *KeyStore) List(ctx context.Context) ([]key.Key, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, user_id, hash, prefix, name, scopes, quota_bypass, expires_at, revoked_at, created_at, last_used
+		FROM api_keys
+		ORDER BY created_at DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []key.Key
+	for rows.Next() {
+		k, err := scanKey(rows)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
+}
+
+// ListByUser returns all keys for a user.
+func (s *KeyStore) ListByUser(ctx context.Context, userID string) ([]key.Key, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, user_id, hash, prefix, name, scopes, quota_bypass, expires_at, revoked_at, created_at, last_used
+		FROM api_keys
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []key.Key
+	for rows.Next() {
+		k, err := scanKey(rows)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, rows.Err()
+}
+
+// UpdateLastUsed updates the last used timestamp.
+func (s *KeyStore) UpdateLastUsed(ctx context.Context, id string, at time.Time) error {
+	_, err := s.db.ExecContext(ctx, `
+		UPDATE api_keys SET last_used = ? WHERE id = ?
+	`, at, id)
+	return err
+}
+
+// Update modifies an existing key.
+func (s *KeyStore) Update(ctx context.Context, k key.Key) error {
+	scopes, err := json.Marshal(k.Scopes)
+	if err != nil {
+		return err
+	}
+
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE api_keys
+		SET name = ?, scopes = ?, quota_bypass = ?, expires_at = ?, revoked_at = ?, last_used = ?
+		WHERE id = ?
+	`, k.Name, string(scopes), k.QuotaBypass, nullTime(k.ExpiresAt), nullTime(k.RevokedAt), nullTime(k.LastUsed), k.ID)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// GetByID retrieves a key by ID.
+func (s *KeyStore) GetByID(ctx context.Context, id string) (key.Key, error) {
+	row := s.db.QueryRowContext(ctx, `
+		SELECT id, user_id, hash, prefix, name, scopes, quota_bypass, expires_at, revoked_at, created_at, last_used
+		FROM api_keys
+		WHERE id = ?
+	`, id)
+	return scanKeyRow(row)
+}
+
+// Delete permanently removes a key.
+func (s *KeyStore) Delete(ctx context.Context, id string) error {
+	result, err := s.db.ExecContext(ctx, `DELETE FROM api_keys WHERE id = ?`, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func scanKey(rows scanner) (key.Key, error) {
+	var k key.Key
+	var scopes sql.NullString
+	var quotaBypass sql.NullBool
+	var expiresAt, revokedAt, lastUsed sql.NullTime
+
+	err := rows.Scan(
+		&k.ID, &k.UserID, &k.Hash, &k.Prefix, &k.Name, &scopes, &quotaBypass,
+		&expiresAt, &revokedAt, &k.CreatedAt, &lastUsed,
+	)
+	if err != nil {
+		return key.Key{}, err
+	}
+
+	if scopes.Valid && scopes.String != "" && scopes.String != "null" {
+		if err := json.Unmarshal([]byte(scopes.String), &k.Scopes); err != nil {
+			return key.Key{}, err
+		}
+	}
+
+	if quotaBypass.Valid {
+		k.QuotaBypass = quotaBypass.Bool
+	}
+	if expiresAt.Valid {
+		k.ExpiresAt = &expiresAt.Time
+	}
+	if revokedAt.Valid {
+		k.RevokedAt = &revokedAt.Time
+	}
+	if lastUsed.Valid {
+		k.LastUsed = &lastUsed.Time
+	}
+
+	return k, nil
+}
+
+func scanKeyRow(row *sql.Row) (key.Key, error) {
+	k, err := scanKey(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return key.Key{}, ErrNotFound
+	}
+	return k, err
+}
+
+// nullTime converts a *time.Time to sql.NullTime.
+func nullTime(t *time.Time) sql.NullTime {
+	if t == nil {
+		return sql.NullTime{}
+	}
+	return sql.NullTime{Time: *t, Valid: true}
+}
+
+// Ensure interface compliance.
+var _ ports.KeyStore = (*KeyStore)(nil)

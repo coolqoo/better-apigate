@@ -16,7 +16,12 @@ All configuration is loaded from the database after connection.
 Only minimal bootstrap settings come from environment variables:
 
 Environment variables:
-  APIGATE_DATABASE_DSN  - Database path (default: apigate.db)
+  APIGATE_DATABASE_DSN  - Required PostgreSQL connection URL
+  APIGATE_REDIS_URL     - Required Redis connection URL
+  APIGATE_API_KEY_SECRET - Required deployment-managed key secret (32+ characters)
+  APIGATE_PUBLIC_URL    - Browser origin for cookies, CSRF and checkout returns
+  APIGATE_SETUP_TOKEN   - Deployment setup token for the initial administrator
+  APIGATE_METRICS_TOKEN - Optional protected Prometheus scrape credential
   APIGATE_SERVER_HOST   - Server host (default: from settings or 0.0.0.0)
   APIGATE_SERVER_PORT   - Server port (default: from settings or 8080)
   APIGATE_LOG_LEVEL     - Log level: debug, info, warn, error
@@ -25,14 +30,14 @@ Environment variables:
 All other settings are stored in the database and can be configured
 via the admin UI or API:
   - Email provider settings (SMTP, etc.)
-  - Payment provider settings (Stripe, Paddle, LemonSqueezy)
+  - Payment providers (Stripe, Paddle, Lemon Squeezy, EPUSDT)
   - Portal settings
   - Rate limit settings
   - Upstream settings
 
 Examples:
   apigate serve
-  APIGATE_DATABASE_DSN=/data/apigate.db apigate serve
+  APIGATE_DATABASE_DSN=postgres://apigate@localhost:5432/apigate apigate serve
   APIGATE_LOG_LEVEL=debug APIGATE_LOG_FORMAT=console apigate serve`,
 	RunE: runServe,
 }

@@ -10,9 +10,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/artpar/apigate/core/convention"
+	"github.com/artpar/apigate/adapters/postgres"
 	cliChannel "github.com/artpar/apigate/core/channel/cli"
 	httpChannel "github.com/artpar/apigate/core/channel/http"
+	"github.com/artpar/apigate/core/convention"
 	"github.com/artpar/apigate/core/runtime"
 	"github.com/artpar/apigate/core/schema"
 	"github.com/artpar/apigate/core/storage"
@@ -21,14 +22,14 @@ import (
 
 func main() {
 	// Create storage
-	store, err := storage.NewSQLiteStore("./example.db")
+	store, err := postgres.Open(os.Getenv("APIGATE_DATABASE_DSN"))
 	if err != nil {
 		log.Fatalf("Failed to create storage: %v", err)
 	}
 	defer store.Close()
 
 	// Create a storage adapter for runtime
-	adapter := &storageAdapter{store: store}
+	adapter := &storageAdapter{store: storage.NewPostgresStoreFromDB(store.DB)}
 
 	// Create runtime
 	rt := runtime.New(adapter, runtime.Config{
@@ -133,7 +134,7 @@ func main() {
 
 // storageAdapter adapts storage.Store to runtime.Storage
 type storageAdapter struct {
-	store *storage.SQLiteStore
+	store *storage.PostgresStore
 }
 
 func (a *storageAdapter) CreateTable(ctx context.Context, mod convention.Derived) error {

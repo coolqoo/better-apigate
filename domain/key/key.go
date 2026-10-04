@@ -8,15 +8,16 @@ import (
 	"fmt"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
+	"crypto/hmac"
+	"crypto/sha256"
 )
 
 // Key represents an API key (immutable value type).
 type Key struct {
 	ID          string
 	UserID      string
-	Hash        []byte     // bcrypt hash of the full key
-	Prefix      string     // First 12 chars for lookup
+	Hash        []byte // HMAC-SHA256 digest of the full key
+	Prefix      string // First 12 chars for lookup
 	Name        string
 	Scopes      []string   // Optional: restrict to specific endpoints
 	QuotaBypass bool       // Service account: bypass quota limits
@@ -38,7 +39,7 @@ type UserContext struct {
 	KeyID     string
 	UserID    string
 	PlanID    string
-	RateLimit int      // requests per minute
+	RateLimit int // requests per minute
 	Scopes    []string
 }
 
@@ -63,7 +64,7 @@ const (
 // Generate creates a new API key with the given prefix.
 // Returns the raw key (to give to user) and the Key struct (to store).
 // The raw key is: prefix + 64 hex chars (total 67 chars for "ak_" prefix).
-func Generate(prefix string) (rawKey string, k Key) {
+func Generate(prefix string, secrets ...[]byte) (rawKey string, k Key) {
 	// Generate 32 random bytes = 64 hex chars
 	randomBytes := make([]byte, 32)
 	if _, err := rand.Read(randomBytes); err != nil {
@@ -73,11 +74,11 @@ func Generate(prefix string) (rawKey string, k Key) {
 	randomHex := hex.EncodeToString(randomBytes)
 	rawKey = prefix + randomHex
 
-	// Hash the raw key
-	hash, err := bcrypt.GenerateFromPassword([]byte(rawKey), bcrypt.DefaultCost)
-	if err != nil {
-		panic(fmt.Sprintf("bcrypt failed: %v", err))
+	var secret []byte
+	if len(secrets) > 0 {
+		secret = secrets[0]
 	}
+	hash := Digest(rawKey, secret)
 
 	// Generate key ID
 	idBytes := make([]byte, 8)
@@ -116,4 +117,16 @@ func (k Key) WithScopes(scopes []string) Key {
 func (k Key) WithQuotaBypass(bypass bool) Key {
 	k.QuotaBypass = bypass
 	return k
+}
+
+// Digest derives a lookup-safe digest from a high-entropy API key.
+func Digest(raw string, secret []byte) []byte {
+	h := hmac.New(sha256.New, secret)
+	h.Write([]byte(raw))
+	return h.Sum(nil)
+}
+
+// Verify compares API-key digests in constant time.
+func Verify(hash []byte, raw string, secret []byte) bool {
+	return hmac.Equal(hash, Digest(raw, secret))
 }

@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"os"
+	"strings"
 	"syscall"
 	"text/tabwriter"
 	"time"
 
 	"github.com/artpar/apigate/adapters/hasher"
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/artpar/apigate/adapters/postgres"
 	"github.com/artpar/apigate/ports"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/bcrypt"
@@ -29,12 +31,8 @@ Examples:
   apigate admin create --email=admin@example.com
   apigate admin reset-password admin@example.com
 
-For local dev without a config file, use --db to specify the database directly:
-  apigate admin reset-password --db apigate.db admin@example.com
-  apigate admin list --db apigate.db
-
-Or set the APIGATE_DATABASE_PATH environment variable:
-  APIGATE_DATABASE_PATH=apigate.db apigate admin list`,
+Set APIGATE_DATABASE_DSN to the PostgreSQL connection URL before running
+administrative operations. The browser setup flow is available at /setup.`,
 }
 
 var adminListCmd = &cobra.Command{
@@ -90,8 +88,7 @@ func init() {
 	adminCmd.AddCommand(adminResetPasswordCmd)
 	adminCmd.AddCommand(adminDeleteCmd)
 
-	// Add --db persistent flag to admin command (works with all subcommands)
-	adminCmd.PersistentFlags().StringVar(&dbPath, "db", "", "database file path (bypasses config file)")
+	adminCmd.PersistentFlags().StringVar(&databaseDSN, "dsn", "", "PostgreSQL connection URL (overrides deployment configuration)")
 
 	adminCreateCmd.Flags().StringVar(&adminEmail, "email", "", "admin email (required)")
 	adminCreateCmd.Flags().StringVar(&adminPassword, "password", "", "admin password (will prompt if not provided)")
@@ -107,7 +104,7 @@ func runAdminList(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	userStore := sqlite.NewUserStore(db)
+	userStore := postgres.NewUserStore(db)
 	users, err := userStore.List(context.Background(), 1000, 0)
 	if err != nil {
 		return fmt.Errorf("failed to list users: %w", err)
@@ -116,7 +113,7 @@ func runAdminList(cmd *cobra.Command, args []string) error {
 	// Filter to only show users with passwords (admin users)
 	var admins []ports.User
 	for _, u := range users {
-		if len(u.PasswordHash) > 0 {
+		if u.Role == "admin" {
 			admins = append(admins, u)
 		}
 	}
@@ -142,13 +139,18 @@ func runAdminList(cmd *cobra.Command, args []string) error {
 }
 
 func runAdminCreate(cmd *cobra.Command, args []string) error {
+	adminEmail = strings.ToLower(strings.TrimSpace(adminEmail))
+	address, err := mail.ParseAddress(adminEmail)
+	if err != nil || address.Address != adminEmail {
+		return fmt.Errorf("enter a valid email address")
+	}
 	db, err := openDatabase()
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	userStore := sqlite.NewUserStore(db)
+	userStore := postgres.NewUserStore(db)
 
 	// Check if email already exists
 	existing, err := userStore.GetByEmail(context.Background(), adminEmail)
@@ -172,8 +174,8 @@ func runAdminCreate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if len(password) < 8 {
-		return fmt.Errorf("password must be at least 8 characters")
+	if len(password) < 12 || len(password) > 72 {
+		return fmt.Errorf("password must be 12–72 characters")
 	}
 
 	// Hash password
@@ -189,13 +191,13 @@ func runAdminCreate(cmd *cobra.Command, args []string) error {
 		Email:        adminEmail,
 		PasswordHash: passwordHash,
 		Role:         "admin",
-		PlanID:       "admin",
+		PlanID:       "paygo",
 		Status:       "active",
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
 
-	if err := userStore.Create(context.Background(), user); err != nil {
+	if _, err := db.ExecContext(cmd.Context(), "INSERT INTO users(id,email,name,password_hash,role,plan_id,status,email_verified,created_at,updated_at) VALUES(?,?,?,?,'admin','paygo','active',TRUE,?,?)", user.ID, user.Email, "Administrator", user.PasswordHash, now, now); err != nil {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 
@@ -216,7 +218,7 @@ func runAdminResetPassword(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	userStore := sqlite.NewUserStore(db)
+	userStore := postgres.NewUserStore(db)
 
 	// Find user by email
 	user, err := userStore.GetByEmail(context.Background(), email)
@@ -224,7 +226,7 @@ func runAdminResetPassword(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("user not found: %s", email)
 	}
 
-	if len(user.PasswordHash) == 0 {
+	if user.Role != "admin" || len(user.PasswordHash) == 0 {
 		return fmt.Errorf("user %s is not an admin user (no password set)", email)
 	}
 
@@ -244,8 +246,8 @@ func runAdminResetPassword(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if len(password) < 8 {
-		return fmt.Errorf("password must be at least 8 characters")
+	if len(password) < 12 || len(password) > 72 {
+		return fmt.Errorf("password must be 12–72 characters")
 	}
 
 	// Hash password
@@ -255,11 +257,19 @@ func runAdminResetPassword(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	user.PasswordHash = passwordHash
-	user.UpdatedAt = time.Now().UTC()
-
-	if err := userStore.Update(context.Background(), user); err != nil {
-		return fmt.Errorf("failed to update password: %w", err)
+	tx, err := db.BeginTx(cmd.Context(), nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err = tx.ExecContext(cmd.Context(), "UPDATE users SET password_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=?", passwordHash, user.ID); err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(cmd.Context(), "DELETE FROM user_sessions WHERE user_id=?", user.ID); err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
 	}
 
 	fmt.Printf("%s Password reset for: %s\n", checkMark, email)
@@ -275,7 +285,7 @@ func runAdminDelete(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 
-	userStore := sqlite.NewUserStore(db)
+	userStore := postgres.NewUserStore(db)
 
 	// Find user by email
 	user, err := userStore.GetByEmail(context.Background(), email)
@@ -283,7 +293,7 @@ func runAdminDelete(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("user not found: %s", email)
 	}
 
-	if len(user.PasswordHash) == 0 {
+	if user.Role != "admin" {
 		return fmt.Errorf("user %s is not an admin user", email)
 	}
 

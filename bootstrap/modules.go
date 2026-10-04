@@ -13,6 +13,7 @@ import (
 	httpChannel "github.com/artpar/apigate/core/channel/http"
 	"github.com/artpar/apigate/core/convention"
 	"github.com/artpar/apigate/core/exporter"
+	yamlmodules "github.com/artpar/apigate/core/modules"
 	"github.com/artpar/apigate/core/registry"
 	"github.com/artpar/apigate/core/runtime"
 	"github.com/artpar/apigate/core/schema"
@@ -21,17 +22,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// boolPtr returns a pointer to a bool value.
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 // ModuleRuntime wraps the declarative module runtime with app integration.
 type ModuleRuntime struct {
 	Runtime   *runtime.Runtime
 	Registry  *registry.Registry
-	Storage   *storage.SQLiteStore
-	Analytics *analytics.SQLiteStore
+	Storage   *storage.PostgresStore
+	Analytics *analytics.PostgresStore
 	HTTP      *httpChannel.Channel
 	CLI       *cliChannel.Channel
 	Logger    zerolog.Logger
@@ -59,10 +55,10 @@ func NewModuleRuntime(db *sql.DB, rootCmd *cobra.Command, logger zerolog.Logger,
 	}
 
 	// Create storage adapter from existing DB
-	mr.Storage = storage.NewSQLiteStoreFromDB(db)
+	mr.Storage = storage.NewPostgresStoreFromDB(db)
 
 	// Create analytics store
-	analyticsStore, err := analytics.NewSQLiteStore(db, analytics.DefaultSQLiteConfig())
+	analyticsStore, err := analytics.NewPostgresStore(db, analytics.DefaultPostgresConfig())
 	if err != nil {
 		return nil, fmt.Errorf("create analytics store: %w", err)
 	}
@@ -112,7 +108,7 @@ func (mr *ModuleRuntime) LoadModules(ctx context.Context, cfg ModuleConfig) erro
 	// Load embedded modules first
 	for _, mod := range cfg.EmbeddedModules {
 		if err := mr.loadModule(ctx, mod); err != nil {
-			mr.Logger.Warn().Err(err).Str("module", mod.Name).Msg("failed to load embedded module")
+			return fmt.Errorf("load embedded module %s: %w", mod.Name, err)
 		}
 	}
 
@@ -255,9 +251,9 @@ func (mr *ModuleRuntime) GetCLIPaths() []schema.PathClaim {
 	return mr.Registry.GetCLIPaths()
 }
 
-// runtimeStorageAdapter adapts storage.SQLiteStore to runtime.Storage.
+// runtimeStorageAdapter adapts storage.PostgresStore to runtime.Storage.
 type runtimeStorageAdapter struct {
-	store *storage.SQLiteStore
+	store *storage.PostgresStore
 }
 
 func (a *runtimeStorageAdapter) CreateTable(ctx context.Context, mod convention.Derived) error {
@@ -294,14 +290,11 @@ func (a *runtimeStorageAdapter) Delete(ctx context.Context, module string, id st
 // These define the standard user, plan, api_key, route, upstream, and setting modules.
 // Note: Analytics is a runtime capability, not a data module.
 func CoreModules() []schema.Module {
-	return []schema.Module{
-		coreUserModule(),
-		corePlanModule(),
-		coreAPIKeyModule(),
-		coreRouteModule(),
-		coreUpstreamModule(),
-		coreSettingModule(),
+	mods, err := yamlmodules.Core()
+	if err != nil {
+		panic(fmt.Sprintf("invalid embedded module definition: %v", err))
 	}
+	return mods
 }
 
 // CoreModulesDir returns the path to the core modules directory.
@@ -310,194 +303,3 @@ func CoreModulesDir() string {
 	// In production, modules would be embedded or in a known location
 	return filepath.Join("core", "modules")
 }
-
-// coreUserModule returns the user module definition.
-func coreUserModule() schema.Module {
-	return schema.Module{
-		Name: "user",
-		Meta: schema.ModuleMeta{
-			Description: "User accounts for API access and billing",
-		},
-		Schema: map[string]schema.Field{
-			"email":         {Type: schema.FieldTypeEmail, Unique: true, Lookup: true, Required: boolPtr(true), Description: "Primary email address for login and notifications"},
-			"password_hash": {Type: schema.FieldTypeSecret, Internal: true, Description: "Hashed password for authentication"},
-			"name":          {Type: schema.FieldTypeString, Default: "", Description: "Display name for the user"},
-			"stripe_id":     {Type: schema.FieldTypeString, Internal: true, Description: "Stripe customer ID for payment processing"},
-			"role":          {Type: schema.FieldTypeEnum, Values: []string{"admin", "user"}, Default: "user", Description: "User role controlling access level"},
-			"plan_id":       {Type: schema.FieldTypeRef, To: "plan", Default: "free", Description: "Reference to the user's pricing plan"},
-			"status":        {Type: schema.FieldTypeEnum, Values: []string{"pending", "active", "suspended", "cancelled"}, Default: "active", Description: "Current account status controlling access"},
-		},
-		Actions: map[string]schema.Action{
-			"activate": {Set: map[string]string{"status": "active"}, Description: "Activate a user account"},
-			"suspend":  {Set: map[string]string{"status": "suspended"}, Description: "Suspend a user account", Confirm: true},
-			"cancel":   {Set: map[string]string{"status": "cancelled"}, Description: "Cancel a user account", Confirm: true},
-			"set_password": {
-				Input: []schema.ActionInput{
-					{Name: "password", Type: "secret", Required: true, Prompt: true, PromptText: "Enter new password"},
-				},
-				Description: "Set user password",
-				Auth:        "admin",
-			},
-		},
-		Channels: schema.Channels{
-			HTTP: schema.HTTPChannel{Serve: schema.HTTPServe{Enabled: true}},
-			CLI:  schema.CLIChannel{Serve: schema.CLIServe{Enabled: true, Command: "users"}},
-		},
-	}
-}
-
-// corePlanModule returns the plan module definition.
-func corePlanModule() schema.Module {
-	return schema.Module{
-		Name: "plan",
-		Meta: schema.ModuleMeta{
-			Description: "Pricing plans with rate limits and billing",
-		},
-		Schema: map[string]schema.Field{
-			"name":                  {Type: schema.FieldTypeString, Required: boolPtr(true), Lookup: true, Description: "Unique name identifying this pricing plan"},
-			"description":           {Type: schema.FieldTypeString, Default: "", Description: "Human-readable description of plan features"},
-			"rate_limit_per_minute": {Type: schema.FieldTypeInt, Default: 60, Description: "Maximum API requests allowed per minute"},
-			"requests_per_month":    {Type: schema.FieldTypeInt, Default: 1000, Description: "Total API requests included per billing cycle"},
-			"price_monthly":         {Type: schema.FieldTypeInt, Default: 0, Description: "Monthly subscription price in cents"},
-			"overage_price":         {Type: schema.FieldTypeInt, Default: 0, Description: "Price per additional request beyond quota in cents"},
-			"stripe_price_id":       {Type: schema.FieldTypeString, Description: "Stripe Price ID for subscription billing"},
-			"paddle_price_id":       {Type: schema.FieldTypeString, Description: "Paddle Price ID for subscription billing"},
-			"lemon_variant_id":      {Type: schema.FieldTypeString, Description: "LemonSqueezy variant ID for subscription billing"},
-			"is_default":            {Type: schema.FieldTypeBool, Default: false, Description: "Whether this plan is assigned to new users"},
-			"enabled":               {Type: schema.FieldTypeBool, Default: true, Description: "Whether this plan is available for selection"},
-		},
-		Actions: map[string]schema.Action{
-			"enable":      {Set: map[string]string{"enabled": "true"}, Description: "Enable a pricing plan"},
-			"disable":     {Set: map[string]string{"enabled": "false"}, Description: "Disable a pricing plan", Confirm: true},
-			"set_default": {Set: map[string]string{"is_default": "true"}, Description: "Set as the default plan"},
-		},
-		Channels: schema.Channels{
-			HTTP: schema.HTTPChannel{Serve: schema.HTTPServe{Enabled: true}},
-			CLI:  schema.CLIChannel{Serve: schema.CLIServe{Enabled: true, Command: "plans"}},
-		},
-	}
-}
-
-// coreAPIKeyModule returns the api_key module definition.
-func coreAPIKeyModule() schema.Module {
-	return schema.Module{
-		Name: "api_key",
-		Meta: schema.ModuleMeta{
-			Description: "API keys for authenticating API requests",
-		},
-		Schema: map[string]schema.Field{
-			"user_id":    {Type: schema.FieldTypeRef, To: "user", Required: boolPtr(true), Description: "The user who owns this API key"},
-			"hash":       {Type: schema.FieldTypeSecret, Internal: true, Description: "Cryptographic hash of the API key"},
-			"prefix":     {Type: schema.FieldTypeString, Lookup: true, Description: "Visible key prefix for identification (e.g., ak_xxxxx)"},
-			"name":       {Type: schema.FieldTypeString, Default: "", Description: "Human-readable label for this key"},
-			"scopes":     {Type: schema.FieldTypeJSON, Description: "Array of permission scopes granted to this key"},
-			"expires_at": {Type: schema.FieldTypeTimestamp, Description: "When this key expires and becomes invalid"},
-			"revoked_at": {Type: schema.FieldTypeTimestamp, Internal: true, Description: "When this key was manually revoked"},
-			"last_used":  {Type: schema.FieldTypeTimestamp, Internal: true, Description: "Timestamp of most recent API call with this key"},
-		},
-		Actions: map[string]schema.Action{
-			"revoke": {Set: map[string]string{"revoked_at": "${NOW}"}, Description: "Revoke an API key", Confirm: true},
-		},
-		Channels: schema.Channels{
-			HTTP: schema.HTTPChannel{Serve: schema.HTTPServe{Enabled: true}},
-			CLI:  schema.CLIChannel{Serve: schema.CLIServe{Enabled: true, Command: "keys"}},
-		},
-	}
-}
-
-// coreRouteModule returns the route module definition.
-func coreRouteModule() schema.Module {
-	return schema.Module{
-		Name: "route",
-		Meta: schema.ModuleMeta{
-			Description: "API routing rules mapping paths to upstreams",
-		},
-		Schema: map[string]schema.Field{
-			"name":               {Type: schema.FieldTypeString, Required: boolPtr(true), Lookup: true, Description: "Unique name identifying this route"},
-			"description":        {Type: schema.FieldTypeString, Default: "", Description: "Human-readable description of this route's purpose"},
-			"path_pattern":       {Type: schema.FieldTypeString, Required: boolPtr(true), Description: "URL path pattern to match incoming requests"},
-			"match_type":         {Type: schema.FieldTypeEnum, Values: []string{"exact", "prefix", "regex"}, Default: "prefix", Description: "How path_pattern is matched: exact, prefix, or regex"},
-			"methods":            {Type: schema.FieldTypeJSON, Description: "HTTP methods to match (empty array matches all methods)"},
-			"headers":            {Type: schema.FieldTypeJSON, Description: "Header conditions that must match for this route"},
-			"upstream_id":        {Type: schema.FieldTypeRef, To: "upstream", Required: boolPtr(true), Description: "Backend service to forward matching requests to"},
-			"path_rewrite":       {Type: schema.FieldTypeString, Description: "Expression to transform the request path before forwarding"},
-			"method_override":    {Type: schema.FieldTypeString, Description: "Override the HTTP method when forwarding to upstream"},
-			"request_transform":  {Type: schema.FieldTypeJSON, Description: "Rules to transform request headers and body"},
-			"response_transform": {Type: schema.FieldTypeJSON, Description: "Rules to transform response headers and body"},
-			"metering_expr":      {Type: schema.FieldTypeString, Default: "1", Description: "Expression to calculate request cost for rate limiting"},
-			"metering_mode":      {Type: schema.FieldTypeEnum, Values: []string{"request", "response_field", "bytes", "custom"}, Default: "request", Description: "How API usage is measured for billing"},
-			"protocol":           {Type: schema.FieldTypeEnum, Values: []string{"http", "http_stream", "sse", "websocket"}, Default: "http", Description: "Protocol handling mode for this route"},
-			"priority":           {Type: schema.FieldTypeInt, Default: 0, Description: "Route matching priority (higher values match first)"},
-			"enabled":            {Type: schema.FieldTypeBool, Default: true, Description: "Whether this route is active and processing requests"},
-		},
-		Actions: map[string]schema.Action{
-			"enable":  {Set: map[string]string{"enabled": "true"}, Description: "Enable a route"},
-			"disable": {Set: map[string]string{"enabled": "false"}, Description: "Disable a route"},
-		},
-		Channels: schema.Channels{
-			HTTP: schema.HTTPChannel{Serve: schema.HTTPServe{Enabled: true}},
-			CLI:  schema.CLIChannel{Serve: schema.CLIServe{Enabled: true, Command: "routes"}},
-		},
-		Hooks: map[string][]schema.Hook{
-			"after_create": {{Call: "reload_router"}},
-			"after_update": {{Call: "reload_router"}},
-			"after_delete": {{Call: "reload_router"}},
-		},
-	}
-}
-
-// coreUpstreamModule returns the upstream module definition.
-func coreUpstreamModule() schema.Module {
-	return schema.Module{
-		Name: "upstream",
-		Meta: schema.ModuleMeta{
-			Description: "Backend services that routes forward requests to",
-		},
-		Schema: map[string]schema.Field{
-			"name":                 {Type: schema.FieldTypeString, Required: boolPtr(true), Lookup: true, Description: "Unique name identifying this upstream service"},
-			"description":          {Type: schema.FieldTypeString, Default: "", Description: "Human-readable description of this backend service"},
-			"base_url":             {Type: schema.FieldTypeString, Required: boolPtr(true), Description: "Base URL of the backend service (e.g., https://api.example.com)"},
-			"timeout_ms":           {Type: schema.FieldTypeInt, Default: 30000, Description: "Request timeout in milliseconds"},
-			"max_idle_conns":       {Type: schema.FieldTypeInt, Default: 100, Description: "Maximum number of idle connections to maintain"},
-			"idle_conn_timeout_ms": {Type: schema.FieldTypeInt, Default: 90000, Description: "How long idle connections are kept alive in milliseconds"},
-			"auth_type":            {Type: schema.FieldTypeEnum, Values: []string{"none", "header", "bearer", "basic"}, Default: "none", Description: "Type of authentication to inject into upstream requests"},
-			"auth_header":          {Type: schema.FieldTypeString, Required: boolPtr(false), Description: "Custom header name for authentication (when auth_type is header)"},
-			"auth_value_encrypted": {Type: schema.FieldTypeBytes, Required: boolPtr(false), Description: "Encrypted authentication credentials"},
-			"enabled":              {Type: schema.FieldTypeBool, Default: true, Description: "Whether this upstream is available for routing"},
-		},
-		Actions: map[string]schema.Action{
-			"enable":  {Set: map[string]string{"enabled": "true"}, Description: "Enable an upstream"},
-			"disable": {Set: map[string]string{"enabled": "false"}, Description: "Disable an upstream"},
-		},
-		Channels: schema.Channels{
-			HTTP: schema.HTTPChannel{Serve: schema.HTTPServe{Enabled: true}},
-			CLI:  schema.CLIChannel{Serve: schema.CLIServe{Enabled: true, Command: "upstreams"}},
-		},
-		Hooks: map[string][]schema.Hook{
-			"after_create": {{Call: "reload_router"}},
-			"after_update": {{Call: "reload_router"}},
-			"after_delete": {{Call: "reload_router"}},
-		},
-	}
-}
-
-// coreSettingModule returns the setting module definition.
-func coreSettingModule() schema.Module {
-	return schema.Module{
-		Name: "setting",
-		Meta: schema.ModuleMeta{
-			Description: "Application configuration settings",
-		},
-		Schema: map[string]schema.Field{
-			"key":       {Type: schema.FieldTypeString, Unique: true, Lookup: true, Required: boolPtr(true), Description: "Unique configuration key (e.g., smtp.host, auth.jwt_secret)"},
-			"value":     {Type: schema.FieldTypeString, Required: boolPtr(true), Description: "Configuration value (may be encrypted if sensitive)"},
-			"encrypted": {Type: schema.FieldTypeInt, Default: 0, Description: "Whether the value is stored encrypted (0=plaintext, 1=encrypted)"},
-		},
-		Actions: map[string]schema.Action{},
-		Channels: schema.Channels{
-			HTTP: schema.HTTPChannel{Serve: schema.HTTPServe{Enabled: true}},
-			CLI:  schema.CLIChannel{Serve: schema.CLIServe{Enabled: true, Command: "settings"}},
-		},
-	}
-}
-

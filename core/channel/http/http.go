@@ -181,18 +181,15 @@ func (c *Channel) registerExplicitEndpoints(mod convention.Derived, basePath str
 	for _, ep := range mod.Source.Channels.HTTP.Serve.Endpoints {
 		path := basePath + ep.Path
 		handler := c.makeExplicitHandler(mod, ep.Action, ep.Auth)
-
-		switch strings.ToUpper(ep.Method) {
-		case "GET":
-			c.router.Get(path, handler)
-		case "POST":
-			c.router.Post(path, handler)
-		case "PUT":
-			c.router.Put(path, handler)
-		case "PATCH":
-			c.router.Patch(path, handler)
-		case "DELETE":
-			c.router.Delete(path, handler)
+		method := strings.ToUpper(ep.Method)
+		switch method {
+		case "GET", "POST", "PUT", "PATCH", "DELETE":
+			c.router.Method(method, path, handler)
+			// A YAML collection endpoint at "/" also accepts its base path.
+			// Register both directly so POST bodies never depend on a redirect.
+			if ep.Path == "/" && basePath != "" {
+				c.router.Method(method, strings.TrimRight(basePath, "/"), handler)
+			}
 		}
 	}
 }
@@ -299,6 +296,7 @@ func (c *Channel) doExplicitAction(ctx context.Context, w http.ResponseWriter, r
 	}
 
 	input := runtime.ActionInput{
+		Auth:         runtime.AuthFromContext(ctx),
 		Data:         data,
 		Lookup:       lookup,
 		Channel:      "http",
@@ -340,7 +338,7 @@ func (c *Channel) doExplicitAction(ctx context.Context, w http.ResponseWriter, r
 		}
 		rb := jsonapi.NewResource(mod.Plural, id)
 		for k, v := range result.Data {
-			if k != "id" {
+			if k != "id" && publicField(mod, k) {
 				rb.Attr(k, v)
 			}
 		}
@@ -409,6 +407,8 @@ func (c *Channel) doList(ctx context.Context, w http.ResponseWriter, r *http.Req
 		offset, _ = strconv.Atoi(o)
 	}
 
+	limit = min(max(limit, 1), 100)
+	offset = max(offset, 0)
 	// Build filters from query params
 	filters := make(map[string]any)
 	for _, f := range mod.Fields {
@@ -418,6 +418,7 @@ func (c *Channel) doList(ctx context.Context, w http.ResponseWriter, r *http.Req
 	}
 
 	input := runtime.ActionInput{
+		Auth: runtime.AuthFromContext(ctx),
 		Data: map[string]any{
 			"limit":   limit,
 			"offset":  offset,
@@ -443,7 +444,7 @@ func (c *Channel) doList(ctx context.Context, w http.ResponseWriter, r *http.Req
 		}
 		rb := jsonapi.NewResource(mod.Plural, id)
 		for k, v := range item {
-			if k != "id" {
+			if k != "id" && publicField(mod, k) {
 				rb.Attr(k, v)
 			}
 		}
@@ -459,6 +460,7 @@ func (c *Channel) doList(ctx context.Context, w http.ResponseWriter, r *http.Req
 // doGet handles get requests.
 func (c *Channel) doGet(ctx context.Context, w http.ResponseWriter, r *http.Request, mod convention.Derived, id string) {
 	result, err := c.runtime.Execute(ctx, mod.Source.Name, "get", runtime.ActionInput{
+		Auth:     runtime.AuthFromContext(ctx),
 		Lookup:   id,
 		Channel:  "http",
 		RemoteIP: r.RemoteAddr,
@@ -471,7 +473,7 @@ func (c *Channel) doGet(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	// Convert to JSON:API resource
 	rb := jsonapi.NewResource(mod.Plural, id)
 	for k, v := range result.Data {
-		if k != "id" {
+		if k != "id" && publicField(mod, k) {
 			rb.Attr(k, v)
 		}
 	}
@@ -486,7 +488,9 @@ func (c *Channel) doCreate(ctx context.Context, w http.ResponseWriter, r *http.R
 		return
 	}
 
+	data = attributes(data)
 	result, err := c.runtime.Execute(ctx, mod.Source.Name, "create", runtime.ActionInput{
+		Auth:         runtime.AuthFromContext(ctx),
 		Data:         data,
 		Channel:      "http",
 		RemoteIP:     r.RemoteAddr,
@@ -500,7 +504,7 @@ func (c *Channel) doCreate(ctx context.Context, w http.ResponseWriter, r *http.R
 	// Convert to JSON:API resource
 	rb := jsonapi.NewResource(mod.Plural, result.ID)
 	for k, v := range result.Data {
-		if k != "id" {
+		if k != "id" && publicField(mod, k) {
 			rb.Attr(k, v)
 		}
 	}
@@ -519,7 +523,9 @@ func (c *Channel) doUpdate(ctx context.Context, w http.ResponseWriter, r *http.R
 		return
 	}
 
+	data = attributes(data)
 	result, err := c.runtime.Execute(ctx, mod.Source.Name, "update", runtime.ActionInput{
+		Auth:         runtime.AuthFromContext(ctx),
 		Lookup:       id,
 		Data:         data,
 		Channel:      "http",
@@ -534,7 +540,7 @@ func (c *Channel) doUpdate(ctx context.Context, w http.ResponseWriter, r *http.R
 	// Convert to JSON:API resource
 	rb := jsonapi.NewResource(mod.Plural, result.ID)
 	for k, v := range result.Data {
-		if k != "id" {
+		if k != "id" && publicField(mod, k) {
 			rb.Attr(k, v)
 		}
 	}
@@ -544,6 +550,7 @@ func (c *Channel) doUpdate(ctx context.Context, w http.ResponseWriter, r *http.R
 // doDelete handles delete requests.
 func (c *Channel) doDelete(ctx context.Context, w http.ResponseWriter, r *http.Request, mod convention.Derived, id string) {
 	_, err := c.runtime.Execute(ctx, mod.Source.Name, "delete", runtime.ActionInput{
+		Auth:     runtime.AuthFromContext(ctx),
 		Lookup:   id,
 		Channel:  "http",
 		RemoteIP: r.RemoteAddr,
@@ -581,6 +588,7 @@ func (c *Channel) doCustomAction(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	result, err := c.runtime.Execute(ctx, mod.Source.Name, actionName, runtime.ActionInput{
+		Auth:         runtime.AuthFromContext(ctx),
 		Lookup:       id,
 		Data:         data,
 		Channel:      "http",
@@ -595,7 +603,7 @@ func (c *Channel) doCustomAction(ctx context.Context, w http.ResponseWriter, r *
 	// Convert to JSON:API resource
 	rb := jsonapi.NewResource(mod.Plural, result.ID)
 	for k, v := range result.Data {
-		if k != "id" {
+		if k != "id" && publicField(mod, k) {
 			rb.Attr(k, v)
 		}
 	}
@@ -683,4 +691,23 @@ func (c *Channel) handleSwaggerUI(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write([]byte(html))
+}
+
+func attributes(data map[string]any) map[string]any {
+	if d, ok := data["data"].(map[string]any); ok {
+		if a, ok := d["attributes"].(map[string]any); ok {
+			return a
+		}
+	}
+	return data
+}
+
+// Keep schema-internal fields out of every transport response.
+func publicField(mod convention.Derived, name string) bool {
+	for _, field := range mod.Fields {
+		if field.Name == name {
+			return !field.Internal
+		}
+	}
+	return false
 }

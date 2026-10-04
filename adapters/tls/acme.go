@@ -126,9 +126,10 @@ type ACMEProvider struct {
 // ACMEConfig holds configuration for ACME provider.
 type ACMEConfig struct {
 	Email       string
-	Staging     bool     // Use staging server for testing
-	Domains     []string // Domains to obtain certificates for
-	RenewalDays int      // Days before expiry to renew (default: 30)
+	Staging     bool         // Use staging server for testing
+	Domains     []string     // Domains to obtain certificates for
+	RenewalDays int          // Days before expiry to renew (default: 30)
+	HTTPClient  *http.Client // Optional transport for controlled certificate-authority environments.
 }
 
 // NewACMEProvider creates a new direct ACME TLS provider.
@@ -208,6 +209,13 @@ func NewACMEProvider(certStore ports.CertificateStore, cfg ACMEConfig) (*ACMEPro
 	acmeHTTPClient := &http.Client{
 		Timeout:   60 * time.Second,
 		Transport: loggingTransport,
+	}
+	if cfg.HTTPClient != nil {
+		client := *cfg.HTTPClient
+		if client.Timeout <= 0 {
+			client.Timeout = 60 * time.Second
+		}
+		acmeHTTPClient = &client
 	}
 
 	acmeClient := &acme.Client{

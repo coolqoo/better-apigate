@@ -1,143 +1,149 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { DocumentationProvider } from '@/context/DocumentationContext';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { ThreePaneLayout } from '@/components/layout/ThreePaneLayout';
-import { Dashboard } from '@/pages/Dashboard';
-import { ModuleList } from '@/pages/ModuleList';
-import { ModuleView } from '@/pages/ModuleView';
-import { UsageDashboard } from '@/pages/UsageDashboard';
-import { Login } from '@/pages/Login';
-import { Register } from '@/pages/Register';
-import { Setup } from '@/pages/Setup';
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+} from "react-router-dom";
+import { Toaster } from "sonner";
+import { SessionProvider, useSession } from "./v2/context";
+import { Logo, ThemeToggle, Layout } from "./v2/layout";
+import { AuthPage } from "./v2/auth";
+import { Failure, Loading } from "./v2/shared";
+import { lazy, Suspense } from "react";
+const Overview = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.Overview })),
+);
+const Keys = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.Keys })),
+);
+const Usage = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.Usage })),
+);
+const Plans = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.Plans })),
+);
+const WalletPage = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.WalletPage })),
+);
+const Account = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.Account })),
+);
+const Docs = lazy(() =>
+  import("./v2/customer").then((m) => ({ default: m.Docs })),
+);
+const AdminOverview = lazy(() =>
+  import("./v2/admin").then((m) => ({ default: m.AdminOverview })),
+);
+const Customers = lazy(() =>
+  import("./v2/admin").then((m) => ({ default: m.Customers })),
+);
+const Configuration = lazy(() =>
+  import("./v2/admin").then((m) => ({ default: m.Configuration })),
+);
+const AdminPlans = lazy(() =>
+  import("./v2/admin").then((m) => ({ default: m.AdminPlans })),
+);
+const Payments = lazy(() =>
+  import("./v2/admin").then((m) => ({ default: m.Payments })),
+);
+const SettingsPage = lazy(() =>
+  import("./v2/admin").then((m) => ({ default: m.SettingsPage })),
+);
 
-// Loading spinner component
-function LoadingScreen() {
+function PublicDocs() {
+  const { session } = useSession();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
-      </div>
+    <div className="min-h-screen">
+      <header className="flex items-center justify-between border-b bg-card px-6 py-5 md:px-12">
+        <Logo />
+        <div className="flex items-center gap-5">
+          <Link
+            to={session ? "/portal" : "/login"}
+            className="text-sm font-medium text-primary"
+          >
+            {session ? "Your workspace" : "Sign in"}
+          </Link>
+          <ThemeToggle />
+        </div>
+      </header>
+      <main className="mx-auto max-w-7xl px-6 py-10 md:px-12">
+        <Docs />
+      </main>
     </div>
   );
 }
-
-// Protected route wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, setupRequired } = useAuth();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (setupRequired) {
-    return <Navigate to="/setup" replace />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
+function Guard({ admin = false }: { admin?: boolean }) {
+  const { session, status, loading, error, refresh } = useSession();
+  if (loading)
+    return (
+      <div className="p-10">
+        <Loading />
+      </div>
+    );
+  if (error)
+    return (
+      <div className="p-10">
+        <Failure error={error} retry={() => void refresh()} />
+      </div>
+    );
+  if (status?.setup_required) return <Navigate to="/setup" replace />;
+  if (!session) return <Navigate to="/login" replace />;
+  if (admin && session.role !== "admin")
+    return <Navigate to="/portal" replace />;
+  return <Outlet />;
 }
-
-// Auth route wrapper (login/register - redirect if already authenticated)
-function AuthRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, setupRequired } = useAuth();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (setupRequired) {
-    return <Navigate to="/setup" replace />;
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-// Setup route wrapper
-function SetupRoute({ children }: { children: React.ReactNode }) {
-  const { isLoading, setupRequired, isAuthenticated } = useAuth();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!setupRequired) {
-    if (isAuthenticated) {
-      return <Navigate to="/" replace />;
-    }
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function AppRoutes() {
-  return (
-    <Routes>
-      {/* Setup route - first time only */}
-      <Route
-        path="/setup"
-        element={
-          <SetupRoute>
-            <Setup />
-          </SetupRoute>
-        }
-      />
-
-      {/* Auth routes */}
-      <Route
-        path="/login"
-        element={
-          <AuthRoute>
-            <Login />
-          </AuthRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <AuthRoute>
-            <Register />
-          </AuthRoute>
-        }
-      />
-
-      {/* Protected routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <ThreePaneLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="usage" element={<UsageDashboard />} />
-        <Route path=":module" element={<ModuleList />} />
-        <Route path=":module/:id" element={<ModuleView />} />
-      </Route>
-
-      {/* Catch all - redirect to home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
-
 export function App() {
   return (
-    <AuthProvider>
-      <DocumentationProvider>
-        <BrowserRouter basename="/mod/ui">
-          <AppRoutes />
-        </BrowserRouter>
-      </DocumentationProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <SessionProvider>
+        <Suspense
+          fallback={
+            <div className="p-10">
+              <Loading />
+            </div>
+          }
+        >
+          <Routes>
+            {[
+              "login",
+              "signup",
+              "setup",
+              "forgot-password",
+              "reset-password",
+              "verify",
+            ].map((path) => (
+              <Route key={path} path={"/" + path} element={<AuthPage />} />
+            ))}
+            <Route path="/docs" element={<PublicDocs />} />
+            <Route element={<Guard />}>
+              <Route element={<Layout />}>
+                <Route path="/portal" element={<Overview />} />
+                <Route path="/portal/keys" element={<Keys />} />
+                <Route path="/portal/usage" element={<Usage />} />
+                <Route path="/portal/plans" element={<Plans />} />
+                <Route path="/portal/wallet" element={<WalletPage />} />
+                <Route path="/portal/account" element={<Account />} />
+
+                <Route element={<Guard admin />}>
+                  <Route path="/admin" element={<AdminOverview />} />
+                  <Route path="/admin/customers" element={<Customers />} />
+                  <Route
+                    path="/admin/configuration"
+                    element={<Configuration />}
+                  />
+                  <Route path="/admin/plans" element={<AdminPlans />} />
+                  <Route path="/admin/payments" element={<Payments />} />
+                  <Route path="/admin/settings" element={<SettingsPage />} />
+                </Route>
+              </Route>
+            </Route>
+            <Route path="*" element={<Navigate to="/portal" replace />} />
+          </Routes>
+        </Suspense>
+        <Toaster richColors position="bottom-right" />
+      </SessionProvider>
+    </BrowserRouter>
   );
 }
