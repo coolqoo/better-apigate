@@ -57,9 +57,11 @@ import {
   type Plan,
   type Provider,
   type UsageDay,
+  type UsageSummary,
   type Wallet,
 } from "./api";
 import { useSession } from "./context";
+import { useHistory, HistoryNavigation } from "./history";
 import {
   ActionLink,
   Confirm,
@@ -176,22 +178,25 @@ export function Overview() {
   const { session } = useSession();
   const wallet = useData<Wallet>("/wallet");
   const usage = useData<UsageDay[]>("/usage");
+  const summary = useData<UsageSummary>("/usage/summary");
   const ledger = useData<Ledger[]>("/ledger");
   const keys = useData<APIKey[]>("/keys");
-  if (wallet.isPending || usage.isPending) return <Loading />;
-  if (wallet.error || usage.error)
+  if (wallet.isPending || usage.isPending || summary.isPending)
+    return <Loading />;
+  if (wallet.error || usage.error || summary.error)
     return (
       <Failure
-        error={wallet.error || usage.error}
+        error={wallet.error || usage.error || summary.error}
         retry={() => {
           void wallet.refetch();
           void usage.refetch();
+          void summary.refetch();
         }}
       />
     );
   const a = wallet.data!;
   const days = usage.data || [];
-  const requests = days.reduce((s, d) => s + d.requests, 0);
+  const requests = summary.data!.requests;
   const remaining = a.term
     ? Math.max(
         0,
@@ -225,7 +230,7 @@ export function Overview() {
           />
         </div>
       )}
-      <div className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <Metric
           label="Available balance"
           value={dollars(a.available)}
@@ -265,6 +270,18 @@ export function Overview() {
               : "Choose a plan to include usage units"
           }
           icon={<RefreshCw className="size-4" />}
+        />
+        <Metric
+          label="Spent in last 30 days"
+          value={dollars(summary.data!.spending)}
+          detail={`${dollars(summary.data!.usage_spending)} requests · ${dollars(summary.data!.plan_spending)} plans`}
+          icon={<CreditCard className="size-4" />}
+        />
+        <Metric
+          label="API errors"
+          value={summary.data!.errors.toLocaleString()}
+          detail={`Last 30 days · ${requests ? ((summary.data!.errors / requests) * 100).toFixed(1) : "0.0"}% of requests`}
+          icon={<Activity className="size-4" />}
         />
       </div>
       {!funded && requests > 0 && !a.frozen && (
@@ -947,8 +964,8 @@ export function Plans() {
 }
 export function WalletPage() {
   const q = useData<Wallet>("/wallet");
-  const ledger = useData<Ledger[]>("/ledger");
-  const orders = useData<Order[]>("/orders");
+  const ledger = useHistory<Ledger>("/ledger");
+  const orders = useHistory<Order>("/orders");
   const providers = useData<Provider[]>("/providers");
   const { status } = useSession();
   const qc = useQueryClient();
@@ -1167,6 +1184,7 @@ export function WalletPage() {
           ) : (
             <LedgerTable entries={ledger.data || []} />
           )}
+          <HistoryNavigation history={ledger} />
         </CardContent>
       </Card>
       <Card className="shadow-none">
@@ -1224,6 +1242,7 @@ export function WalletPage() {
               description="Choose an amount and payment provider to fund your wallet."
             />
           )}
+          <HistoryNavigation history={orders} />
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>

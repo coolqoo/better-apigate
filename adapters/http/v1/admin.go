@@ -7,6 +7,7 @@ import (
 
 	"github.com/artpar/apigate/adapters/payment"
 	"github.com/artpar/apigate/adapters/postgres"
+	"github.com/artpar/apigate/domain/portal"
 	"github.com/artpar/apigate/domain/settings"
 	"github.com/artpar/apigate/domain/wallet"
 	"github.com/artpar/apigate/pkg/jsonapi"
@@ -29,29 +30,40 @@ func (s *Server) adminOverview(w http.ResponseWriter, r *http.Request) {
 	resource(w, 200, "admin-overview", "overview", map[string]any{"customers": customers, "requests": requests, "errors": errorsCount, "pending_reservations": pending, "wallet_liability": balance, "top_up_volume": credits})
 }
 func (s *Server) customers(w http.ResponseWriter, r *http.Request) {
-	rows, e := s.DB.QueryContext(r.Context(), `SELECT u.id,u.name,u.email,u.role,u.status,u.plan_id,u.email_verified,u.created_at,COALESCE(w.balance_micros,0),COALESCE(w.shortfall_micros,0),COALESCE(w.frozen,FALSE) FROM users u LEFT JOIN wallets w ON w.user_id=u.id ORDER BY u.created_at DESC LIMIT 100`)
-	if e != nil {
-		failure(w, e)
+	page, ok := requestPagination(w, r)
+	if !ok {
+		return
+	}
+	search := strings.TrimSpace(r.URL.Query().Get("q"))
+	if len(search) > 200 {
+		jsonapi.WriteBadRequest(w, "Use a customer search of at most 200 characters.")
+		return
+	}
+	const filter = "u.role='user' AND POSITION(LOWER(?) IN LOWER(u.email || ' ' || u.name))>0"
+	if err := s.DB.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM users u WHERE "+filter, search).Scan(&page.Total); err != nil {
+		failure(w, err)
+		return
+	}
+	rows, err := s.DB.QueryContext(r.Context(), `SELECT u.id,u.name,u.email,u.role,u.status,u.plan_id,u.email_verified,u.created_at,COALESCE(w.balance_micros,0),COALESCE(w.shortfall_micros,0),COALESCE(w.frozen,FALSE) FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE `+filter+` ORDER BY u.created_at DESC,u.id DESC LIMIT ? OFFSET ?`, search, page.Limit(), page.Offset())
+	if err != nil {
+		failure(w, err)
 		return
 	}
 	defer rows.Close()
-	out := []map[string]any{}
+	out := []portal.Customer{}
 	for rows.Next() {
-		var id, name, email, role, status, plan string
-		var verified, frozen bool
-		var created any
-		var balance, shortfall wallet.Money
-		if e = rows.Scan(&id, &name, &email, &role, &status, &plan, &verified, &created, &balance, &shortfall, &frozen); e != nil {
-			failure(w, e)
+		var customer portal.Customer
+		if err = rows.Scan(&customer.ID, &customer.Name, &customer.Email, &customer.Role, &customer.Status, &customer.PlanID, &customer.EmailVerified, &customer.CreatedAt, &customer.Balance, &customer.Shortfall, &customer.Frozen); err != nil {
+			failure(w, err)
 			return
 		}
-		out = append(out, map[string]any{"id": id, "name": name, "email": email, "role": role, "status": status, "plan_id": plan, "email_verified": verified, "created_at": created, "balance": balance, "shortfall": shortfall, "frozen": frozen})
+		out = append(out, customer)
 	}
-	if e = rows.Err(); e != nil {
-		failure(w, e)
+	if err = rows.Err(); err != nil {
+		failure(w, err)
 		return
 	}
-	collection(w, "customer", out)
+	collectionPage(w, "customer", out, page)
 }
 func (s *Server) customerState(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -165,12 +177,20 @@ func (s *Server) unfreeze(w http.ResponseWriter, r *http.Request) {
 	jsonapi.WriteNoContent(w)
 }
 func (s *Server) adminOrders(w http.ResponseWriter, r *http.Request) {
-	out, e := s.Wallet.Orders(r.Context(), "", 100)
-	if e != nil {
-		failure(w, e)
+	page, ok := requestPagination(w, r)
+	if !ok {
 		return
 	}
-	collection(w, "payment-order", out)
+	if err := s.DB.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM payment_orders").Scan(&page.Total); err != nil {
+		failure(w, err)
+		return
+	}
+	out, err := s.Wallet.OrdersPage(r.Context(), "", page.Limit(), page.Offset())
+	if err != nil {
+		failure(w, err)
+		return
+	}
+	collectionPage(w, "payment-order", out, page)
 }
 func (s *Server) reconcile(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -211,12 +231,20 @@ func (s *Server) reconcile(w http.ResponseWriter, r *http.Request) {
 	resource(w, 200, "payment-order", id, o)
 }
 func (s *Server) pending(w http.ResponseWriter, r *http.Request) {
-	out, e := s.Wallet.Pending(r.Context())
-	if e != nil {
-		failure(w, e)
+	page, ok := requestPagination(w, r)
+	if !ok {
 		return
 	}
-	collection(w, "usage-reservation", out)
+	if err := s.DB.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM usage_reservations WHERE state='pending' AND created_at<CURRENT_TIMESTAMP-INTERVAL '5 minutes'").Scan(&page.Total); err != nil {
+		failure(w, err)
+		return
+	}
+	out, err := s.Wallet.PendingPage(r.Context(), page.Limit(), page.Offset())
+	if err != nil {
+		failure(w, err)
+		return
+	}
+	collectionPage(w, "usage-reservation", out, page)
 }
 func (s *Server) resolve(w http.ResponseWriter, r *http.Request) {
 	var in struct {

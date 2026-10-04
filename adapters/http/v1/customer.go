@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -42,21 +41,38 @@ func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 	resource(w, 200, "wallet", a.UserID, a)
 }
 func (s *Server) ledger(w http.ResponseWriter, r *http.Request) {
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	entries, e := s.Wallet.Ledger(r.Context(), current(r).UserID, 50, offset)
-	if e != nil {
-		failure(w, e)
+	page, ok := requestPagination(w, r)
+	if !ok {
 		return
 	}
-	collection(w, "ledger-entry", entries)
+	userID := current(r).UserID
+	if err := s.DB.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM wallet_ledger WHERE user_id=?", userID).Scan(&page.Total); err != nil {
+		failure(w, err)
+		return
+	}
+	entries, err := s.Wallet.Ledger(r.Context(), userID, page.Limit(), page.Offset())
+	if err != nil {
+		failure(w, err)
+		return
+	}
+	collectionPage(w, "ledger-entry", entries, page)
 }
 func (s *Server) orders(w http.ResponseWriter, r *http.Request) {
-	orders, e := s.Wallet.Orders(r.Context(), current(r).UserID, 100)
-	if e != nil {
-		failure(w, e)
+	page, ok := requestPagination(w, r)
+	if !ok {
 		return
 	}
-	collection(w, "payment-order", orders)
+	userID := current(r).UserID
+	if err := s.DB.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM payment_orders WHERE user_id=?", userID).Scan(&page.Total); err != nil {
+		failure(w, err)
+		return
+	}
+	orders, err := s.Wallet.OrdersPage(r.Context(), userID, page.Limit(), page.Offset())
+	if err != nil {
+		failure(w, err)
+		return
+	}
+	collectionPage(w, "payment-order", orders, page)
 }
 func (s *Server) order(w http.ResponseWriter, r *http.Request) {
 	o, e := s.Wallet.Order(r.Context(), current(r).UserID, chi.URLParam(r, "id"))
@@ -65,12 +81,16 @@ func (s *Server) order(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if o.State == "pending" && o.ExpiresAt != nil && o.ExpiresAt.Before(time.Now()) {
-		_, e = s.DB.ExecContext(r.Context(), "UPDATE payment_orders SET state='expired' WHERE id=? AND state='pending'", o.ID)
+		_, e = s.DB.ExecContext(r.Context(), "UPDATE payment_orders SET state='expired' WHERE id=? AND state='pending' AND expires_at<=CURRENT_TIMESTAMP", o.ID)
 		if e != nil {
 			failure(w, e)
 			return
 		}
-		o.State = "expired"
+		o, e = s.Wallet.Order(r.Context(), current(r).UserID, o.ID)
+		if e != nil {
+			failure(w, e)
+			return
+		}
 	}
 	resource(w, 200, "payment-order", o.ID, o)
 }

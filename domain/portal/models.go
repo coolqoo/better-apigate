@@ -33,6 +33,14 @@ type UsageDay struct {
 	Units     int64   `json:"units"`
 	LatencyMS float64 `json:"latency_ms"`
 }
+type UsageSummary struct {
+	Requests      int64        `json:"requests"`
+	Errors        int64        `json:"errors"`
+	Units         int64        `json:"units"`
+	Spending      wallet.Money `json:"spending"`
+	UsageSpending wallet.Money `json:"usage_spending"`
+	PlanSpending  wallet.Money `json:"plan_spending"`
+}
 type Installation struct {
 	SetupRequired     bool     `json:"setup_required"`
 	AppName           string   `json:"app_name"`
@@ -64,6 +72,21 @@ type Overview struct {
 }
 type Settings struct {
 	Values map[string]string `json:"values"`
+}
+type Pagination struct {
+	Total   int64 `json:"total"`
+	Page    int   `json:"page"`
+	PerPage int   `json:"per_page"`
+	Pages   int   `json:"pages"`
+}
+type AuditEntry struct {
+	ID         string    `json:"id"`
+	ActorID    string    `json:"actor_id"`
+	ActorEmail string    `json:"actor_email"`
+	Action     string    `json:"action"`
+	TargetID   string    `json:"target_id"`
+	Reason     string    `json:"reason"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 type Credentials struct {
 	Email      string `json:"email"`

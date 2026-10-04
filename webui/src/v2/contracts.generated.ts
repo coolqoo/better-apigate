@@ -23,6 +23,15 @@ export interface AdjustmentRequest {
   direction: string
   reason: string
 }
+export interface AuditEntry {
+  id: string
+  actor_id: string
+  actor_email: string
+  action: string
+  target_id: string
+  reason: string
+  created_at: string
+}
 export interface ChallengeRequest {
   token: string
   password?: string
@@ -100,6 +109,12 @@ export interface Overview {
   pending_reservations: number
   wallet_liability: Money
   top_up_volume: Money
+}
+export interface Pagination {
+  total: number
+  page: number
+  per_page: number
+  pages: number
 }
 export interface PasswordRequest {
   current_password: string
@@ -190,6 +205,14 @@ export interface UsageDay {
   errors: number
   units: number
   latency_ms: number
+}
+export interface UsageSummary {
+  requests: number
+  errors: number
+  units: number
+  spending: Money
+  usage_spending: Money
+  plan_spending: Money
 }
 export interface Wallet {
   user_id: string

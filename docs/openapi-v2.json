@@ -117,6 +117,42 @@
         ],
         "type": "object"
       },
+      "AuditEntry": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor_email": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "actor_id",
+          "actor_email",
+          "action",
+          "target_id",
+          "reason",
+          "created_at"
+        ],
+        "type": "object"
+      },
       "ChallengeRequest": {
         "properties": {
           "password": {
@@ -448,6 +484,33 @@
           "pending_reservations",
           "wallet_liability",
           "top_up_volume"
+        ],
+        "type": "object"
+      },
+      "Pagination": {
+        "properties": {
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "pages": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "per_page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "per_page",
+          "pages"
         ],
         "type": "object"
       },
@@ -828,6 +891,46 @@
         ],
         "type": "object"
       },
+      "UsageSummary": {
+        "properties": {
+          "errors": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "plan_spending": {
+            "description": "Exact USD decimal, stored as integer millionths",
+            "pattern": "^-?[0-9]+\\.[0-9]{6}$",
+            "type": "string"
+          },
+          "requests": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "spending": {
+            "description": "Exact USD decimal, stored as integer millionths",
+            "pattern": "^-?[0-9]+\\.[0-9]{6}$",
+            "type": "string"
+          },
+          "units": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "usage_spending": {
+            "description": "Exact USD decimal, stored as integer millionths",
+            "pattern": "^-?[0-9]+\\.[0-9]{6}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requests",
+          "errors",
+          "units",
+          "spending",
+          "usage_spending",
+          "plan_spending"
+        ],
+        "type": "object"
+      },
       "Wallet": {
         "properties": {
           "auto_renew": {
@@ -1132,10 +1235,175 @@
         "x-admin-required": false
       }
     },
+    "/api/v1/admin/audit": {
+      "get": {
+        "operationId": "get_admin_audit",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "attributes": {
+                            "properties": {
+                              "action": {
+                                "type": "string"
+                              },
+                              "actor_email": {
+                                "type": "string"
+                              },
+                              "actor_id": {
+                                "type": "string"
+                              },
+                              "created_at": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              },
+                              "target_id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "actor_id",
+                              "actor_email",
+                              "action",
+                              "target_id",
+                              "reason",
+                              "created_at"
+                            ],
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "id",
+                          "attributes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "links": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-admin-required": true
+      }
+    },
     "/api/v1/admin/customers": {
       "get": {
         "operationId": "get_admin_customers",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Case-insensitive customer name or email search",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1212,6 +1480,15 @@
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "links": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   },
                   "required": [
@@ -1901,7 +2178,27 @@
     "/api/v1/admin/orders": {
       "get": {
         "operationId": "get_admin_orders",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1983,6 +2280,15 @@
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "links": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   },
                   "required": [
@@ -3016,7 +3322,27 @@
     "/api/v1/admin/reservations": {
       "get": {
         "operationId": "get_admin_reservations",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -3101,6 +3427,15 @@
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "links": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   },
                   "required": [
@@ -4483,7 +4818,27 @@
     "/api/v1/ledger": {
       "get": {
         "operationId": "get_ledger",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -4548,6 +4903,15 @@
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "links": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   },
                   "required": [
@@ -4598,7 +4962,27 @@
     "/api/v1/orders": {
       "get": {
         "operationId": "get_orders",
-        "parameters": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -4680,6 +5064,15 @@
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "links": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
                   },
                   "required": [
@@ -6167,6 +6560,118 @@
                         "type": "object"
                       },
                       "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-admin-required": false
+      }
+    },
+    "/api/v1/usage/summary": {
+      "get": {
+        "operationId": "get_usage_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "attributes": {
+                          "properties": {
+                            "errors": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
+                            "plan_spending": {
+                              "description": "Exact USD decimal, stored as integer millionths",
+                              "pattern": "^-?[0-9]+\\.[0-9]{6}$",
+                              "type": "string"
+                            },
+                            "requests": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
+                            "spending": {
+                              "description": "Exact USD decimal, stored as integer millionths",
+                              "pattern": "^-?[0-9]+\\.[0-9]{6}$",
+                              "type": "string"
+                            },
+                            "units": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
+                            "usage_spending": {
+                              "description": "Exact USD decimal, stored as integer millionths",
+                              "pattern": "^-?[0-9]+\\.[0-9]{6}$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "requests",
+                            "errors",
+                            "units",
+                            "spending",
+                            "usage_spending",
+                            "plan_spending"
+                          ],
+                          "type": "object"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [

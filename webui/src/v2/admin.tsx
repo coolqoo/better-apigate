@@ -43,11 +43,13 @@ import {
   dollars,
   operation,
   type Customer,
+  type AuditEntry,
   type Order,
   type Plan,
   type Reservation,
 } from "./api";
 import { useData } from "./customer";
+import { useHistory, HistoryNavigation } from "./history";
 import {
   ActionLink,
   Confirm,
@@ -191,7 +193,11 @@ export function AdminOverview() {
   );
 }
 export function Customers() {
-  const q = useData<Customer[]>("/admin/customers");
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const q = useHistory<Customer>(
+    `/admin/customers${query ? "?q=" + encodeURIComponent(query) : ""}`,
+  );
   const plans = useData<Plan[]>("/admin/plans");
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Customer>();
@@ -245,6 +251,42 @@ export function Customers() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <form
+            className="mb-5 flex flex-wrap gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              q.setPage(1);
+              setQuery(search.trim());
+            }}
+          >
+            <Label htmlFor="customer-search" className="sr-only">
+              Search customer name or email
+            </Label>
+            <Input
+              id="customer-search"
+              type="search"
+              maxLength={200}
+              className="max-w-sm"
+              placeholder="Search name or email"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <Button type="submit" variant="outline">
+              Search
+            </Button>
+            {query && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setSearch("");
+                  setQuery("");
+                }}
+              >
+                Clear
+              </Button>
+            )}
+          </form>
           {q.isPending ? (
             <Loading />
           ) : q.error ? (
@@ -308,6 +350,7 @@ export function Customers() {
               </TableBody>
             </Table>
           )}
+          <HistoryNavigation history={q} />
         </CardContent>
       </Card>
       <Dialog open={!!selected} onOpenChange={() => setSelected(undefined)}>
@@ -450,8 +493,9 @@ function OrderTable({
   );
 }
 export function Payments() {
-  const orders = useData<Order[]>("/admin/orders");
-  const pending = useData<Reservation[]>("/admin/reservations");
+  const orders = useHistory<Order>("/admin/orders");
+  const pending = useHistory<Reservation>("/admin/reservations");
+  const audit = useHistory<AuditEntry>("/admin/audit");
   const qc = useQueryClient();
   const [reversing, setReversing] = useState<Order>();
   const [reversalOperation, setReversalOperation] = useState("");
@@ -491,9 +535,10 @@ export function Payments() {
         }
       />
       <Tabs defaultValue="orders">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-1 sm:w-fit sm:grid-cols-3">
           <TabsTrigger value="orders">Payment orders</TabsTrigger>
           <TabsTrigger value="reservations">Unresolved requests</TabsTrigger>
+          <TabsTrigger value="audit">Audit trail</TabsTrigger>
         </TabsList>
         <TabsContent value="orders">
           <Card className="shadow-none">
@@ -537,6 +582,7 @@ export function Payments() {
                   description="Customer checkouts will appear here as pending, paid, expired, or reversed."
                 />
               )}
+              <HistoryNavigation history={orders} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -600,6 +646,72 @@ export function Payments() {
                   description="Older unresolved requests will appear here if a gateway crashes or an outcome remains unknown."
                 />
               )}
+              <HistoryNavigation history={pending} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="audit">
+          <Card className="shadow-none">
+            <CardHeader>
+              <CardTitle>Administrator audit trail</CardTitle>
+              <CardDescription>
+                Review who changed access, pricing or funds, the affected
+                record, and the evidence recorded at the time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {audit.isPending ? (
+                <Loading />
+              ) : audit.error ? (
+                <Failure
+                  error={audit.error}
+                  retry={() => void audit.refetch()}
+                />
+              ) : audit.data?.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>When</TableHead>
+                      <TableHead>Administrator</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Record</TableHead>
+                      <TableHead>Reason & evidence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {audit.data.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {new Date(entry.created_at).toLocaleString("en-US")}
+                        </TableCell>
+                        <TableCell>
+                          {entry.actor_email || entry.actor_id}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {entry.action
+                            .replaceAll(".", " · ")
+                            .replaceAll("_", " ")}
+                        </TableCell>
+                        <TableCell
+                          className="font-mono text-xs"
+                          title={entry.target_id}
+                        >
+                          {entry.target_id}
+                        </TableCell>
+                        <TableCell className="min-w-64 max-w-xl whitespace-normal break-words">
+                          {entry.reason}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Empty
+                  title="No administrator actions yet"
+                  description="Audited adjustments and reconciliation decisions will appear here."
+                />
+              )}
+              <HistoryNavigation history={audit} />
             </CardContent>
           </Card>
         </TabsContent>

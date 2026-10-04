@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { api } from "./api";
+import { toast } from "sonner";
 import { useSession } from "./context";
 const customer = [
   { path: "/portal", label: "Overview", icon: LayoutDashboard },
@@ -93,6 +94,7 @@ function Navigation({
   onNavigate?: () => void;
 }) {
   const { session } = useSession();
+  const [signingOut, setSigningOut] = useState(false);
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 py-7">
@@ -156,11 +158,22 @@ function Navigation({
           </div>
           <Button
             aria-label="Sign out"
+            disabled={signingOut}
             variant="ghost"
             size="icon"
             onClick={async () => {
-              await api("/auth/logout", "POST");
-              window.location.assign("/login");
+              setSigningOut(true);
+              try {
+                await api("/auth/logout", "POST");
+                window.location.assign("/login");
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Sign out could not complete. Please retry.",
+                );
+                setSigningOut(false);
+              }
             }}
           >
             <LogOut className="size-4" />

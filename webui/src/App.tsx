@@ -10,6 +10,7 @@ import { Toaster } from "sonner";
 import { SessionProvider, useSession } from "./v2/context";
 import { Logo, ThemeToggle, Layout } from "./v2/layout";
 import { AuthPage } from "./v2/auth";
+import { AppErrorBoundary } from "./v2/error-boundary";
 import { Failure, Loading } from "./v2/shared";
 import { lazy, Suspense } from "react";
 const Overview = lazy(() =>
@@ -97,53 +98,55 @@ function Guard({ admin = false }: { admin?: boolean }) {
 export function App() {
   return (
     <BrowserRouter>
-      <SessionProvider>
-        <Suspense
-          fallback={
-            <div className="p-10">
-              <Loading />
-            </div>
-          }
-        >
-          <Routes>
-            {[
-              "login",
-              "signup",
-              "setup",
-              "forgot-password",
-              "reset-password",
-              "verify",
-            ].map((path) => (
-              <Route key={path} path={"/" + path} element={<AuthPage />} />
-            ))}
-            <Route path="/docs" element={<PublicDocs />} />
-            <Route element={<Guard />}>
-              <Route element={<Layout />}>
-                <Route path="/portal" element={<Overview />} />
-                <Route path="/portal/keys" element={<Keys />} />
-                <Route path="/portal/usage" element={<Usage />} />
-                <Route path="/portal/plans" element={<Plans />} />
-                <Route path="/portal/wallet" element={<WalletPage />} />
-                <Route path="/portal/account" element={<Account />} />
+      <AppErrorBoundary>
+        <SessionProvider>
+          <Suspense
+            fallback={
+              <div className="p-10">
+                <Loading />
+              </div>
+            }
+          >
+            <Routes>
+              {[
+                "login",
+                "signup",
+                "setup",
+                "forgot-password",
+                "reset-password",
+                "verify",
+              ].map((path) => (
+                <Route key={path} path={"/" + path} element={<AuthPage />} />
+              ))}
+              <Route path="/docs" element={<PublicDocs />} />
+              <Route element={<Guard />}>
+                <Route element={<Layout />}>
+                  <Route path="/portal" element={<Overview />} />
+                  <Route path="/portal/keys" element={<Keys />} />
+                  <Route path="/portal/usage" element={<Usage />} />
+                  <Route path="/portal/plans" element={<Plans />} />
+                  <Route path="/portal/wallet" element={<WalletPage />} />
+                  <Route path="/portal/account" element={<Account />} />
 
-                <Route element={<Guard admin />}>
-                  <Route path="/admin" element={<AdminOverview />} />
-                  <Route path="/admin/customers" element={<Customers />} />
-                  <Route
-                    path="/admin/configuration"
-                    element={<Configuration />}
-                  />
-                  <Route path="/admin/plans" element={<AdminPlans />} />
-                  <Route path="/admin/payments" element={<Payments />} />
-                  <Route path="/admin/settings" element={<SettingsPage />} />
+                  <Route element={<Guard admin />}>
+                    <Route path="/admin" element={<AdminOverview />} />
+                    <Route path="/admin/customers" element={<Customers />} />
+                    <Route
+                      path="/admin/configuration"
+                      element={<Configuration />}
+                    />
+                    <Route path="/admin/plans" element={<AdminPlans />} />
+                    <Route path="/admin/payments" element={<Payments />} />
+                    <Route path="/admin/settings" element={<SettingsPage />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
-            <Route path="*" element={<Navigate to="/portal" replace />} />
-          </Routes>
-        </Suspense>
-        <Toaster richColors position="bottom-right" />
-      </SessionProvider>
+              <Route path="*" element={<Navigate to="/portal" replace />} />
+            </Routes>
+          </Suspense>
+          <Toaster richColors position="bottom-right" />
+        </SessionProvider>
+      </AppErrorBoundary>
     </BrowserRouter>
   );
 }

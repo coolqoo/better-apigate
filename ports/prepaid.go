@@ -19,6 +19,7 @@ type PrepaidStore interface {
 	RenewalPreference(context.Context, string, bool, string) error
 	Ledger(context.Context, string, int, int) ([]wallet.LedgerEntry, error)
 	Orders(context.Context, string, int) ([]wallet.Order, error)
+	OrdersPage(context.Context, string, int, int) ([]wallet.Order, error)
 	Order(context.Context, string, string) (wallet.Order, error)
 	CreateOrder(context.Context, wallet.Order, string) (wallet.Order, error)
 	SetCheckout(context.Context, string, wallet.Checkout) error
@@ -26,6 +27,7 @@ type PrepaidStore interface {
 	ReverseOrder(context.Context, string, wallet.Money, string, string, string) error
 	Adjust(context.Context, string, wallet.Money, string, string, string) error
 	Pending(context.Context) ([]wallet.Reservation, error)
+	PendingPage(context.Context, int, int) ([]wallet.Reservation, error)
 	Resolve(context.Context, string, bool, string, string) error
 }
 type AtomicRateLimiter interface {

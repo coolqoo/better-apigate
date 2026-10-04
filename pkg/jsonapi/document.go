@@ -81,9 +81,9 @@ func (b *DocumentBuilder) Pagination(p *Pagination) *DocumentBuilder {
 	if b.doc.Meta == nil {
 		b.doc.Meta = make(Meta)
 	}
-	b.doc.Meta["total"] = p.Total
-	b.doc.Meta["page"] = p.Page
-	b.doc.Meta["per_page"] = p.PerPage
+	for key, value := range p.Meta() {
+		b.doc.Meta[key] = value
+	}
 
 	// Add pagination links
 	b.doc.Links = p.Links()

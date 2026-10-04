@@ -65,7 +65,7 @@ var _ ports.PrepaidStore = (*WalletStore)(nil)
 
 const planColumns = "id,name,COALESCE(description,''),price_micros,unit_price_micros,included_units,rate_limit_per_minute,term_days,is_default,enabled"
 const termColumns = "id,plan_id,plan_name,price_micros,unit_price_micros,included_units,used_units,reserved_units,rate_limit_per_minute,starts_at,ends_at"
-const orderColumns = "id,user_id,provider,amount_micros,currency,state,COALESCE(provider_id,''),checkout_url,crypto_amount,crypto_token,expires_at,created_at"
+const orderColumns = "id,user_id,provider,amount_micros,currency,CASE WHEN state='pending' AND expires_at<=CURRENT_TIMESTAMP THEN 'expired' ELSE state END,COALESCE(provider_id,''),checkout_url,crypto_amount,crypto_token,expires_at,created_at"
 
 type scanner interface{ Scan(...any) error }
 
@@ -522,7 +522,10 @@ func (s *WalletStore) Order(ctx context.Context, userID, id string) (wallet.Orde
 	return scanOrder(s.db.QueryRowContext(ctx, "SELECT "+orderColumns+" FROM payment_orders WHERE id=? AND user_id=?", id, userID))
 }
 func (s *WalletStore) Orders(ctx context.Context, userID string, limit int) ([]wallet.Order, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT "+orderColumns+" FROM payment_orders WHERE (?='' OR user_id=?) ORDER BY created_at DESC LIMIT ?", userID, userID, min(max(limit, 1), 100))
+	return s.OrdersPage(ctx, userID, limit, 0)
+}
+func (s *WalletStore) OrdersPage(ctx context.Context, userID string, limit, offset int) ([]wallet.Order, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT "+orderColumns+" FROM payment_orders WHERE (?='' OR user_id=?) ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?", userID, userID, min(max(limit, 1), 100), max(offset, 0))
 	if err != nil {
 		return nil, err
 	}
@@ -819,7 +822,10 @@ func (s *WalletStore) Adjust(ctx context.Context, userID string, amount wallet.M
 	return tx.Commit()
 }
 func (s *WalletStore) Pending(ctx context.Context) ([]wallet.Reservation, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT "+reservationColumns+" FROM usage_reservations WHERE state='pending' AND created_at<CURRENT_TIMESTAMP-INTERVAL '5 minutes' ORDER BY created_at LIMIT 100")
+	return s.PendingPage(ctx, 100, 0)
+}
+func (s *WalletStore) PendingPage(ctx context.Context, limit, offset int) ([]wallet.Reservation, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT "+reservationColumns+" FROM usage_reservations WHERE state='pending' AND created_at<CURRENT_TIMESTAMP-INTERVAL '5 minutes' ORDER BY created_at,id LIMIT ? OFFSET ?", min(max(limit, 1), 100), max(offset, 0))
 	if err != nil {
 		return nil, err
 	}

@@ -65,9 +65,10 @@ func New(d Deps) (*Server, error) {
 		return nil, errors.New("APIGATE_METRICS_TOKEN must contain at least 32 characters")
 	}
 	u, e := url.Parse(d.PublicURL)
-	if e != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil {
-		return nil, errors.New("APIGATE_PUBLIC_URL must be an absolute HTTP URL")
+	if e != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || (u.Path != "" && u.Path != "/") || u.RawQuery != "" || u.Fragment != "" {
+		return nil, errors.New("APIGATE_PUBLIC_URL must be an absolute HTTP origin without a path, query or fragment")
 	}
+	u.Path, u.RawPath = "", ""
 	return &Server{Deps: d, base: u, secure: u.Scheme == "https"}, nil
 }
 func (s *Server) Router() http.Handler {
@@ -101,11 +102,13 @@ func (s *Server) Router() http.Handler {
 		r.Post("/keys", s.createKey)
 		r.Delete("/keys/{id}", s.revokeKey)
 		r.Get("/usage", s.usage)
+		r.Get("/usage/summary", s.usageSummary)
 		r.Patch("/account", s.updateAccount)
 		r.Post("/account/password", s.password)
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(s.RequireAdmin)
 			r.Get("/overview", s.adminOverview)
+			r.Get("/audit", s.auditTrail)
 			r.Get("/customers", s.customers)
 			r.Patch("/customers/{id}", s.customerState)
 			r.Get("/customers/{id}/wallet", s.customerWallet)
@@ -150,6 +153,9 @@ func resource(w http.ResponseWriter, status int, kind, id string, v any) {
 	jsonapi.WriteResource(w, status, jsonapi.Resource{Type: kind, ID: id, Attributes: attrs})
 }
 func collection(w http.ResponseWriter, kind string, v any) {
+	collectionPage(w, kind, v, nil)
+}
+func collectionPage(w http.ResponseWriter, kind string, v any, pagination *jsonapi.Pagination) {
 	b, e := json.Marshal(v)
 	if e != nil {
 		failure(w, e)
@@ -169,7 +175,7 @@ func collection(w http.ResponseWriter, kind string, v any) {
 		delete(row, "id")
 		data = append(data, jsonapi.Resource{Type: kind, ID: id, Attributes: row})
 	}
-	jsonapi.WriteCollection(w, 200, data, nil)
+	jsonapi.WriteCollection(w, 200, data, pagination)
 }
 func decode(w http.ResponseWriter, r *http.Request, out any) bool {
 	ct := strings.Split(r.Header.Get("Content-Type"), ";")[0]

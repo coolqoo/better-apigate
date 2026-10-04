@@ -17,6 +17,8 @@ type Endpoint struct {
 }
 
 var Endpoints = []Endpoint{
+	{"get", "/usage/summary", "UsageSummary", "", false, false},
+	{"get", "/admin/audit", "AuditEntry", "", false, true},
 	{"post", "/admin/orders/{id}/reversals", "Order", "ReversalRequest", false, false},
 	{"get", "/status", "Installation", "", true, false},
 	{"post", "/auth/setup", "AccountCreated", "Credentials", true, false}, {"post", "/auth/signup", "AccountCreated", "Credentials", true, false}, {"post", "/auth/login", "AccountCreated", "Credentials", true, false},
@@ -35,7 +37,7 @@ var Endpoints = []Endpoint{
 	{"get", "/admin/plans", "Plan", "", false, true}, {"post", "/admin/plans", "Plan", "Plan", false, false}, {"patch", "/admin/plans/{id}", "Plan", "Plan", false, false},
 	{"get", "/admin/settings", "Settings", "", false, false}, {"patch", "/admin/settings", "Settings", "Settings", false, false},
 }
-var Models = map[string]any{"ReversalRequest": portal.ReversalRequest{}, "AccountCreated": portal.AccountCreated{}, "Message": portal.Message{}, "Wallet": wallet.Account{}, "Term": wallet.Term{}, "Plan": wallet.Plan{}, "Order": wallet.Order{}, "Reservation": wallet.Reservation{}, "LedgerEntry": wallet.LedgerEntry{}, "ProviderInfo": wallet.ProviderInfo{}, "Session": portal.Session{}, "APIKey": portal.APIKey{}, "UsageDay": portal.UsageDay{}, "Installation": portal.Installation{}, "Customer": portal.Customer{}, "Overview": portal.Overview{}, "Settings": portal.Settings{}, "Credentials": portal.Credentials{}, "TopUpRequest": portal.TopUpRequest{}, "PurchaseRequest": portal.PurchaseRequest{}, "RenewalRequest": portal.RenewalRequest{}, "KeyRequest": portal.KeyRequest{}, "AdjustmentRequest": portal.AdjustmentRequest{}, "ResolveRequest": portal.ResolveRequest{}, "CustomerStateRequest": portal.CustomerStateRequest{}, "ReasonRequest": portal.ReasonRequest{}, "AccountRequest": portal.AccountRequest{}, "PasswordRequest": portal.PasswordRequest{}, "EmailRequest": portal.EmailRequest{}, "ChallengeRequest": portal.ChallengeRequest{}}
+var Models = map[string]any{"UsageSummary": portal.UsageSummary{}, "AuditEntry": portal.AuditEntry{}, "Pagination": portal.Pagination{}, "ReversalRequest": portal.ReversalRequest{}, "AccountCreated": portal.AccountCreated{}, "Message": portal.Message{}, "Wallet": wallet.Account{}, "Term": wallet.Term{}, "Plan": wallet.Plan{}, "Order": wallet.Order{}, "Reservation": wallet.Reservation{}, "LedgerEntry": wallet.LedgerEntry{}, "ProviderInfo": wallet.ProviderInfo{}, "Session": portal.Session{}, "APIKey": portal.APIKey{}, "UsageDay": portal.UsageDay{}, "Installation": portal.Installation{}, "Customer": portal.Customer{}, "Overview": portal.Overview{}, "Settings": portal.Settings{}, "Credentials": portal.Credentials{}, "TopUpRequest": portal.TopUpRequest{}, "PurchaseRequest": portal.PurchaseRequest{}, "RenewalRequest": portal.RenewalRequest{}, "KeyRequest": portal.KeyRequest{}, "AdjustmentRequest": portal.AdjustmentRequest{}, "ResolveRequest": portal.ResolveRequest{}, "CustomerStateRequest": portal.CustomerStateRequest{}, "ReasonRequest": portal.ReasonRequest{}, "AccountRequest": portal.AccountRequest{}, "PasswordRequest": portal.PasswordRequest{}, "EmailRequest": portal.EmailRequest{}, "ChallengeRequest": portal.ChallengeRequest{}}
 
 func schema(t reflect.Type) map[string]any {
 	if t == reflect.TypeOf(wallet.Money(0)) {
@@ -100,6 +102,13 @@ func envelope(name string, collection bool) map[string]any {
 	}
 	return map[string]any{"type": "object", "required": []string{"data"}, "properties": map[string]any{"data": value}}
 }
+func paginated(path string) bool {
+	switch path {
+	case "/ledger", "/orders", "/admin/customers", "/admin/orders", "/admin/reservations", "/admin/audit":
+		return true
+	}
+	return false
+}
 func Document() map[string]any {
 	schemas := map[string]any{}
 	for name, model := range Models {
@@ -120,6 +129,15 @@ func Document() map[string]any {
 		if strings.Contains(path, "{id}") {
 			params = append(params, map[string]any{"name": "id", "in": "path", "required": true, "schema": map[string]any{"type": "string"}})
 		}
+		if e.Method == "get" && paginated(e.Path) {
+			params = append(params,
+				map[string]any{"name": "page[number]", "in": "query", "schema": map[string]any{"type": "integer", "minimum": 1, "default": 1}},
+				map[string]any{"name": "page[size]", "in": "query", "schema": map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": 50}},
+			)
+		}
+		if e.Path == "/admin/customers" {
+			params = append(params, map[string]any{"name": "q", "in": "query", "description": "Case-insensitive customer name or email search", "schema": map[string]any{"type": "string", "maxLength": 200}})
+		}
 		if e.Method != "get" && !e.Public {
 			params = append(params, map[string]any{"name": "X-CSRF-Token", "in": "header", "required": true, "schema": map[string]any{"type": "string"}})
 		}
@@ -132,7 +150,13 @@ func Document() map[string]any {
 			if e.Method == "post" && (e.Path == "/keys" || e.Path == "/top-ups" || e.Path == "/auth/setup" || e.Path == "/auth/signup") {
 				code = "201"
 			}
-			responses[code] = map[string]any{"description": "Success", "content": map[string]any{"application/vnd.api+json": map[string]any{"schema": envelope(e.Response, e.Collection)}}}
+			responseSchema := envelope(e.Response, e.Collection)
+			if paginated(e.Path) {
+				properties := responseSchema["properties"].(map[string]any)
+				properties["meta"] = map[string]any{"$ref": "#/components/schemas/Pagination"}
+				properties["links"] = map[string]any{"type": "object", "additionalProperties": map[string]any{"type": "string"}}
+			}
+			responses[code] = map[string]any{"description": "Success", "content": map[string]any{"application/vnd.api+json": map[string]any{"schema": responseSchema}}}
 
 			if e.Path == "/top-ups" {
 				responses["200"] = responses[code]
