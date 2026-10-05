@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/usage"
 )
 
 // mockUsageStore implements ports.UsageStore for testing.

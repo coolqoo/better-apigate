@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/domain/route"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/domain/route"
 	"github.com/rs/zerolog"
 )
 
@@ -157,8 +157,8 @@ func TestNewService_DefaultAppName(t *testing.T) {
 		Logger:        zerolog.Nop(),
 	})
 
-	if svc.appName != "APIGate" {
-		t.Errorf("appName = %s, want APIGate (default)", svc.appName)
+	if svc.appName != "better-apigate" {
+		t.Errorf("appName = %s, want better-apigate (default)", svc.appName)
 	}
 }
 

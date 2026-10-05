@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/streaming"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/streaming"
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 )

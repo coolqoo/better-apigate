@@ -1,4 +1,4 @@
-module github.com/artpar/apigate
+module github.com/coolqoo/better-apigate
 
 go 1.27.1
 

@@ -4,5 +4,5 @@
 !build/linux/
 !build/linux/amd64/
 !build/linux/arm64/
-!build/linux/amd64/apigate
-!build/linux/arm64/apigate
+!build/linux/amd64/better-apigate
+!build/linux/arm64/better-apigate

@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/quota"
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/domain/wallet"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/quota"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 type admission struct {

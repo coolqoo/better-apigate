@@ -1,6 +1,6 @@
 # Protocols
 
-APIGate supports multiple protocols for different use cases.
+better-apigate supports multiple protocols for different use cases.
 
 ---
 

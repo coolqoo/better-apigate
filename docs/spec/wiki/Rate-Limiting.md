@@ -6,7 +6,7 @@
 
 ## Overview
 
-APIGate uses a **token bucket algorithm** for rate limiting:
+better-apigate uses a **token bucket algorithm** for rate limiting:
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -100,7 +100,7 @@ curl -X POST http://localhost:8080/admin/plans \
 Burst capacity is configured globally via settings:
 
 ```bash
-apigate settings set ratelimit.burst_tokens 10
+better-apigate settings set ratelimit.burst_tokens 10
 ```
 
 The default is 5 tokens. This allows brief bursts above the steady rate.

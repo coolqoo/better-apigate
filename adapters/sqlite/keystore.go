@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // KeyStore implements ports.KeyStore using SQLite.

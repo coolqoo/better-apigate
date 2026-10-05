@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/adapters/auth"
-	"github.com/artpar/apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/adapters/auth"
+	"github.com/coolqoo/better-apigate/core/runtime"
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/crypto/bcrypt"
 )

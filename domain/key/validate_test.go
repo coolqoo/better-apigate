@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/key"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -155,10 +155,10 @@ func TestValidateFormat(t *testing.T) {
 
 func TestHasScope(t *testing.T) {
 	tests := []struct {
-		name     string
-		key      key.Key
-		scope    string
-		wantHas  bool
+		name    string
+		key     key.Key
+		scope   string
+		wantHas bool
 	}{
 		{
 			name:    "empty scopes grants all access",
@@ -330,10 +330,10 @@ func TestGenerateUniqueness(t *testing.T) {
 // TestWithUserID tests the WithUserID method
 func TestWithUserID(t *testing.T) {
 	tests := []struct {
-		name     string
-		initial  key.Key
-		userID   string
-		wantID   string
+		name    string
+		initial key.Key
+		userID  string
+		wantID  string
 	}{
 		{
 			name: "set user ID on empty key",

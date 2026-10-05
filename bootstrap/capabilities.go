@@ -2,10 +2,10 @@
 package bootstrap
 
 import (
-	"github.com/artpar/apigate/core/capability"
-	"github.com/artpar/apigate/core/capability/adapters"
-	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/capability"
+	"github.com/coolqoo/better-apigate/core/capability/adapters"
+	"github.com/coolqoo/better-apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 

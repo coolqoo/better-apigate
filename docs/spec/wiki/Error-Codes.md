@@ -1,6 +1,6 @@
 # Error Codes
 
-APIGate returns errors in JSON:API format with consistent error codes.
+better-apigate returns errors in JSON:API format with consistent error codes.
 
 ---
 

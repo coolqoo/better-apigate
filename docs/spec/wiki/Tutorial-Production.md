@@ -1,6 +1,6 @@
 # Tutorial: Production Deployment
 
-Deploy APIGate to production with security, reliability, and scalability.
+Deploy better-apigate to production with security, reliability, and scalability.
 
 ---
 
@@ -40,7 +40,7 @@ sudo mkdir -p /opt/apigate /var/lib/apigate /var/log/apigate
 sudo chown -R apigate:apigate /opt/apigate /var/lib/apigate /var/log/apigate
 ```
 
-### Install APIGate
+### Install better-apigate
 
 ```bash
 # Download latest release
@@ -170,7 +170,7 @@ sudo systemctl reload nginx
 
 ### Option B: Direct TLS
 
-APIGate can terminate TLS directly:
+better-apigate can terminate TLS directly:
 
 ```yaml
 # In config.yaml
@@ -190,7 +190,7 @@ Create `/etc/systemd/system/apigate.service`:
 
 ```ini
 [Unit]
-Description=APIGate API Gateway
+Description=better-apigate API Gateway
 After=network.target
 
 [Service]
@@ -198,7 +198,7 @@ Type=simple
 User=apigate
 Group=apigate
 WorkingDirectory=/opt/apigate
-ExecStart=/opt/apigate/apigate serve --config /opt/apigate/config.yaml
+ExecStart=/opt/apigate/better-apigate serve --config /opt/apigate/config.yaml
 Restart=always
 RestartSec=5
 
@@ -281,7 +281,7 @@ sudo systemctl start apigate
 
 ### Health Check Endpoint
 
-APIGate exposes `/health`:
+better-apigate exposes `/health`:
 
 ```bash
 curl https://api.yourdomain.com/health
@@ -372,7 +372,7 @@ net.ipv4.tcp_tw_reuse = 1
 
 Apply: `sudo sysctl -p`
 
-### APIGate Tuning
+### better-apigate Tuning
 
 ```yaml
 # In config.yaml
@@ -393,7 +393,7 @@ usage:
 
 ## Step 8: High Availability (Optional)
 
-For high availability, run multiple APIGate instances behind a load balancer.
+For high availability, run multiple better-apigate instances behind a load balancer.
 
 ### Load Balancer Setup
 
@@ -505,7 +505,7 @@ curl -I https://api.yourdomain.com/portal
 │     │                                                            │
 │     ▼                                                            │
 │  ┌─────────────────────────────────────────────────────┐        │
-│  │                   APIGate                            │        │
+│  │                   better-apigate                            │        │
 │  │  • Authentication    • Rate limiting                 │        │
 │  │  • Routing          • Usage tracking                │        │
 │  └─────────────────────────────────────────────────────┘        │
@@ -564,7 +564,7 @@ curl https://api.yourdomain.com/health
 
 ## Summary
 
-You've deployed APIGate to production with:
+You've deployed better-apigate to production with:
 
 1. ✅ Secure configuration with encrypted secrets
 2. ✅ TLS/HTTPS via nginx reverse proxy

@@ -109,22 +109,22 @@ If payment integration enabled:
 
 ```bash
 # Enable portal (default is true)
-apigate settings set portal.enabled true
+better-apigate settings set portal.enabled true
 
 # Disable portal
-apigate settings set portal.enabled false
+better-apigate settings set portal.enabled false
 ```
 
 ### Set App Name
 
 ```bash
-apigate settings set portal.app_name "Acme API"
+better-apigate settings set portal.app_name "Acme API"
 ```
 
 ### Set Portal Base URL
 
 ```bash
-apigate settings set portal.base_url "https://api.example.com"
+better-apigate settings set portal.base_url "https://api.example.com"
 ```
 
 ---
@@ -134,13 +134,13 @@ apigate settings set portal.base_url "https://api.example.com"
 ### Welcome Message
 
 ```bash
-apigate settings set custom.portal_welcome_html "<h2>Welcome to Acme API!</h2><p>Get started by creating an API key.</p>"
+better-apigate settings set custom.portal_welcome_html "<h2>Welcome to Acme API!</h2><p>Get started by creating an API key.</p>"
 ```
 
 ### Custom CSS
 
 ```bash
-apigate settings set custom.portal_css ".header { background: #3B82F6; }"
+better-apigate settings set custom.portal_css ".header { background: #3B82F6; }"
 ```
 
 ### Branding
@@ -237,10 +237,10 @@ The portal is protected by the same rate limiting that applies to API requests.
 Integrate with your existing auth using OAuth providers:
 
 ```bash
-apigate settings set oauth.enabled true
-apigate settings set oauth.google.enabled true
-apigate settings set oauth.google.client_id "your-client-id"
-apigate settings set oauth.google.client_secret "your-secret" --encrypted
+better-apigate settings set oauth.enabled true
+better-apigate settings set oauth.google.enabled true
+better-apigate settings set oauth.google.client_id "your-client-id"
+better-apigate settings set oauth.google.client_secret "your-secret" --encrypted
 ```
 
 See [[OAuth]] for full SSO configuration.
@@ -270,7 +270,7 @@ Customers receive emails for:
 
 1. Check `portal.enabled` setting:
    ```bash
-   apigate settings get portal.enabled
+   better-apigate settings get portal.enabled
    ```
 2. Verify web server is running
 3. Check browser console for errors

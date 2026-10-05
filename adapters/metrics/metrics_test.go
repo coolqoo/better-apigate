@@ -3,7 +3,7 @@ package metrics_test
 import (
 	"testing"
 
-	"github.com/artpar/apigate/adapters/metrics"
+	"github.com/coolqoo/better-apigate/adapters/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

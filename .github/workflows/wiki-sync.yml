@@ -17,18 +17,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: main
 
-      - name: Checkout wiki
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository }}.wiki
-          path: wiki
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clone wiki when initialized
+        id: wiki
+        env:
+          WIKI_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > "$RUNNER_TEMP/wiki-askpass" <<'SH'
+          #!/bin/sh
+          case "$1" in
+            *Username*) printf '%s\n' 'x-access-token' ;;
+            *Password*) printf '%s\n' "$WIKI_TOKEN" ;;
+          esac
+          SH
+          chmod 0700 "$RUNNER_TEMP/wiki-askpass"
+          export GIT_ASKPASS="$RUNNER_TEMP/wiki-askpass" GIT_TERMINAL_PROMPT=0
+          wiki_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.wiki.git"
+          if git ls-remote "$wiki_url" HEAD > /dev/null 2>&1; then
+            git clone "$wiki_url" wiki
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '::notice::Wiki is unavailable or has not been initialized; skipping optional documentation sync.'
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Sync spec files to wiki
+        if: steps.wiki.outputs.available == 'true'
         run: |
           # Map spec files to wiki pages
           cp main/docs/spec/README.md wiki/Home.md
@@ -46,7 +63,11 @@ jobs:
           echo "_Last synced: $(date -u '+%Y-%m-%d %H:%M:%S UTC') from docs/spec/_" >> wiki/Home.md
 
       - name: Commit and push wiki changes
+        if: steps.wiki.outputs.available == 'true'
+        env:
+          WIKI_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          export GIT_ASKPASS="$RUNNER_TEMP/wiki-askpass" GIT_TERMINAL_PROMPT=0
           cd wiki
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

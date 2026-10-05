@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
 	"golang.org/x/crypto/acme"
 )
 

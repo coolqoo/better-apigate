@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	apihttp "github.com/artpar/apigate/adapters/http"
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/route"
+	apihttp "github.com/coolqoo/better-apigate/adapters/http"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/route"
 )
 
 func TestNewUpstreamClient(t *testing.T) {

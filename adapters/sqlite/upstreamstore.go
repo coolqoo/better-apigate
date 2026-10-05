@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // UpstreamStore implements ports.UpstreamStore using SQLite.

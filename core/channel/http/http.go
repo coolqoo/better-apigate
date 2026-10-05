@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/artpar/apigate/adapters/auth"
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/openapi"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/core/schema"
-	"github.com/artpar/apigate/pkg/jsonapi"
+	"github.com/coolqoo/better-apigate/adapters/auth"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/openapi"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/core/schema"
+	"github.com/coolqoo/better-apigate/pkg/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -616,7 +616,7 @@ func (c *Channel) handleOpenAPI(w http.ResponseWriter, r *http.Request) {
 
 	// Set API info
 	gen.SetInfo(openapi.Info{
-		Title:       "APIGate API",
+		Title:       "better-apigate API",
 		Description: "Auto-generated REST API from module schemas. All endpoints support JSON request/response bodies.",
 		Version:     "1.0.0",
 	})
@@ -647,7 +647,7 @@ func (c *Channel) handleSwaggerUI(w http.ResponseWriter, r *http.Request) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>APIGate - API Documentation</title>
+    <title>better-apigate - API Documentation</title>
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
     <style>
         html { box-sizing: border-box; overflow-y: scroll; }

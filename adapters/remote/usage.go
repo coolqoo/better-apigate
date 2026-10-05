@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // UsageRecorder sends usage events to an external HTTP service.
@@ -22,13 +22,13 @@ import (
 //	Request:  {"event": {...}}
 //	Response: {}
 type UsageRecorder struct {
-	client    *Client
-	buffer    []usage.Event
-	mu        sync.Mutex
-	batchSize int
+	client        *Client
+	buffer        []usage.Event
+	mu            sync.Mutex
+	batchSize     int
 	flushInterval time.Duration
-	stopCh    chan struct{}
-	wg        sync.WaitGroup
+	stopCh        chan struct{}
+	wg            sync.WaitGroup
 }
 
 // UsageRecorderConfig configures the usage recorder.
@@ -47,11 +47,11 @@ func NewUsageRecorder(client *Client, cfg UsageRecorderConfig) *UsageRecorder {
 	}
 
 	r := &UsageRecorder{
-		client:    client,
-		buffer:    make([]usage.Event, 0, cfg.BatchSize),
-		batchSize: cfg.BatchSize,
+		client:        client,
+		buffer:        make([]usage.Event, 0, cfg.BatchSize),
+		batchSize:     cfg.BatchSize,
 		flushInterval: cfg.FlushInterval,
-		stopCh:    make(chan struct{}),
+		stopCh:        make(chan struct{}),
 	}
 
 	r.wg.Add(1)

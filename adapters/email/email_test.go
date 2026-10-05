@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // =============================================================================
@@ -417,8 +417,8 @@ func TestSMTPSender_New(t *testing.T) {
 		t.Fatalf("NewSMTPSender failed: %v", err)
 	}
 
-	if sender.config.AppName != "APIGate" {
-		t.Errorf("AppName = %s, want APIGate", sender.config.AppName)
+	if sender.config.AppName != "better-apigate" {
+		t.Errorf("AppName = %s, want better-apigate", sender.config.AppName)
 	}
 }
 
@@ -516,14 +516,14 @@ func TestDefaultConfig(t *testing.T) {
 	if !config.UseTLS {
 		t.Error("UseTLS should be true by default")
 	}
-	if config.AppName != "APIGate" {
-		t.Errorf("AppName = %s, want APIGate", config.AppName)
+	if config.AppName != "better-apigate" {
+		t.Errorf("AppName = %s, want better-apigate", config.AppName)
 	}
 	if config.From != "noreply@localhost" {
 		t.Errorf("From = %s, want noreply@localhost", config.From)
 	}
-	if config.FromName != "APIGate" {
-		t.Errorf("FromName = %s, want APIGate", config.FromName)
+	if config.FromName != "better-apigate" {
+		t.Errorf("FromName = %s, want better-apigate", config.FromName)
 	}
 	if config.Timeout != 30*time.Second {
 		t.Errorf("Timeout = %v, want 30s", config.Timeout)
@@ -721,8 +721,8 @@ func TestNewSender_Mock_DefaultAppName(t *testing.T) {
 		t.Fatal("Expected *MockSender for mock provider")
 	}
 
-	if mockSender.AppName != "APIGate" {
-		t.Errorf("AppName = %s, want APIGate (default)", mockSender.AppName)
+	if mockSender.AppName != "better-apigate" {
+		t.Errorf("AppName = %s, want better-apigate (default)", mockSender.AppName)
 	}
 }
 
@@ -1584,9 +1584,9 @@ func TestSMTPSender_TLSConfiguration(t *testing.T) {
 
 func TestSMTPSender_AuthConfiguration(t *testing.T) {
 	tests := []struct {
-		name     string
-		config   SMTPConfig
-		hasAuth  bool
+		name    string
+		config  SMTPConfig
+		hasAuth bool
 	}{
 		{
 			name: "With authentication",
@@ -1757,27 +1757,27 @@ func TestSMTPSender_TemplateVariables_Verification(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name      string
-		userName  string
-		token     string
+		name       string
+		userName   string
+		token      string
 		wantInHTML []string
 	}{
 		{
-			name:     "Standard name and token",
-			userName: "John Doe",
-			token:    "abc123",
+			name:       "Standard name and token",
+			userName:   "John Doe",
+			token:      "abc123",
 			wantInHTML: []string{"John Doe", "abc123", "MyApp"},
 		},
 		{
-			name:     "Name with special chars",
-			userName: "O'Brien",
-			token:    "xyz789",
+			name:       "Name with special chars",
+			userName:   "O'Brien",
+			token:      "xyz789",
 			wantInHTML: []string{"O&#39;Brien", "xyz789"}, // html/template escapes apostrophe
 		},
 		{
-			name:     "Empty name",
-			userName: "",
-			token:    "empty123",
+			name:       "Empty name",
+			userName:   "",
+			token:      "empty123",
 			wantInHTML: []string{"empty123"},
 		},
 	}
@@ -1977,7 +1977,7 @@ func TestEmailTemplateData_UnicodeContent(t *testing.T) {
 	}
 
 	data := emailTemplateData{
-		Name:    "User Name", // Chinese characters
+		Name:    "User Name",  // Chinese characters
 		AppName: "Aplicacion", // Spanish accented characters
 		Link:    "https://example.com/test",
 	}
@@ -2406,11 +2406,11 @@ func TestSMTPSender_Send_WithMockServer_HTMLOnly(t *testing.T) {
 	defer server.close()
 
 	config := SMTPConfig{
-		Host:     "127.0.0.1",
-		Port:     server.port(),
-		From:     "sender@example.com",
-		Timeout:  5 * time.Second,
-		UseTLS:   false,
+		Host:    "127.0.0.1",
+		Port:    server.port(),
+		From:    "sender@example.com",
+		Timeout: 5 * time.Second,
+		UseTLS:  false,
 	}
 
 	sender, err := NewSMTPSender(config)
@@ -2447,11 +2447,11 @@ func TestSMTPSender_Send_WithMockServer_TextOnly(t *testing.T) {
 	defer server.close()
 
 	config := SMTPConfig{
-		Host:     "127.0.0.1",
-		Port:     server.port(),
-		From:     "sender@example.com",
-		Timeout:  5 * time.Second,
-		UseTLS:   false,
+		Host:    "127.0.0.1",
+		Port:    server.port(),
+		From:    "sender@example.com",
+		Timeout: 5 * time.Second,
+		UseTLS:  false,
 	}
 
 	sender, err := NewSMTPSender(config)
@@ -2557,11 +2557,11 @@ func TestSMTPSender_Send_WithMockServer_MailFailure(t *testing.T) {
 	server.setFailAt("mail")
 
 	config := SMTPConfig{
-		Host:     "127.0.0.1",
-		Port:     server.port(),
-		From:     "sender@example.com",
-		Timeout:  5 * time.Second,
-		UseTLS:   false,
+		Host:    "127.0.0.1",
+		Port:    server.port(),
+		From:    "sender@example.com",
+		Timeout: 5 * time.Second,
+		UseTLS:  false,
 	}
 
 	sender, err := NewSMTPSender(config)
@@ -2591,11 +2591,11 @@ func TestSMTPSender_Send_WithMockServer_RcptFailure(t *testing.T) {
 	server.setFailAt("rcpt")
 
 	config := SMTPConfig{
-		Host:     "127.0.0.1",
-		Port:     server.port(),
-		From:     "sender@example.com",
-		Timeout:  5 * time.Second,
-		UseTLS:   false,
+		Host:    "127.0.0.1",
+		Port:    server.port(),
+		From:    "sender@example.com",
+		Timeout: 5 * time.Second,
+		UseTLS:  false,
 	}
 
 	sender, err := NewSMTPSender(config)
@@ -2625,11 +2625,11 @@ func TestSMTPSender_Send_WithMockServer_DataFailure(t *testing.T) {
 	server.setFailAt("data")
 
 	config := SMTPConfig{
-		Host:     "127.0.0.1",
-		Port:     server.port(),
-		From:     "sender@example.com",
-		Timeout:  5 * time.Second,
-		UseTLS:   false,
+		Host:    "127.0.0.1",
+		Port:    server.port(),
+		From:    "sender@example.com",
+		Timeout: 5 * time.Second,
+		UseTLS:  false,
 	}
 
 	sender, err := NewSMTPSender(config)
@@ -2775,13 +2775,13 @@ func TestSMTPSender_Send_WithMockServer_MultipleMessages(t *testing.T) {
 	defer server.close()
 
 	config := SMTPConfig{
-		Host:     "127.0.0.1",
-		Port:     server.port(),
-		From:     "sender@example.com",
-		Timeout:  5 * time.Second,
-		UseTLS:   false,
-		BaseURL:  "https://example.com",
-		AppName:  "TestApp",
+		Host:    "127.0.0.1",
+		Port:    server.port(),
+		From:    "sender@example.com",
+		Timeout: 5 * time.Second,
+		UseTLS:  false,
+		BaseURL: "https://example.com",
+		AppName: "TestApp",
 	}
 
 	sender, err := NewSMTPSender(config)

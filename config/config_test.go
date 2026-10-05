@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/config"
+	"github.com/coolqoo/better-apigate/config"
 )
 
 func TestLoad_ValidConfig(t *testing.T) {

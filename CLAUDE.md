@@ -576,7 +576,7 @@ The GitHub wiki mirrors `docs/spec/` for external visibility.
 ### First-Time Setup
 
 The wiki must be initialized via GitHub UI before git access works:
-1. Go to https://github.com/artpar/apigate/wiki
+1. Go to https://github.com/coolqoo/better-apigate/wiki
 2. Click "Create the first page"
 3. Save any content (will be replaced by sync)
 

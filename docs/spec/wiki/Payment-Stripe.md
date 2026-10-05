@@ -12,7 +12,7 @@ Stripe is the recommended payment provider for production deployments.
 2. Complete business verification
 3. Get API keys from Dashboard > Developers > API keys
 
-### 2. Configure APIGate
+### 2. Configure better-apigate
 
 ```bash
 # Environment variables
@@ -20,10 +20,10 @@ APIGATE_BILLING_MODE=stripe
 APIGATE_BILLING_STRIPE_KEY=sk_live_xxx
 
 # Or via CLI settings
-apigate settings set payment.provider stripe
-apigate settings set payment.stripe.secret_key "sk_live_xxx" --encrypted
-apigate settings set payment.stripe.public_key "pk_live_xxx"
-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
+better-apigate settings set payment.provider stripe
+better-apigate settings set payment.stripe.secret_key "sk_live_xxx" --encrypted
+better-apigate settings set payment.stripe.public_key "pk_live_xxx"
+better-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
 ```
 
 ### 3. Set Up Webhooks
@@ -44,7 +44,7 @@ In Stripe Dashboard > Developers > Webhooks:
 
 ## Plan Configuration
 
-### 1. Create Plans in APIGate
+### 1. Create Plans in better-apigate
 
 ```bash
 apigate plans create \
@@ -57,10 +57,10 @@ apigate plans create \
 
 ### 2. Link to Stripe Price
 
-After creating the plan in APIGate:
+After creating the plan in better-apigate:
 
 1. Create a corresponding price in Stripe Dashboard
-2. In APIGate Admin UI, go to **Plans** and edit the plan
+2. In better-apigate Admin UI, go to **Plans** and edit the plan
 3. Enter the Stripe price ID (e.g., `price_xxx`) in the Stripe Price ID field
 4. Save the plan
 
@@ -68,7 +68,7 @@ After creating the plan in APIGate:
 
 ### Automatic Sync
 
-When configured, APIGate automatically:
+When configured, better-apigate automatically:
 - Creates Stripe customers for new users
 - Creates subscriptions when users select a plan
 - Updates subscriptions on plan changes
@@ -99,7 +99,7 @@ apigate plans create \
   --overage-price 1
 ```
 
-Link to a Stripe metered price via Admin UI. APIGate reports usage to Stripe automatically at the end of each billing period.
+Link to a Stripe metered price via Admin UI. better-apigate reports usage to Stripe automatically at the end of each billing period.
 
 External services can also report usage via the [[Metering-API]].
 
@@ -110,7 +110,7 @@ External services can also report usage via the [[Metering-API]].
 Use Stripe test mode:
 
 ```bash
-apigate settings set payment.stripe.secret_key "sk_test_xxx" --encrypted
+better-apigate settings set payment.stripe.secret_key "sk_test_xxx" --encrypted
 ```
 
 Test card numbers:
@@ -122,7 +122,7 @@ Test card numbers:
 
 ## Webhook Events
 
-| Event | APIGate Action |
+| Event | better-apigate Action |
 |-------|----------------|
 | `customer.subscription.created` | Activate user plan |
 | `customer.subscription.updated` | Update user plan |
@@ -140,7 +140,7 @@ Test card numbers:
 
 **Solution**: Ensure webhook secret matches the endpoint's signing secret:
 ```bash
-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
+better-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
 ```
 
 ### Customer Not Found
@@ -153,7 +153,7 @@ apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
 
 1. Check webhook logs in Stripe Dashboard
 2. Verify webhook endpoint is receiving events
-3. Check APIGate logs for processing errors
+3. Check better-apigate logs for processing errors
 
 ---
 

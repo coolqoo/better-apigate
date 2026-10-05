@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/memory"
-	"github.com/artpar/apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/adapters/memory"
+	"github.com/coolqoo/better-apigate/domain/usage"
 )
 
 func TestQuotaStore_NewQuotaStore(t *testing.T) {

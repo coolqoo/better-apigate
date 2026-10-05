@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/clock"
+	"github.com/coolqoo/better-apigate/adapters/clock"
 )
 
 func TestReal_Now(t *testing.T) {

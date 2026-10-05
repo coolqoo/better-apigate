@@ -1,6 +1,6 @@
 # Resource Types
 
-APIGate exposes these resource types via its JSON:API endpoints.
+better-apigate exposes these resource types via its JSON:API endpoints.
 
 ---
 

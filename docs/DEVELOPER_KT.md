@@ -233,7 +233,7 @@ import (
     "testing"
     "time"
 
-    "github.com/artpar/apigate/domain/ratelimit"
+    "github.com/coolqoo/better-apigate/domain/ratelimit"
     "github.com/stretchr/testify/assert"
 )
 
@@ -298,11 +298,11 @@ import (
     "context"
     "testing"
 
-    "github.com/artpar/apigate/adapters/clock"
-    "github.com/artpar/apigate/adapters/memory"
-    "github.com/artpar/apigate/app"
-    "github.com/artpar/apigate/domain/key"
-    "github.com/artpar/apigate/domain/proxy"
+    "github.com/coolqoo/better-apigate/adapters/clock"
+    "github.com/coolqoo/better-apigate/adapters/memory"
+    "github.com/coolqoo/better-apigate/app"
+    "github.com/coolqoo/better-apigate/domain/key"
+    "github.com/coolqoo/better-apigate/domain/proxy"
     "github.com/stretchr/testify/assert"
 )
 

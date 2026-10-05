@@ -1,12 +1,12 @@
 # Billing
 
-APIGate integrates with payment providers to handle subscription billing.
+better-apigate integrates with payment providers to handle subscription billing.
 
 ---
 
 ## Overview
 
-Billing in APIGate connects:
+Billing in better-apigate connects:
 - **Plans** - Define pricing and limits
 - **Payment Providers** - Handle actual payments
 - **Usage Tracking** - Metered billing
@@ -16,7 +16,7 @@ Billing in APIGate connects:
 |                    Billing Flow                             |
 +-------------------------------------------------------------+
 |                                                             |
-|   Plan (APIGate)  <->  Price (Provider)                     |
+|   Plan (better-apigate)  <->  Price (Provider)                     |
 |        |                    |                               |
 |        v                    v                               |
 |   User subscribes    Payment processed                      |
@@ -34,7 +34,7 @@ Billing in APIGate connects:
 
 ## Payment Providers
 
-APIGate supports multiple payment providers:
+better-apigate supports multiple payment providers:
 
 | Provider | Best For | Docs |
 |----------|----------|------|

@@ -1,6 +1,6 @@
 # Email Configuration
 
-APIGate sends emails for password reset, email verification, and welcome messages.
+better-apigate sends emails for password reset, email verification, and welcome messages.
 
 ---
 
@@ -17,7 +17,7 @@ APIGATE_SMTP_PORT=587
 APIGATE_SMTP_USERNAME=apigate@example.com
 APIGATE_SMTP_PASSWORD=xxx
 APIGATE_SMTP_FROM=noreply@example.com
-APIGATE_SMTP_FROM_NAME="APIGate"
+APIGATE_SMTP_FROM_NAME="better-apigate"
 APIGATE_SMTP_USE_TLS=true
 ```
 
@@ -56,7 +56,7 @@ APIGATE_EMAIL_PROVIDER=none
 
 ## Email Types
 
-APIGate sends these email types:
+better-apigate sends these email types:
 
 | Type | Trigger | Description |
 |------|---------|-------------|
@@ -72,14 +72,14 @@ Email can also be configured via the settings system:
 
 ```bash
 # Using CLI
-apigate settings set email.provider smtp
-apigate settings set email.smtp.host smtp.example.com
-apigate settings set email.smtp.port 587
-apigate settings set email.smtp.username user
-apigate settings set email.smtp.password secret --encrypted
-apigate settings set email.from_address noreply@example.com
-apigate settings set email.from_name "APIGate"
-apigate settings set email.smtp.use_tls true
+better-apigate settings set email.provider smtp
+better-apigate settings set email.smtp.host smtp.example.com
+better-apigate settings set email.smtp.port 587
+better-apigate settings set email.smtp.username user
+better-apigate settings set email.smtp.password secret --encrypted
+better-apigate settings set email.from_address noreply@example.com
+better-apigate settings set email.from_name "better-apigate"
+better-apigate settings set email.smtp.use_tls true
 ```
 
 ---

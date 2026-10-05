@@ -1,16 +1,16 @@
 # Upstreams
 
-An **upstream** is a backend service that APIGate proxies requests to.
+An **upstream** is a backend service that better-apigate proxies requests to.
 
 ---
 
 ## Overview
 
-Upstreams define where your actual API lives. When a request matches a route, APIGate forwards it to the route's configured upstream.
+Upstreams define where your actual API lives. When a request matches a route, better-apigate forwards it to the route's configured upstream.
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────────────┐
-│  Client  │────▶│ APIGate  │────▶│    Upstream      │
+│  Client  │────▶│ better-apigate  │────▶│    Upstream      │
 │          │     │          │     │                  │
 │          │     │  Route   │     │ api.example.com  │
 │          │     │    ▼     │     │                  │
@@ -178,7 +178,7 @@ curl -X DELETE http://localhost:8080/admin/upstreams/<id>
 
 ## Connection Pooling
 
-APIGate maintains connection pools to upstreams for efficiency.
+better-apigate maintains connection pools to upstreams for efficiency.
 
 | Setting | Default | Description |
 |---------|---------|-------------|

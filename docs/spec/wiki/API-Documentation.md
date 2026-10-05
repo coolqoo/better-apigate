@@ -1,6 +1,6 @@
 # API Documentation
 
-APIGate provides built-in API documentation via Swagger/OpenAPI.
+better-apigate provides built-in API documentation via Swagger/OpenAPI.
 
 ---
 

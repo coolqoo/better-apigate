@@ -69,5 +69,5 @@
 ---
 
 ### Resources
-* [GitHub](https://github.com/artpar/apigate)
-* [Issues](https://github.com/artpar/apigate/issues)
+* [GitHub](https://github.com/coolqoo/better-apigate)
+* [Issues](https://github.com/coolqoo/better-apigate/issues)

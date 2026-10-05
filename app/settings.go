@@ -5,8 +5,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 

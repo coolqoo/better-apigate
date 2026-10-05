@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/core/analytics"
+	"github.com/coolqoo/better-apigate/core/analytics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -20,13 +20,13 @@ type PrometheusExporter struct {
 	labels   map[string]string
 
 	// Metrics
-	requestsTotal    *prometheus.CounterVec
-	requestsSuccess  *prometheus.CounterVec
-	requestsError    *prometheus.CounterVec
-	durationSeconds  *prometheus.HistogramVec
-	requestBytes     *prometheus.CounterVec
-	responseBytes    *prometheus.CounterVec
-	costUnits        *prometheus.CounterVec
+	requestsTotal   *prometheus.CounterVec
+	requestsSuccess *prometheus.CounterVec
+	requestsError   *prometheus.CounterVec
+	durationSeconds *prometheus.HistogramVec
+	requestBytes    *prometheus.CounterVec
+	responseBytes   *prometheus.CounterVec
+	costUnits       *prometheus.CounterVec
 
 	// Last collected values for delta calculation
 	lastCollect time.Time

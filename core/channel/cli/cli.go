@@ -8,11 +8,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/formatter"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/core/schema"
-	"github.com/artpar/apigate/core/validation"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/formatter"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/validation"
 	"github.com/spf13/cobra"
 )
 

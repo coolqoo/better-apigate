@@ -1,6 +1,6 @@
 # TLS Certificates
 
-APIGate supports automatic TLS certificate management using ACME (Let's Encrypt) or manual certificate provisioning.
+better-apigate supports automatic TLS certificate management using ACME (Let's Encrypt) or manual certificate provisioning.
 
 ---
 
@@ -80,18 +80,18 @@ APIGATE_TLS_ACME_STAGING=true
 **Via CLI Settings:**
 ```bash
 # Enable TLS with ACME
-apigate settings set tls.enabled true
-apigate settings set tls.mode acme
-apigate settings set tls.domain "api.example.com"
-apigate settings set tls.acme_email "admin@example.com"
+better-apigate settings set tls.enabled true
+better-apigate settings set tls.mode acme
+better-apigate settings set tls.domain "api.example.com"
+better-apigate settings set tls.acme_email "admin@example.com"
 
 # For testing, use staging server
-apigate settings set tls.acme_staging true
+better-apigate settings set tls.acme_staging true
 ```
 
 ### Automatic Certificate Issuance
 
-When ACME mode is enabled, APIGate automatically:
+When ACME mode is enabled, better-apigate automatically:
 
 1. Issues certificates for configured domains
 2. Handles HTTP-01 challenges at `/.well-known/acme-challenge/`
@@ -118,10 +118,10 @@ APIGATE_SERVER_PORT=443
 **Via CLI Settings:**
 ```bash
 # Enable TLS with manual certificates
-apigate settings set tls.enabled true
-apigate settings set tls.mode manual
-apigate settings set tls.cert_path "/path/to/cert.pem"
-apigate settings set tls.key_path "/path/to/key.pem"
+better-apigate settings set tls.enabled true
+better-apigate settings set tls.mode manual
+better-apigate settings set tls.cert_path "/path/to/cert.pem"
+better-apigate settings set tls.key_path "/path/to/key.pem"
 ```
 
 ### Upload Certificate to Database
@@ -138,7 +138,7 @@ For database-backed certificate storage:
 #### Via CLI
 
 ```bash
-apigate certificates create \
+better-apigate certificates create \
   --domain "api.example.com" \
   --cert-pem /path/to/cert.pem \
   --key-pem /path/to/key.pem \
@@ -174,7 +174,7 @@ curl -X POST http://localhost:8080/api/certificates \
 
 ```bash
 # CLI
-apigate certificates list
+better-apigate certificates list
 
 # API
 curl http://localhost:8080/api/certificates \
@@ -185,7 +185,7 @@ curl http://localhost:8080/api/certificates \
 
 ```bash
 # CLI
-apigate certificates get-domain "api.example.com"
+better-apigate certificates get-domain "api.example.com"
 
 # API
 curl http://localhost:8080/api/certificates/domain/api.example.com \
@@ -196,7 +196,7 @@ curl http://localhost:8080/api/certificates/domain/api.example.com \
 
 ```bash
 # Certificates expiring within 30 days
-apigate certificates expiring --days 30
+better-apigate certificates expiring --days 30
 
 # API
 curl http://localhost:8080/api/certificates/expiring?days=30 \
@@ -207,7 +207,7 @@ curl http://localhost:8080/api/certificates/expiring?days=30 \
 
 ```bash
 # CLI
-apigate certificates expired
+better-apigate certificates expired
 
 # API
 curl http://localhost:8080/api/certificates/expired \
@@ -218,7 +218,7 @@ curl http://localhost:8080/api/certificates/expired \
 
 ```bash
 # CLI
-apigate certificates revoke <id> --reason "Key compromised"
+better-apigate certificates revoke <id> --reason "Key compromised"
 
 # API
 curl -X POST http://localhost:8080/api/certificates/<id>/revoke \
@@ -231,7 +231,7 @@ curl -X POST http://localhost:8080/api/certificates/<id>/revoke \
 
 ```bash
 # CLI
-apigate certificates delete <id>
+better-apigate certificates delete <id>
 
 # API
 curl -X DELETE http://localhost:8080/api/certificates/<id> \
@@ -268,7 +268,7 @@ When using ACME, certificates are automatically renewed:
 
 ### SNI Support
 
-APIGate supports Server Name Indication (SNI) for multiple domains when using database-stored certificates.
+better-apigate supports Server Name Indication (SNI) for multiple domains when using database-stored certificates.
 
 ### ACME Certificate Cache
 
@@ -321,10 +321,10 @@ Webhooks are triggered for certificate events:
 Let's Encrypt provides free, automated certificates:
 
 ```bash
-apigate settings set tls.enabled true
-apigate settings set tls.mode acme
-apigate settings set tls.domain "api.example.com"
-apigate settings set tls.acme_email "admin@example.com"
+better-apigate settings set tls.enabled true
+better-apigate settings set tls.mode acme
+better-apigate settings set tls.domain "api.example.com"
+better-apigate settings set tls.acme_email "admin@example.com"
 ```
 
 ### 2. Monitor Expiration
@@ -332,7 +332,7 @@ apigate settings set tls.acme_email "admin@example.com"
 Set up alerts for expiring certificates via the Admin UI or by checking periodically:
 
 ```bash
-apigate certificates expiring --days 14
+better-apigate certificates expiring --days 14
 ```
 
 ### 3. Use Staging for Testing
@@ -340,7 +340,7 @@ apigate certificates expiring --days 14
 Test certificate issuance with Let's Encrypt staging to avoid rate limits:
 
 ```bash
-apigate settings set tls.acme_staging true
+better-apigate settings set tls.acme_staging true
 ```
 
 ### 4. Revoke Compromised Certificates
@@ -348,7 +348,7 @@ apigate settings set tls.acme_staging true
 If a private key is compromised:
 
 ```bash
-apigate certificates revoke <id> --reason "Key compromised"
+better-apigate certificates revoke <id> --reason "Key compromised"
 ```
 
 Then obtain a new certificate by restarting with ACME enabled, or upload a new manual certificate.
@@ -359,7 +359,7 @@ Then obtain a new certificate by restarting with ACME enabled, or upload a new m
 
 ### Verifying Binary Version
 
-Before troubleshooting, verify you're running the correct binary version. APIGate logs version info at startup:
+Before troubleshooting, verify you're running the correct binary version. better-apigate logs version info at startup:
 
 ```
 apigate v1.2.3 (commit: 1f021b9, built: 2026-01-19T17:20:21Z)
@@ -368,7 +368,7 @@ apigate v1.2.3 (commit: 1f021b9, built: 2026-01-19T17:20:21Z)
 You can also check the version explicitly:
 
 ```bash
-apigate version
+better-apigate version
 ```
 
 **If version info shows `dev` or `none`**: You may be running a development build without proper ldflags. Use official releases or build with:
@@ -382,7 +382,7 @@ make build  # Sets version, commit, and build date
 **Error**: `ACME challenge failed for domain`
 
 **Causes**:
-- DNS not pointing to APIGate server
+- DNS not pointing to better-apigate server
 - Port 80 blocked (HTTP-01 challenge)
 - Domain validation failed
 
@@ -398,10 +398,10 @@ make build  # Sets version, commit, and build date
 **Solution**:
 ```bash
 # Check if certificate exists
-apigate certificates get-domain "api.example.com"
+better-apigate certificates get-domain "api.example.com"
 
 # For ACME mode, ensure domain is configured
-apigate settings get tls.domain
+better-apigate settings get tls.domain
 ```
 
 ### ACME Account Key Errors
@@ -426,7 +426,7 @@ apigate settings get tls.domain
 
 **Debug logging**: Enable debug logging to see ACME certificate operations:
 ```bash
-APIGATE_LOG_LEVEL=debug apigate serve
+APIGATE_LOG_LEVEL=debug better-apigate serve
 ```
 
 You'll see messages like:
@@ -445,7 +445,7 @@ You'll see messages like:
 
 **Solution**:
 - Wait for rate limit reset
-- Use staging for testing: `apigate settings set tls.acme_staging true`
+- Use staging for testing: `better-apigate settings set tls.acme_staging true`
 
 ### Switching from Staging to Production
 
@@ -457,7 +457,7 @@ When switching from Let's Encrypt staging to production:
 
 3. **No manual cleanup needed**: Simply change the setting and restart:
    ```bash
-   apigate settings set tls.acme_staging false
+   better-apigate settings set tls.acme_staging false
    # Restart the server
    ```
 
@@ -479,7 +479,7 @@ sqlite3 apigate.db "DELETE FROM certificates WHERE issuer LIKE '%Fake%';"
 **Solution**:
 1. Verify port 80 is accessible for HTTP-01 challenges
 2. Check DNS resolution: `dig api.example.com`
-3. Check logs for ACME errors: `APIGATE_LOG_LEVEL=debug apigate serve`
+3. Check logs for ACME errors: `APIGATE_LOG_LEVEL=debug better-apigate serve`
 4. If rate limited, wait or use staging mode for testing
 5. Verify you're running a recent version (Issue #48 was fixed in v0.x.x)
 
@@ -499,16 +499,16 @@ See [TLS Certificates Spec](../tls-certificates.md) for implementation details
 
 ```bash
 # List all certificates
-apigate certificates list
+better-apigate certificates list
 
 # Get certificate by ID
-apigate certificates get <id>
+better-apigate certificates get <id>
 
 # Get certificate by domain
-apigate certificates get-domain <domain>
+better-apigate certificates get-domain <domain>
 
 # Create/upload certificate (manual)
-apigate certificates create \
+better-apigate certificates create \
   --domain <domain> \
   --cert-pem <path> \
   --key-pem <path> \
@@ -516,16 +516,16 @@ apigate certificates create \
   --expires-at <datetime>
 
 # List expiring certificates
-apigate certificates expiring --days 30
+better-apigate certificates expiring --days 30
 
 # List expired certificates
-apigate certificates expired
+better-apigate certificates expired
 
 # Revoke certificate
-apigate certificates revoke <id> --reason "reason"
+better-apigate certificates revoke <id> --reason "reason"
 
 # Delete certificate
-apigate certificates delete <id>
+better-apigate certificates delete <id>
 ```
 
 ---

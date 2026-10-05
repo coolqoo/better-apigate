@@ -30,6 +30,7 @@ import { Separator } from "@/components/ui/separator";
 import { api } from "./api";
 import { toast } from "sonner";
 import { useSession } from "./context";
+import { version } from "../../package.json";
 const customer = [
   { path: "/portal", label: "Overview", icon: LayoutDashboard },
   { path: "/portal/keys", label: "API Keys", icon: KeyRound },
@@ -74,14 +75,16 @@ export function Logo() {
   return (
     <Link
       to="/portal"
-      className="flex items-center gap-2.5 font-semibold text-lg tracking-tight"
+      className="flex items-center gap-2.5 font-semibold tracking-tight"
     >
       <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
         <Zap className="size-4" fill="currentColor" />
       </span>
-      APIGate
-      <span className="ml-1 rounded border px-1.5 text-[10px] font-medium text-muted-foreground">
-        v2
+      <span>
+        better-apigate
+        <span className="block text-[10px] font-medium tracking-normal text-muted-foreground">
+          v{version}
+        </span>
       </span>
     </Link>
   );
@@ -246,7 +249,7 @@ export function Layout() {
           <Outlet />
         </main>
         <footer className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-7 text-[11px] text-muted-foreground md:px-10">
-          <span>APIGate · Your API, under control.</span>
+          <span>better-apigate · Your API, under control.</span>
           <Link to="/docs" className="hover:text-foreground">
             Documentation <ArrowUpRight className="inline size-3" />
           </Link>

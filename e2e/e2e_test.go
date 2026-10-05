@@ -1,4 +1,4 @@
-// Package e2e provides end-to-end tests for the complete APIGate proxy flow.
+// Package e2e provides end-to-end tests for the complete better-apigate proxy flow.
 package e2e
 
 import (
@@ -13,16 +13,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	"github.com/artpar/apigate/bootstrap"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/ports"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // TestE2E_FullProxyFlow tests the complete proxy flow:
 // 1. Start upstream mock server
-// 2. Start APIGate proxy
+// 2. Start better-apigate proxy
 // 3. Create user and API key
 // 4. Make authenticated request
 // 5. Verify response and usage tracking
@@ -42,7 +42,7 @@ func TestE2E_FullProxyFlow(t *testing.T) {
 	}))
 	defer upstream.Close()
 
-	// 2. Start APIGate
+	// 2. Start better-apigate
 	app, apiKey, cleanup := setupTestApp(t, upstream.URL)
 	defer cleanup()
 

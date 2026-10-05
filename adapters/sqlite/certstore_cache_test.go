@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/artpar/apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
 )
 
 func setupCacheTestDB(t *testing.T) (*sqlite.DB, func()) {

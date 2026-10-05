@@ -15,7 +15,7 @@ APIGate is a **generic API gateway** that provides authentication, rate limiting
 
 ```
 apigate/
-├── cmd/apigate/          # CLI entry point (Cobra commands)
+├── cmd/better-apigate/          # CLI entry point (Cobra commands)
 ├── bootstrap/            # Application wiring and initialization
 ├── config/               # Configuration loading and validation
 ├── domain/               # Pure domain logic (no I/O)

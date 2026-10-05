@@ -6,16 +6,16 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/artpar/apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
 	"github.com/spf13/cobra"
 )
 
 var settingsCmd = &cobra.Command{
 	Use:   "settings",
 	Short: "Manage settings",
-	Long: `Manage APIGate settings stored in the database.
+	Long: `Manage better-apigate settings stored in the database.
 
-Settings control various aspects of APIGate behavior.
+Settings control various aspects of better-apigate behavior.
 
 Examples:
   apigate settings list

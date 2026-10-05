@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/core/analytics"
+	"github.com/coolqoo/better-apigate/core/analytics"
 	"github.com/rs/zerolog"
 )
 

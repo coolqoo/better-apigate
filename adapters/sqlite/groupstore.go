@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/group"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/group"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // GroupStore implements ports.GroupStore using SQLite.

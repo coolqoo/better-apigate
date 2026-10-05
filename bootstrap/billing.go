@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/domain/usage"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )

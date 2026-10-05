@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 func TestInviteStore_CreateAndGetByTokenHash(t *testing.T) {

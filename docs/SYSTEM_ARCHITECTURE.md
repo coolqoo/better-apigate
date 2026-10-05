@@ -839,10 +839,10 @@ hooks:
 
 ```bash
 # Build
-go build -o apigate ./cmd/apigate
+go build -o apigate ./cmd/better-apigate
 
 # Run
-./apigate serve
+./better-apigate serve
 ```
 
 ### 13.2 Docker
@@ -851,7 +851,7 @@ go build -o apigate ./cmd/apigate
 FROM golang:1.21-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o apigate ./cmd/apigate
+RUN go build -o apigate ./cmd/better-apigate
 
 FROM alpine:latest
 COPY --from=builder /app/apigate /usr/local/bin/

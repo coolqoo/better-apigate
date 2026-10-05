@@ -1,6 +1,6 @@
 # JSON:API Response Format
 
-APIGate implements the [JSON:API v1.1 specification](https://jsonapi.org/format/1.1/).
+better-apigate implements the [JSON:API v1.1 specification](https://jsonapi.org/format/1.1/).
 
 ---
 

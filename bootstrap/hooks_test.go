@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/artpar/apigate/core/events"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/domain/webhook"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/events"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 
@@ -551,12 +551,12 @@ func TestMapEventToWebhookType(t *testing.T) {
 
 // mockTestEmailSender implements ports.EmailSender for testing with tracking.
 type mockTestEmailSender struct {
-	sendVerificationCalled bool
+	sendVerificationCalled  bool
 	sendPasswordResetCalled bool
 	sendWelcomeCalled       bool
 	sendCalled              bool
-	lastEmail              string
-	lastToken              string
+	lastEmail               string
+	lastToken               string
 }
 
 func (m *mockTestEmailSender) Send(ctx context.Context, msg ports.EmailMessage) error {
@@ -587,7 +587,7 @@ func (m *mockTestEmailSender) SendWelcome(ctx context.Context, to, name string) 
 // mockTestPlanStore implements ports.PlanStore for testing.
 type mockTestPlanStore struct {
 	clearOtherDefaultsCalled bool
-	lastExceptID            string
+	lastExceptID             string
 }
 
 func (m *mockTestPlanStore) List(ctx context.Context) ([]ports.Plan, error) {

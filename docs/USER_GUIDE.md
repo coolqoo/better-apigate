@@ -1,6 +1,6 @@
-# APIGate v2 user guide
+# better-apigate user guide
 
-APIGate provides a prepaid API gateway with a customer workspace at `/portal`, administration at `/admin`, and public documentation at `/docs`. All browser operations use the signed-in session; API requests use a separately generated API key.
+better-apigate provides a prepaid API gateway with a customer workspace at `/portal`, administration at `/admin`, and public documentation at `/docs`. All browser operations use the signed-in session; API requests use a separately generated API key.
 
 ## Set up the gateway
 

@@ -3,8 +3,8 @@ package adapters
 import (
 	"context"
 
-	"github.com/artpar/apigate/core/capability"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/capability"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // EmailAdapter wraps a ports.EmailSender to implement capability.EmailProvider.

@@ -3,8 +3,8 @@ package contracts
 
 import (
 	"fmt"
-	"github.com/artpar/apigate/domain/portal"
-	"github.com/artpar/apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/domain/portal"
+	"github.com/coolqoo/better-apigate/domain/wallet"
 	"reflect"
 	"sort"
 	"strings"
@@ -186,7 +186,7 @@ func Document() map[string]any {
 		p[e.Method] = op
 		paths[path] = p
 	}
-	return map[string]any{"openapi": "3.1.0", "info": map[string]any{"title": "APIGate v2 prepaid API", "version": "2.0.0", "description": "HttpOnly browser sessions and CSRF; gateway API keys. Exact decimal USD money, integer usage units."}, "servers": []any{map[string]any{"url": "/"}}, "paths": paths, "components": map[string]any{"schemas": schemas, "securitySchemes": map[string]any{"sessionCookie": map[string]any{"type": "apiKey", "in": "cookie", "name": "apigate_session"}}}}
+	return map[string]any{"openapi": "3.1.0", "info": map[string]any{"title": "better-apigate prepaid API", "version": "1.0.0", "description": "HttpOnly browser sessions and CSRF; gateway API keys. Exact decimal USD money, integer usage units."}, "servers": []any{map[string]any{"url": "/"}}, "paths": paths, "components": map[string]any{"schemas": schemas, "securitySchemes": map[string]any{"sessionCookie": map[string]any{"type": "apiKey", "in": "cookie", "name": "apigate_session"}}}}
 }
 func tsType(t reflect.Type) string {
 	if t == reflect.TypeOf(wallet.Money(0)) {

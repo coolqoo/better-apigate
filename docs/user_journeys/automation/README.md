@@ -139,7 +139,7 @@ Consider running capture:
 ```
 Error: APIGate server is not running at localhost:8080
 ```
-Start the server: `./apigate serve`
+Start the server: `./better-apigate serve`
 
 ### Playwright Not Installed
 ```

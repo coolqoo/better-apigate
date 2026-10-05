@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	"github.com/artpar/apigate/domain/portal"
+	"github.com/coolqoo/better-apigate/domain/portal"
 )
 
 func (s *Server) auditTrail(w http.ResponseWriter, r *http.Request) {

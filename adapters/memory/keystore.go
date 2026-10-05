@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // KeyStore is an in-memory implementation of ports.KeyStore.

@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/artpar/apigate/app"
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/route"
+	"github.com/coolqoo/better-apigate/app"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/route"
 )
 
 func TestTransformService_EvalString(t *testing.T) {
@@ -410,9 +410,9 @@ func TestTransformService_TransformResponse(t *testing.T) {
 			proxy.Response{
 				Status: 200,
 				Headers: map[string]string{
-					"Keep":           "value",
-					"X-Internal":     "secret",
-					"X-Debug":        "info",
+					"Keep":       "value",
+					"X-Internal": "secret",
+					"X-Debug":    "info",
 				},
 			},
 			&route.Transform{
@@ -581,10 +581,10 @@ func TestTransformService_ValidateExpr(t *testing.T) {
 	svc := app.NewTransformService()
 
 	tests := []struct {
-		name       string
-		expr       string
-		context    string
-		wantValid  bool
+		name      string
+		expr      string
+		context   string
+		wantValid bool
 	}{
 		{"empty expression", "", "request", true},
 		{"valid request expr", `method + " " + path`, "request", true},

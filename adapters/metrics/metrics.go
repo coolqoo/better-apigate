@@ -1,4 +1,4 @@
-// Package metrics provides Prometheus metrics collection for APIGate.
+// Package metrics provides Prometheus metrics collection for better-apigate.
 package metrics
 
 import (
@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Collector holds all Prometheus metrics for APIGate.
+// Collector holds all Prometheus metrics for better-apigate.
 type Collector struct {
 	// Request metrics
 	RequestsTotal    *prometheus.CounterVec
@@ -25,9 +25,9 @@ type Collector struct {
 	UsageBytes    *prometheus.CounterVec
 
 	// Upstream metrics
-	UpstreamDuration  *prometheus.HistogramVec
-	UpstreamErrors    *prometheus.CounterVec
-	UpstreamInFlight  prometheus.Gauge
+	UpstreamDuration *prometheus.HistogramVec
+	UpstreamErrors   *prometheus.CounterVec
+	UpstreamInFlight prometheus.Gauge
 
 	// Config metrics
 	ConfigReloads      prometheus.Counter

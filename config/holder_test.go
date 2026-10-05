@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/config"
+	"github.com/coolqoo/better-apigate/config"
 	"github.com/rs/zerolog"
 )
 

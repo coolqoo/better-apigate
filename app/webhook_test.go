@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/domain/webhook"
 	"github.com/rs/zerolog"
 )
 
@@ -460,14 +460,14 @@ func TestWebhookService_ProcessRetries(t *testing.T) {
 	now := time.Now()
 	nextRetry := now.Add(-time.Second) // Already due
 	d := webhook.Delivery{
-		ID:         "del_retry_test",
-		WebhookID:  "wh_retry_test",
-		EventID:    "evt_123",
-		Payload:    `{"id":"evt_123","type":"usage.threshold","timestamp":"2024-01-01T00:00:00Z","data":{}}`,
-		Status:     webhook.DeliveryRetrying,
-		Attempt:    1,
-		NextRetry:  &nextRetry,
-		CreatedAt:  now.Add(-time.Minute),
+		ID:        "del_retry_test",
+		WebhookID: "wh_retry_test",
+		EventID:   "evt_123",
+		Payload:   `{"id":"evt_123","type":"usage.threshold","timestamp":"2024-01-01T00:00:00Z","data":{}}`,
+		Status:    webhook.DeliveryRetrying,
+		Attempt:   1,
+		NextRetry: &nextRetry,
+		CreatedAt: now.Add(-time.Minute),
 	}
 	deliveryStore.Create(context.Background(), d)
 

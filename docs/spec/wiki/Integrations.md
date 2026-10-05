@@ -1,6 +1,6 @@
 # Integrations
 
-APIGate integrates with external services through a capability/provider pattern.
+better-apigate integrates with external services through a capability/provider pattern.
 
 ---
 
@@ -23,14 +23,14 @@ Integrations are configured via the settings system:
 
 ```bash
 # Payment
-apigate settings set payment.provider stripe
-apigate settings set payment.stripe.secret_key "sk_xxx" --encrypted
-apigate settings set payment.stripe.public_key "pk_xxx"
+better-apigate settings set payment.provider stripe
+better-apigate settings set payment.stripe.secret_key "sk_xxx" --encrypted
+better-apigate settings set payment.stripe.public_key "pk_xxx"
 
 # Email
-apigate settings set email.provider smtp
-apigate settings set email.smtp.host "smtp.example.com"
-apigate settings set email.smtp.port "587"
+better-apigate settings set email.provider smtp
+better-apigate settings set email.smtp.host "smtp.example.com"
+better-apigate settings set email.smtp.port "587"
 ```
 
 ---

@@ -1,6 +1,6 @@
 # OAuth Authentication
 
-APIGate supports OAuth 2.0 / OpenID Connect for user authentication, allowing users to sign in with external identity providers.
+better-apigate supports OAuth 2.0 / OpenID Connect for user authentication, allowing users to sign in with external identity providers.
 
 ---
 
@@ -16,7 +16,7 @@ OAuth enables "Sign in with Google/GitHub" functionality:
 │  1. User clicks "Sign in with Google"                           │
 │                    │                                            │
 │                    ▼                                            │
-│  2. APIGate redirects to Google                                 │
+│  2. better-apigate redirects to Google                                 │
 │     └─▶ /auth/oauth/google                                      │
 │                    │                                            │
 │                    ▼                                            │
@@ -27,10 +27,10 @@ OAuth enables "Sign in with Google/GitHub" functionality:
 │     └─▶ /auth/oauth/google/callback?code=xxx                    │
 │                    │                                            │
 │                    ▼                                            │
-│  5. APIGate exchanges code for tokens                           │
+│  5. better-apigate exchanges code for tokens                           │
 │                    │                                            │
 │                    ▼                                            │
-│  6. APIGate fetches user profile                                │
+│  6. better-apigate fetches user profile                                │
 │                    │                                            │
 │                    ▼                                            │
 │  7. User logged in (or created if new)                          │
@@ -83,13 +83,13 @@ Any OpenID Connect compatible provider.
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create OAuth 2.0 credentials
 3. Set redirect URI: `https://your-domain.com/auth/oauth/google/callback`
-4. Configure in APIGate:
+4. Configure in better-apigate:
 
 ```bash
 # Via CLI (stored in database)
-apigate settings set oauth.google.enabled true
-apigate settings set oauth.google.client_id "your-client-id.googleusercontent.com"
-apigate settings set oauth.google.client_secret "your-client-secret" --encrypted
+better-apigate settings set oauth.google.enabled true
+better-apigate settings set oauth.google.client_id "your-client-id.googleusercontent.com"
+better-apigate settings set oauth.google.client_secret "your-client-secret" --encrypted
 ```
 
 ### GitHub OAuth Setup
@@ -97,22 +97,22 @@ apigate settings set oauth.google.client_secret "your-client-secret" --encrypted
 1. Go to GitHub Settings > Developer Settings > OAuth Apps
 2. Create new OAuth App
 3. Set callback URL: `https://your-domain.com/auth/oauth/github/callback`
-4. Configure in APIGate:
+4. Configure in better-apigate:
 
 ```bash
-apigate settings set oauth.github.enabled true
-apigate settings set oauth.github.client_id "your-client-id"
-apigate settings set oauth.github.client_secret "your-client-secret" --encrypted
+better-apigate settings set oauth.github.enabled true
+better-apigate settings set oauth.github.client_id "your-client-id"
+better-apigate settings set oauth.github.client_secret "your-client-secret" --encrypted
 ```
 
 ### Generic OIDC Setup
 
 ```bash
-apigate settings set oauth.oidc.enabled true
-apigate settings set oauth.oidc.name "My IdP"
-apigate settings set oauth.oidc.issuer_url "https://your-idp.com"
-apigate settings set oauth.oidc.client_id "your-client-id"
-apigate settings set oauth.oidc.client_secret "your-client-secret" --encrypted
+better-apigate settings set oauth.oidc.enabled true
+better-apigate settings set oauth.oidc.name "My IdP"
+better-apigate settings set oauth.oidc.issuer_url "https://your-idp.com"
+better-apigate settings set oauth.oidc.client_id "your-client-id"
+better-apigate settings set oauth.oidc.client_secret "your-client-secret" --encrypted
 ```
 
 ---
@@ -250,8 +250,8 @@ https://your-domain.com/auth/oauth/{provider}/callback
 Give users choice:
 
 ```bash
-apigate settings set oauth.google.enabled true
-apigate settings set oauth.github.enabled true
+better-apigate settings set oauth.google.enabled true
+better-apigate settings set oauth.github.enabled true
 ```
 
 ### 2. Set Redirect URIs Carefully

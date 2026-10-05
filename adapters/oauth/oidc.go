@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/oauth"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/oauth"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // OIDCProvider implements OAuth for any OpenID Connect provider.
@@ -42,7 +42,7 @@ type oidcDiscovery struct {
 
 // OIDCConfig holds configuration for a generic OIDC provider.
 type OIDCConfig struct {
-	Name         string   // Display name
+	Name         string // Display name
 	ClientID     string
 	ClientSecret string
 	IssuerURL    string   // OIDC issuer URL (discovery will be at /.well-known/openid-configuration)
@@ -239,14 +239,14 @@ func (p *OIDCProvider) GetUserProfile(ctx context.Context, accessToken string) (
 
 	// OIDC standard claims
 	var claims struct {
-		Sub           string `json:"sub"`
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-		Name          string `json:"name"`
-		GivenName     string `json:"given_name"`
-		FamilyName    string `json:"family_name"`
-		Picture       string `json:"picture"`
-		Nickname      string `json:"nickname"`
+		Sub               string `json:"sub"`
+		Email             string `json:"email"`
+		EmailVerified     bool   `json:"email_verified"`
+		Name              string `json:"name"`
+		GivenName         string `json:"given_name"`
+		FamilyName        string `json:"family_name"`
+		Picture           string `json:"picture"`
+		Nickname          string `json:"nickname"`
 		PreferredUsername string `json:"preferred_username"`
 	}
 	if err := json.Unmarshal(body, &claims); err != nil {

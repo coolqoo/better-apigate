@@ -1,4 +1,4 @@
-// Package e2e provides end-to-end tests for the complete APIGate flow.
+// Package e2e provides end-to-end tests for the complete better-apigate flow.
 package e2e
 
 import (
@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	adapterstls "github.com/artpar/apigate/adapters/tls"
-	"github.com/artpar/apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	adapterstls "github.com/coolqoo/better-apigate/adapters/tls"
+	"github.com/coolqoo/better-apigate/bootstrap"
 	"golang.org/x/crypto/acme/autocert"
 )
 

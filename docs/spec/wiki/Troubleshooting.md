@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common issues and solutions for APIGate.
+Common issues and solutions for better-apigate.
 
 ---
 
@@ -100,7 +100,7 @@ X-Quota-Reset: 2024-02-01T00:00:00Z
 
 ```bash
 # Check usage for a user
-apigate usage --user <user-id>
+better-apigate usage --user <user-id>
 ```
 
 ---
@@ -124,7 +124,7 @@ apigate routes list
 # Test upstream directly
 curl -v https://upstream.example.com/health
 
-# Check APIGate logs (in terminal output or log file)
+# Check better-apigate logs (in terminal output or log file)
 ```
 
 ### Timeout
@@ -143,7 +143,7 @@ curl -w "@curl-format.txt" -o /dev/null -s https://upstream.example.com/health
 apigate routes get <route-id>
 ```
 
-3. Consider network connectivity between APIGate and upstream.
+3. Consider network connectivity between better-apigate and upstream.
 
 ---
 
@@ -158,14 +158,14 @@ For detailed TLS specification, see [TLS Certificates Spec](../tls-certificates.
 **Solutions**:
 ```bash
 # List certificates
-apigate certificates list
+better-apigate certificates list
 
 # Check if domain certificate exists
-apigate certificates get-domain api.example.com
+better-apigate certificates get-domain api.example.com
 
 # For ACME mode, ensure TLS is properly configured
-apigate settings get tls.enabled
-apigate settings get tls.domain
+better-apigate settings get tls.enabled
+better-apigate settings get tls.domain
 ```
 
 ### ACME Challenge Failed
@@ -188,10 +188,10 @@ apigate settings get tls.domain
 
 **Solutions**:
 
-For ACME mode, restart APIGate to trigger renewal:
+For ACME mode, restart better-apigate to trigger renewal:
 ```bash
 # Check certificate expiration
-apigate certificates expiring --days 7
+better-apigate certificates expiring --days 7
 
 # Restart to trigger ACME renewal
 systemctl restart apigate
@@ -199,7 +199,7 @@ systemctl restart apigate
 
 For manual certificates, upload a new one:
 ```bash
-apigate certificates create \
+better-apigate certificates create \
   --domain api.example.com \
   --cert-pem new-cert.pem \
   --key-pem new-key.pem \
@@ -215,7 +215,7 @@ apigate certificates create \
 **Solutions**:
 1. **Upgrade**: Update to a version that includes the Issue #48 fix
 2. **Verify version**: Check startup logs for commit hash
-3. **Check logs**: `APIGATE_LOG_LEVEL=debug apigate serve`
+3. **Check logs**: `APIGATE_LOG_LEVEL=debug better-apigate serve`
 
 **How to confirm**: The fix ensures `Manager.Client.DirectoryURL` is always set:
 - Production: `https://acme-v02.api.letsencrypt.org/directory`
@@ -236,7 +236,7 @@ https://your-domain.com/auth/oauth/{provider}/callback
 
 Must match in:
 - OAuth provider settings (Google/GitHub console)
-- APIGate configuration
+- better-apigate configuration
 
 ### State Mismatch
 
@@ -270,7 +270,7 @@ Must match in:
 
 **Solutions**:
 
-APIGate uses SQLite by default. If you encounter locking:
+better-apigate uses SQLite by default. If you encounter locking:
 
 1. Check for multiple processes accessing the database:
 ```bash
@@ -282,7 +282,7 @@ lsof | grep apigate.db
 sqlite3 apigate.db "PRAGMA journal_mode;"
 ```
 
-3. Only run one instance of APIGate per database file.
+3. Only run one instance of better-apigate per database file.
 
 ### Migration Failed
 
@@ -322,7 +322,7 @@ curl -w "Total time: %{time_total}s\n" -o /dev/null -s https://upstream.example.
 
 2. Enable debug logging:
 ```bash
-APIGATE_LOG_LEVEL=debug ./apigate serve
+APIGATE_LOG_LEVEL=debug ./better-apigate serve
 ```
 
 3. Check database size and consider maintenance:
@@ -395,7 +395,7 @@ def verify_webhook(payload, timestamp, signature, secret):
 curl http://localhost:9090/admin/health
 
 # Create admin user if needed
-apigate admin create --email admin@example.com
+better-apigate admin create --email admin@example.com
 ```
 
 ### Session Expired
@@ -427,15 +427,15 @@ apigate routes list
 apigate routes get <route-id>
 
 # Check settings
-apigate settings list
-apigate settings get <key>
+better-apigate settings list
+better-apigate settings get <key>
 
 # Check usage
-apigate usage --user <user-id>
+better-apigate usage --user <user-id>
 
 # Check certificates
-apigate certificates list
-apigate certificates expiring --days 30
+better-apigate certificates list
+better-apigate certificates expiring --days 30
 ```
 
 ---
@@ -444,9 +444,9 @@ apigate certificates expiring --days 30
 
 1. Check logs (terminal output or log file)
 2. Review this page for common issues
-3. Check [GitHub Issues](https://github.com/artpar/apigate/issues)
+3. Check [GitHub Issues](https://github.com/coolqoo/better-apigate/issues)
 4. Open new issue with:
-   - APIGate version (`apigate version`)
+   - better-apigate version (`better-apigate version`)
    - Error message
    - Relevant logs
    - Steps to reproduce

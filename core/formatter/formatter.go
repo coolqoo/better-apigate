@@ -7,7 +7,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/artpar/apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/convention"
 )
 
 // Formatter converts structured data to a specific output format.

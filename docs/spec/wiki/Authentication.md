@@ -1,6 +1,6 @@
 # Authentication
 
-APIGate supports multiple authentication methods for different use cases.
+better-apigate supports multiple authentication methods for different use cases.
 
 ---
 
@@ -28,7 +28,7 @@ Authorization: Bearer ak_abc123...
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-APIGate automatically detects the token type by format:
+better-apigate automatically detects the token type by format:
 - Tokens starting with `ak_` (or configured prefix) → API key authentication
 - Other tokens → JWT Bearer token validation
 
@@ -38,7 +38,7 @@ See [[API-Keys]] for details on creating and managing API keys.
 
 ## User Authentication Endpoints
 
-APIGate provides authentication endpoints at `/auth/*` (and `/admin/*` as aliases):
+better-apigate provides authentication endpoints at `/auth/*` (and `/admin/*` as aliases):
 
 ### Login
 

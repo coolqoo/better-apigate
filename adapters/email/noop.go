@@ -3,7 +3,7 @@ package email
 import (
 	"context"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // NoopSender is a no-op email sender for when email is disabled.

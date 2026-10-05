@@ -511,7 +511,7 @@ func setDefaults(cfg *Config) {
 
 	// Portal defaults
 	if cfg.Portal.AppName == "" {
-		cfg.Portal.AppName = "APIGate"
+		cfg.Portal.AppName = "better-apigate"
 	}
 
 	// Email defaults

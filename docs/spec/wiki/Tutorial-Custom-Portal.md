@@ -6,7 +6,7 @@ Customize the customer portal for your brand.
 
 ## Prerequisites
 
-- APIGate running
+- better-apigate running
 - Access to admin settings
 
 ---
@@ -17,10 +17,10 @@ Set your logo and primary color:
 
 ```bash
 # Logo
-apigate settings set custom.logo_url "https://example.com/logo.png"
+better-apigate settings set custom.logo_url "https://example.com/logo.png"
 
 # Primary brand color (hex)
-apigate settings set custom.primary_color "#4F46E5"
+better-apigate settings set custom.primary_color "#4F46E5"
 ```
 
 ---
@@ -28,8 +28,8 @@ apigate settings set custom.primary_color "#4F46E5"
 ## Step 2: Contact Information
 
 ```bash
-apigate settings set custom.support_email "support@acme.com"
-apigate settings set custom.support_url "https://acme.com/support"
+better-apigate settings set custom.support_email "support@acme.com"
+better-apigate settings set custom.support_url "https://acme.com/support"
 ```
 
 ---
@@ -40,11 +40,11 @@ Customize portal and docs content:
 
 ```bash
 # Docs hero section
-apigate settings set custom.docs_hero_title "Acme API Documentation"
-apigate settings set custom.docs_hero_subtitle "The fastest way to integrate with Acme services."
+better-apigate settings set custom.docs_hero_title "Acme API Documentation"
+better-apigate settings set custom.docs_hero_subtitle "The fastest way to integrate with Acme services."
 
 # Portal welcome section (HTML supported)
-apigate settings set custom.portal_welcome_html "<h2>Welcome to Acme API</h2><p>Manage your API keys and usage.</p>"
+better-apigate settings set custom.portal_welcome_html "<h2>Welcome to Acme API</h2><p>Manage your API keys and usage.</p>"
 ```
 
 ---
@@ -55,7 +55,7 @@ Add custom styling for portal and docs pages:
 
 ```bash
 # Portal CSS
-apigate settings set custom.portal_css "
+better-apigate settings set custom.portal_css "
   :root {
     --primary: #4F46E5;
     --radius: 8px;
@@ -72,7 +72,7 @@ apigate settings set custom.portal_css "
 "
 
 # Docs CSS
-apigate settings set custom.docs_css "
+better-apigate settings set custom.docs_css "
   .docs-header {
     background: #4F46E5;
   }
@@ -86,26 +86,26 @@ apigate settings set custom.docs_css "
 Add custom footer content:
 
 ```bash
-apigate settings set custom.footer_html '<p>© 2024 Acme Corp. <a href="/terms">Terms</a> | <a href="/privacy">Privacy</a></p>'
+better-apigate settings set custom.footer_html '<p>© 2024 Acme Corp. <a href="/terms">Terms</a> | <a href="/privacy">Privacy</a></p>'
 ```
 
 ---
 
 ## Step 6: Custom Domain with TLS
 
-Point your domain to APIGate and configure TLS:
+Point your domain to better-apigate and configure TLS:
 
 ```bash
 # Enable TLS with ACME (Let's Encrypt)
-apigate settings set tls.enabled "true"
-apigate settings set tls.mode "acme"
-apigate settings set tls.domain "api.acme.com"
-apigate settings set tls.acme_email "admin@acme.com"
+better-apigate settings set tls.enabled "true"
+better-apigate settings set tls.mode "acme"
+better-apigate settings set tls.domain "api.acme.com"
+better-apigate settings set tls.acme_email "admin@acme.com"
 
 # Or use manual certificates
-apigate settings set tls.mode "manual"
-apigate settings set tls.cert_path "/path/to/cert.pem"
-apigate settings set tls.key_path "/path/to/key.pem"
+better-apigate settings set tls.mode "manual"
+better-apigate settings set tls.cert_path "/path/to/cert.pem"
+better-apigate settings set tls.key_path "/path/to/key.pem"
 ```
 
 ---
@@ -124,7 +124,7 @@ Visit your portal:
 For complete control over the docs home page:
 
 ```bash
-apigate settings set custom.docs_home_html '<!DOCTYPE html>
+better-apigate settings set custom.docs_home_html '<!DOCTYPE html>
 <html>
 <head><title>API Docs</title></head>
 <body>

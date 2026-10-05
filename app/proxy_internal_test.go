@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/artpar/apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/key"
 )
 
 func TestReasonToMessage(t *testing.T) {

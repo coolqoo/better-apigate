@@ -6,7 +6,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/artpar/apigate/core/analytics"
+	"github.com/coolqoo/better-apigate/core/analytics"
 )
 
 // Exporter is the base interface for all metrics exporters.

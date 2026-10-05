@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   publish:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -28,13 +29,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: apigate-linux-*
+          pattern: better-apigate-linux-*
           path: dist
           merge-multiple: true
       - name: Prepare Linux binaries
         run: |
           for arch in amd64 arm64; do
-            install -D -m 0755 "dist/apigate-linux-$arch" "build/linux/$arch/apigate"
+            install -D -m 0755 "dist/better-apigate-linux-$arch" "build/linux/$arch/better-apigate"
           done
       - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
         with:
@@ -45,13 +46,9 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/better-apigate
+          flavor: latest=false
           tags: |
-            type=sha,format=long
-            type=ref,event=branch,prefix=branch-
-            type=raw,value=edge,enable=${{ github.ref == 'refs/heads/main' }}
-            type=semver,pattern={{raw}}
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
       - name: Log in to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
@@ -68,8 +65,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=gha,scope=apigate-release
-          cache-to: type=gha,scope=apigate-release,mode=max
+          cache-from: type=gha,scope=better-apigate-release
+          cache-to: type=gha,scope=better-apigate-release,mode=max
       - name: Verify published manifest
         env:
           IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/better-apigate

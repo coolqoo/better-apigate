@@ -218,7 +218,7 @@ apigate plan-entitlements create --plan-id <enterprise-plan-id> --entitlement-id
 
 ## Headers Sent to Upstream
 
-When a request is proxied, APIGate injects entitlement headers:
+When a request is proxied, better-apigate injects entitlement headers:
 
 ### Default Header Format
 
@@ -235,7 +235,7 @@ GET /api/users HTTP/1.1
 Host: api.example.com
 X-API-Key: ak_xxx
 
-# Injected by APIGate:
+# Injected by better-apigate:
 X-User-ID: usr_abc123
 X-User-Plan: pro
 X-Entitlement-Webhooks: true

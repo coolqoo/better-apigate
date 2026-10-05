@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // quotaShard is a single shard of the quota store.
@@ -29,8 +29,8 @@ type QuotaStore struct {
 
 // QuotaStoreConfig configures the quota store.
 type QuotaStoreConfig struct {
-	NumShards       int           // Number of shards (default: 32)
-	CleanupInterval time.Duration // How often to clean old periods (default: 1h)
+	NumShards       int              // Number of shards (default: 32)
+	CleanupInterval time.Duration    // How often to clean old periods (default: 1h)
 	UsageStore      ports.UsageStore // Optional: for syncing with persistent storage
 }
 

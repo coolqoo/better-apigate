@@ -22,28 +22,28 @@ Global Flags:
 
 ```bash
 # Start with defaults
-apigate serve
+better-apigate serve
 
 # Custom port (via config or environment)
-APIGATE_SERVER_PORT=8080 apigate serve
+APIGATE_SERVER_PORT=8080 better-apigate serve
 ```
 
 ### Interactive Setup
 
 ```bash
-apigate init
+better-apigate init
 ```
 
 ### Validate Configuration
 
 ```bash
-apigate validate
+better-apigate validate
 ```
 
 ### Version
 
 ```bash
-apigate version
+better-apigate version
 ```
 
 ---
@@ -54,17 +54,17 @@ Admin users can log into the web dashboard.
 
 ```bash
 # List admin users
-apigate admin list
+better-apigate admin list
 
 # Create admin user
-apigate admin create --email admin@example.com
+better-apigate admin create --email admin@example.com
 # You will be prompted for a password
 
 # Reset admin password
-apigate admin reset-password admin@example.com
+better-apigate admin reset-password admin@example.com
 
 # Delete admin user
-apigate admin delete admin@example.com
+better-apigate admin delete admin@example.com
 ```
 
 ---
@@ -92,7 +92,7 @@ apigate users set-password <user-id-or-email>
 apigate users delete <user-id>
 ```
 
-**Note**: `apigate users` is deprecated. Use `apigate mod users` instead.
+**Note**: `apigate users` is deprecated. Use `better-apigate mod users` instead.
 
 ---
 
@@ -131,7 +131,7 @@ apigate plans delete <plan-id>
 - `--overage` - Overage price in cents per request (default: 0)
 - `--default` - Set as default plan
 
-**Note**: `apigate plans` is deprecated. Use `apigate mod plans` instead.
+**Note**: `apigate plans` is deprecated. Use `better-apigate mod plans` instead.
 
 ---
 
@@ -152,7 +152,7 @@ apigate keys create --user <user-id> --name "Production Key"
 apigate keys revoke <key-id>
 ```
 
-**Note**: `apigate keys` is deprecated. Use `apigate mod api_keys` instead.
+**Note**: `apigate keys` is deprecated. Use `better-apigate mod api_keys` instead.
 
 ---
 
@@ -200,7 +200,7 @@ apigate routes delete <route-id>
 - `--priority` - Route priority, higher matches first (default: 0)
 - `--rewrite` - Path rewrite expression
 
-**Note**: `apigate routes` is deprecated. Use `apigate mod routes` instead.
+**Note**: `apigate routes` is deprecated. Use `better-apigate mod routes` instead.
 
 ---
 
@@ -210,19 +210,19 @@ Settings are stored in the database and can be any key-value pair.
 
 ```bash
 # List all settings
-apigate settings list
+better-apigate settings list
 
 # Get a setting
-apigate settings get <key>
+better-apigate settings get <key>
 
 # Set a setting
-apigate settings set <key> <value>
+better-apigate settings set <key> <value>
 
 # Set encrypted setting (for secrets)
-apigate settings set <key> <value> --encrypted
+better-apigate settings set <key> <value> --encrypted
 
 # Delete a setting
-apigate settings delete <key>
+better-apigate settings delete <key>
 ```
 
 ---
@@ -233,16 +233,16 @@ Usage commands require specifying a user via `--user` or `--email`:
 
 ```bash
 # Usage summary for current period
-apigate usage summary --user <user-id>
-apigate usage summary --email user@example.com
+better-apigate usage summary --user <user-id>
+better-apigate usage summary --email user@example.com
 
 # Usage history (last N periods)
-apigate usage history --user <user-id>
-apigate usage history --user <user-id> --periods 12
+better-apigate usage history --user <user-id>
+better-apigate usage history --user <user-id> --periods 12
 
 # Recent requests
-apigate usage recent --user <user-id>
-apigate usage recent --email user@example.com --limit 50
+better-apigate usage recent --user <user-id>
+better-apigate usage recent --email user@example.com --limit 50
 ```
 
 **Available flags:**
@@ -255,20 +255,20 @@ apigate usage recent --email user@example.com --limit 50
 
 ## Module-Based Commands
 
-The `apigate mod` command provides CRUD operations through the module system:
+The `better-apigate mod` command provides CRUD operations through the module system:
 
 ```bash
 # List available modules
-apigate mod
+better-apigate mod
 
 # Examples
-apigate mod users list
-apigate mod plans get free
-apigate mod upstreams create --name "API" --url "https://api.example.com"
-apigate mod routes list
-apigate mod api_keys list
-apigate mod groups list
-apigate mod certificates list
+better-apigate mod users list
+better-apigate mod plans get free
+better-apigate mod upstreams create --name "API" --url "https://api.example.com"
+better-apigate mod routes list
+better-apigate mod api_keys list
+better-apigate mod groups list
+better-apigate mod certificates list
 ```
 
 **Available modules:**
@@ -288,7 +288,7 @@ apigate mod certificates list
 ## Interactive Shell
 
 ```bash
-apigate shell
+better-apigate shell
 ```
 
 Starts an interactive shell for running multiple commands.

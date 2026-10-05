@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/memory"
-	"github.com/artpar/apigate/domain/key"
+	"github.com/coolqoo/better-apigate/adapters/memory"
+	"github.com/coolqoo/better-apigate/domain/key"
 )
 
 func TestKeyStore_NewKeyStore(t *testing.T) {
@@ -300,7 +300,7 @@ func TestKeyStore_ConcurrentAccess(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			k := key.Key{
-				ID:     string(rune('a' + idx%26)) + string(rune('0'+idx/26)),
+				ID:     string(rune('a'+idx%26)) + string(rune('0'+idx/26)),
 				UserID: "user1",
 				Prefix: "prefix",
 			}

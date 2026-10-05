@@ -2,7 +2,7 @@
 
 > Implementation: `adapters/http/admin/`
 
-This document defines all JSON:API resource types used in the APIGate API.
+This document defines all JSON:API resource types used in the better-apigate API.
 
 ## Resource Type Constants
 

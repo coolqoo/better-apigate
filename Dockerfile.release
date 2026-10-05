@@ -2,9 +2,9 @@ FROM alpine:3.23
 ARG TARGETARCH
 RUN apk add --no-cache ca-certificates tzdata && addgroup -S apigate && adduser -S -G apigate apigate
 WORKDIR /app
-COPY build/linux/${TARGETARCH}/apigate /app/apigate
+COPY build/linux/${TARGETARCH}/better-apigate /app/better-apigate
 USER apigate
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s CMD wget -q -O /dev/null http://127.0.0.1:8080/ready || exit 1
-ENTRYPOINT ["/app/apigate"]
+ENTRYPOINT ["/app/better-apigate"]
 CMD ["serve"]

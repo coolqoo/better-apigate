@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/config"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/config"
 )
 
 // databaseDSN overrides deployment configuration for an administrative command.

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/core/convention"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/core/convention"
 	"github.com/google/uuid"
 )
 

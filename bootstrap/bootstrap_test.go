@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/bootstrap"
 	"github.com/spf13/cobra"
 )
 
@@ -147,8 +147,8 @@ func TestBootstrap_SettingsLoad(t *testing.T) {
 		t.Errorf("expected key_prefix 'ak_', got '%s'", s.Get("auth.key_prefix"))
 	}
 
-	if s.Get("portal.app_name") != "APIGate" {
-		t.Errorf("expected app_name 'APIGate', got '%s'", s.Get("portal.app_name"))
+	if s.Get("portal.app_name") != "better-apigate" {
+		t.Errorf("expected app_name 'better-apigate', got '%s'", s.Get("portal.app_name"))
 	}
 }
 

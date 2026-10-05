@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/auth"
-	"github.com/artpar/apigate/adapters/clock"
-	"github.com/artpar/apigate/adapters/memory"
-	"github.com/artpar/apigate/app"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/plan"
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/auth"
+	"github.com/coolqoo/better-apigate/adapters/clock"
+	"github.com/coolqoo/better-apigate/adapters/memory"
+	"github.com/coolqoo/better-apigate/app"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/plan"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -379,12 +379,12 @@ func TestProxyService_Handle_WithRouteMatching(t *testing.T) {
 	}
 	upstreams := []route.Upstream{
 		{
-			ID:       "upstream-1",
-			Name:     "Backend",
-			BaseURL:  "https://backend.example.com",
-			AuthType: route.AuthBearer,
+			ID:        "upstream-1",
+			Name:      "Backend",
+			BaseURL:   "https://backend.example.com",
+			AuthType:  route.AuthBearer,
 			AuthValue: "test-token",
-			Enabled:  true,
+			Enabled:   true,
 		},
 	}
 	routeStore := &mockRouteStore{routes: routes}
@@ -633,9 +633,9 @@ func TestProxyService_ShouldStream(t *testing.T) {
 
 	// Without route service, should check Accept header
 	tests := []struct {
-		name    string
-		req     proxy.Request
-		want    bool
+		name string
+		req  proxy.Request
+		want bool
 	}{
 		{
 			"no streaming headers",
@@ -788,10 +788,10 @@ func TestProxyService_EvalStreamingMetering(t *testing.T) {
 	auth := &proxy.AuthContext{UserID: "user-1", PlanID: "free", KeyID: "key-1"}
 
 	tests := []struct {
-		name         string
-		meteringExpr string
+		name          string
+		meteringExpr  string
 		responseBytes int64
-		want         float64
+		want          float64
 	}{
 		{
 			"simple count",
@@ -1348,7 +1348,7 @@ func TestProxyService_Handle_JWTBillingRoute_UserNotInDB(t *testing.T) {
 		t.Fatalf("failed to generate JWT: %v", err)
 	}
 
-	// No user created in store — simulates external auth (user in Hoster, not in APIGate DB)
+	// No user created in store — simulates external auth (user in Hoster, not in better-apigate DB)
 
 	req := proxy.Request{
 		APIKey:    jwt,

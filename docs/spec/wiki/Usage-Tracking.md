@@ -8,7 +8,7 @@
 
 Usage events come from two sources:
 
-1. **Proxy Requests** - Every request through APIGate is automatically tracked
+1. **Proxy Requests** - Every request through better-apigate is automatically tracked
 2. **External Services** - Downstream services can submit events via the [[Metering-API]]
 
 ### Proxy Request Tracking
@@ -290,10 +290,10 @@ curl http://localhost:8080/metrics
 
 ```bash
 # Keep detailed logs for 30 days
-apigate settings set usage_retention_days 30
+better-apigate settings set usage_retention_days 30
 
 # Keep aggregates for 365 days
-apigate settings set usage_aggregate_retention_days 365
+better-apigate settings set usage_aggregate_retention_days 365
 ```
 
 ### Cleanup
@@ -314,10 +314,10 @@ APIGATE_USAGE_CLEANUP_ENABLED=true
 
 ```bash
 # Don't store IP addresses
-apigate settings set usage_store_ip false
+better-apigate settings set usage_store_ip false
 
 # Don't store paths
-apigate settings set usage_store_path false
+better-apigate settings set usage_store_path false
 ```
 
 ### Data Export (GDPR)
@@ -387,17 +387,17 @@ Multiple usage records written in batches:
 
 ```bash
 # Configure batch size
-apigate settings set usage_batch_size 100
+better-apigate settings set usage_batch_size 100
 
 # Configure flush interval
-apigate settings set usage_flush_interval_ms 1000
+better-apigate settings set usage_flush_interval_ms 1000
 ```
 
 ### Storage Optimization
 
 ```bash
 # Enable compression
-apigate settings set usage_compression true
+better-apigate settings set usage_compression true
 
 # Use separate database
 APIGATE_USAGE_DATABASE_PATH=/data/usage.db
@@ -411,7 +411,7 @@ APIGATE_USAGE_DATABASE_PATH=/data/usage.db
 
 1. Check tracking enabled:
    ```bash
-   apigate settings get usage_tracking_enabled
+   better-apigate settings get usage_tracking_enabled
    ```
 
 2. Check disk space for database

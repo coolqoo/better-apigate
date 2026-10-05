@@ -1,6 +1,6 @@
 # Proxying
 
-APIGate acts as a reverse proxy, forwarding authenticated requests to upstream services.
+better-apigate acts as a reverse proxy, forwarding authenticated requests to upstream services.
 
 ---
 
@@ -16,7 +16,7 @@ APIGate acts as a reverse proxy, forwarding authenticated requests to upstream s
 │      │ Request + API Key                                    │
 │      ▼                                                      │
 │   ┌─────────────┐                                           │
-│   │  APIGate    │                                           │
+│   │  better-apigate    │                                           │
 │   │             │  1. Authenticate                          │
 │   │  - Auth     │  2. Rate limit                            │
 │   │  - Rate     │  3. Route match                           │
@@ -70,7 +70,7 @@ See [[Routes]] and [[Upstreams]] for details.
 
 ### Headers Added
 
-APIGate adds these headers to upstream requests:
+better-apigate adds these headers to upstream requests:
 
 | Header | Description |
 |--------|-------------|

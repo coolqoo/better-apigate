@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/artpar/apigate/internal/contracts"
+	"github.com/coolqoo/better-apigate/internal/contracts"
 	"os"
 )
 

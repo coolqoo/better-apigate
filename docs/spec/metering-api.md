@@ -2,13 +2,13 @@
 
 > Implementation: `adapters/http/admin/meter.go`
 
-The Metering API allows external services to submit usage events for billing purposes. This enables downstream services to report their own usage (deployments, compute time, storage, etc.) that doesn't pass through APIGate's proxy.
+The Metering API allows external services to submit usage events for billing purposes. This enables downstream services to report their own usage (deployments, compute time, storage, etc.) that doesn't pass through better-apigate's proxy.
 
 ## Overview
 
 ### Purpose
 
-APIGate tracks usage for requests that pass through its proxy automatically. However, external services need to report their own usage events for:
+better-apigate tracks usage for requests that pass through its proxy automatically. However, external services need to report their own usage events for:
 - Deployment lifecycle events (start, stop, scale)
 - Compute time billing
 - Storage usage

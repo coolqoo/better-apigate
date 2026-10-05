@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/bootstrap"
-	"github.com/artpar/apigate/core/channel/tty"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/core/channel/tty"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ import (
 var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Start interactive shell",
-	Long: `Start an interactive REPL for managing APIGate modules.
+	Long: `Start an interactive REPL for managing better-apigate modules.
 
 Examples:
   apigate shell

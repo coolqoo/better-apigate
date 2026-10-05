@@ -2,7 +2,7 @@
 
 > Implementation: `pkg/jsonapi/`
 
-APIGate implements the [JSON:API v1.1 specification](https://jsonapi.org/format/1.1/).
+better-apigate implements the [JSON:API v1.1 specification](https://jsonapi.org/format/1.1/).
 
 ## Content Type
 
@@ -241,7 +241,7 @@ POST requests should send resource data in the request body:
 }
 ```
 
-> Note: APIGate currently accepts flat JSON for creation, not wrapped in `data.attributes`. This may change in future versions.
+> Note: better-apigate currently accepts flat JSON for creation, not wrapped in `data.attributes`. This may change in future versions.
 
 ### Updating Resources
 
@@ -252,7 +252,7 @@ PUT/PATCH requests follow the same format as creation.
 Use the fluent builder API:
 
 ```go
-import "github.com/artpar/apigate/pkg/jsonapi"
+import "github.com/coolqoo/better-apigate/pkg/jsonapi"
 
 // Create a resource
 resource := jsonapi.NewResource("users", "usr_123").

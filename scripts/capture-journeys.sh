@@ -120,11 +120,11 @@ check_dependencies() {
 }
 
 check_server() {
-    log_info "Checking if APIGate server is running..."
+    log_info "Checking if better-apigate server is running..."
 
     if ! curl -s http://localhost:8080/health > /dev/null 2>&1; then
-        log_error "APIGate server is not running at localhost:8080"
-        log_error "Please start the server: ./apigate serve"
+        log_error "better-apigate server is not running at localhost:8080"
+        log_error "Please start the server: ./better-apigate serve"
         exit 1
     fi
 
@@ -254,7 +254,7 @@ generate_all_gifs() {
 main() {
     echo ""
     echo "=========================================="
-    echo "  APIGate User Journey Capture"
+    echo "  better-apigate User Journey Capture"
     echo "=========================================="
     echo ""
 

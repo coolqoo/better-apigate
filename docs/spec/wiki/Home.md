@@ -1,12 +1,12 @@
-# APIGate Documentation
+# better-apigate Documentation
 
 > **Self-hosted API monetization platform** - Turn your API into a revenue stream in minutes.
 
 ---
 
-## What is APIGate?
+## What is better-apigate?
 
-APIGate is a complete API gateway and monetization platform that helps developers and businesses:
+better-apigate is a complete API gateway and monetization platform that helps developers and businesses:
 
 - **Proxy & Protect** - Route requests to your backend with authentication and rate limiting
 - **Monetize** - Create pricing plans, manage subscriptions, collect payments
@@ -21,7 +21,7 @@ APIGate is a complete API gateway and monetization platform that helps developer
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       APIGate                                    │
+│                       better-apigate                                    │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
 │  │ Customer    │  │   Proxy     │  │   Admin     │             │
 │  │ Portal      │  │   Engine    │  │   Dashboard │             │
@@ -44,12 +44,12 @@ APIGate is a complete API gateway and monetization platform that helps developer
 ## Quick Links
 
 ### Getting Started
-- [[Installation]] - Deploy APIGate in 5 minutes
+- [[Installation]] - Deploy better-apigate in 5 minutes
 - [[Quick-Start]] - Your first API proxy
 - [[First-Customer]] - Onboard your first paying customer
 
 ### Core Concepts
-- [[Architecture]] - How APIGate works
+- [[Architecture]] - How better-apigate works
 - [[Upstreams]] - Configure backend services
 - [[Routes]] - Define API endpoints
 - [[API-Keys]] - Authentication system
@@ -98,7 +98,7 @@ APIGate is a complete API gateway and monetization platform that helps developer
 
 ## Architecture Overview
 
-APIGate follows a clean architecture with clear separation of concerns:
+better-apigate follows a clean architecture with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -118,7 +118,7 @@ APIGate follows a clean architecture with clear separation of concerns:
 
 ---
 
-## Who Uses APIGate?
+## Who Uses better-apigate?
 
 **API Sellers (You)**
 - Indie hackers monetizing side projects
@@ -135,9 +135,9 @@ APIGate follows a clean architecture with clear separation of concerns:
 
 ## Getting Help
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/artpar/apigate/issues)
+- **GitHub Issues**: [Report bugs and request features](https://github.com/coolqoo/better-apigate/issues)
 - **Documentation**: You're here!
-- **Source Code**: [GitHub Repository](https://github.com/artpar/apigate)
+- **Source Code**: [GitHub Repository](https://github.com/coolqoo/better-apigate)
 
 ---
 

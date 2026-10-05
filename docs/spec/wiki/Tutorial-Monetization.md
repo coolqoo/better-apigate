@@ -17,7 +17,7 @@ In this tutorial, you'll:
 
 ## Prerequisites
 
-- APIGate running with basic setup complete
+- better-apigate running with basic setup complete
 - (Optional) Stripe account for payments
 
 ---
@@ -156,11 +156,11 @@ Let customers sign up and manage their subscriptions:
 
 ```bash
 # Enable portal
-apigate settings set portal.enabled true
+better-apigate settings set portal.enabled true
 
 # Branding
-apigate settings set portal.app_name "Your API Company"
-apigate settings set custom.logo_url "https://yoursite.com/logo.png"
+better-apigate settings set portal.app_name "Your API Company"
+better-apigate settings set custom.logo_url "https://yoursite.com/logo.png"
 ```
 
 Now customers can:
@@ -177,9 +177,9 @@ Now customers can:
 
 ```bash
 # Configure Stripe
-apigate settings set payment.provider stripe
-apigate settings set payment.stripe.secret_key "sk_live_xxx" --encrypted
-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
+better-apigate settings set payment.provider stripe
+better-apigate settings set payment.stripe.secret_key "sk_live_xxx" --encrypted
+better-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
 ```
 
 Link Stripe prices to plans via the Admin UI:
@@ -234,10 +234,10 @@ Or use the CLI:
 
 ```bash
 # View user usage summary
-apigate usage summary --user user@example.com
+better-apigate usage summary --user user@example.com
 
 # View usage history
-apigate usage history --user user@example.com --periods 6
+better-apigate usage history --user user@example.com --periods 6
 ```
 
 Key metrics to track:
@@ -300,10 +300,10 @@ Use the Admin UI Analytics page to:
 
 ```bash
 # Check individual user usage
-apigate usage summary --user user@example.com
+better-apigate usage summary --user user@example.com
 
 # View recent requests
-apigate usage recent --user user@example.com --limit 50
+better-apigate usage recent --user user@example.com --limit 50
 ```
 
 ---

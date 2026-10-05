@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/domain/entitlement"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/domain/webhook"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/domain/entitlement"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 func setupTestDB(t *testing.T) (*sqlite.DB, func()) {
@@ -510,30 +510,30 @@ func TestUsageStore_RecordBatch(t *testing.T) {
 
 	events := []usage.Event{
 		{
-			ID:            "evt-1",
-			KeyID:         "key-1",
-			UserID:        "user-1",
-			Method:        "GET",
-			Path:          "/api/data",
-			StatusCode:    200,
-			LatencyMs:     50,
-			RequestBytes:  100,
-			ResponseBytes: 500,
+			ID:             "evt-1",
+			KeyID:          "key-1",
+			UserID:         "user-1",
+			Method:         "GET",
+			Path:           "/api/data",
+			StatusCode:     200,
+			LatencyMs:      50,
+			RequestBytes:   100,
+			ResponseBytes:  500,
 			CostMultiplier: 1.0,
-			Timestamp:     time.Now().UTC(),
+			Timestamp:      time.Now().UTC(),
 		},
 		{
-			ID:            "evt-2",
-			KeyID:         "key-1",
-			UserID:        "user-1",
-			Method:        "POST",
-			Path:          "/api/data",
-			StatusCode:    201,
-			LatencyMs:     100,
-			RequestBytes:  500,
-			ResponseBytes: 200,
+			ID:             "evt-2",
+			KeyID:          "key-1",
+			UserID:         "user-1",
+			Method:         "POST",
+			Path:           "/api/data",
+			StatusCode:     201,
+			LatencyMs:      100,
+			RequestBytes:   500,
+			ResponseBytes:  200,
 			CostMultiplier: 2.0,
-			Timestamp:     time.Now().UTC(),
+			Timestamp:      time.Now().UTC(),
 		},
 	}
 
@@ -2904,14 +2904,14 @@ func TestDeliveryStore_CRUD(t *testing.T) {
 	now := time.Now().UTC()
 	nextRetry := now.Add(time.Hour)
 	del := webhook.Delivery{
-		ID:         "del-1",
-		WebhookID:  "wh-del-1",
-		EventID:    "evt-1",
-		Payload:    `{"test": true}`,
-		Status:     webhook.DeliveryPending,
-		Attempt:    0,
-		NextRetry:  &nextRetry,
-		CreatedAt:  now,
+		ID:        "del-1",
+		WebhookID: "wh-del-1",
+		EventID:   "evt-1",
+		Payload:   `{"test": true}`,
+		Status:    webhook.DeliveryPending,
+		Attempt:   0,
+		NextRetry: &nextRetry,
+		CreatedAt: now,
 	}
 
 	if err := store.Create(ctx, del); err != nil {

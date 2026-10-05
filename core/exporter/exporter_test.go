@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/core/analytics"
+	"github.com/coolqoo/better-apigate/core/analytics"
 )
 
 // MockStore implements analytics.Store for testing
 type MockStore struct {
-	events      []analytics.Event
-	summaries   []analytics.Summary
+	events       []analytics.Event
+	summaries    []analytics.Summary
 	aggregateErr error
 	writeErr     error
 }
@@ -47,11 +47,11 @@ func (m *MockStore) Close() error {
 
 // MockExporter implements Exporter for testing
 type MockExporter struct {
-	name      string
-	startErr  error
-	stopErr   error
-	started   bool
-	stopped   bool
+	name     string
+	startErr error
+	stopErr  error
+	started  bool
+	stopped  bool
 }
 
 func (m *MockExporter) Name() string {

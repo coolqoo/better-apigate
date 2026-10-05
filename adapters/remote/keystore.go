@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // KeyStore delegates key operations to an external HTTP service.

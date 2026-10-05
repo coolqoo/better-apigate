@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/bootstrap"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -21,9 +21,9 @@ func init() {
 		Long: `Access declarative module CRUD operations.
 
 These commands use the module system to manage entities:
-  apigate mod users list
-  apigate mod plans get free
-  apigate mod upstreams create --name "API" --base_url "https://api.example.com"
+  better-apigate mod users list
+  better-apigate mod plans get free
+  better-apigate mod upstreams create --name "API" --base_url "https://api.example.com"
 
 Available subcommands are generated from loaded modules.`,
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {

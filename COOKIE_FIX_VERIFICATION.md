@@ -272,13 +272,13 @@ $ go test ./adapters/http/admin/... -v -run "Cookie"
 --- PASS: TestAdminCookie_Value_Base64Encoded (0.00s)
 
 PASS
-ok  	github.com/artpar/apigate/adapters/http/admin	0.863s
+ok  	github.com/coolqoo/better-apigate/adapters/http/admin	0.863s
 ```
 
 ```
 $ go test ./adapters/http/admin/... -coverprofile=/tmp/admin-coverage.out
 
-ok  	github.com/artpar/apigate/adapters/http/admin	11.373s	coverage: 76.1% of statements
+ok  	github.com/coolqoo/better-apigate/adapters/http/admin	11.373s	coverage: 76.1% of statements
 
 $ go tool cover -func=/tmp/admin-coverage.out | grep "total:"
 total:								(statements)			76.1%

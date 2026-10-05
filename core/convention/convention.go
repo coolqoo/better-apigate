@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Derived contains all derived information from a module definition.

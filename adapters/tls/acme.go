@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	domaintls "github.com/artpar/apigate/domain/tls"
-	"github.com/artpar/apigate/ports"
+	domaintls "github.com/coolqoo/better-apigate/domain/tls"
+	"github.com/coolqoo/better-apigate/ports"
 	"golang.org/x/crypto/acme"
 )
 

@@ -2,7 +2,7 @@
 package portal
 
 import (
-	"github.com/artpar/apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/domain/wallet"
 	"time"
 )
 

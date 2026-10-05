@@ -18,9 +18,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/domain/wallet"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // EPUSDTRevision pins the upstream GMPay API contract used by this adapter.

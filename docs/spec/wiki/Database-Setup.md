@@ -1,6 +1,6 @@
 # Database Setup
 
-APIGate uses SQLite as its database with automatic schema migrations.
+better-apigate uses SQLite as its database with automatic schema migrations.
 
 ---
 
@@ -24,7 +24,7 @@ The database file is created at the specified path. Default is `apigate.db` in t
 
 ### Built-in Optimizations
 
-APIGate configures SQLite with the following optimizations automatically:
+better-apigate configures SQLite with the following optimizations automatically:
 
 - **WAL mode** - Enables concurrent reads during writes
 - **Busy timeout** - 5000ms wait on lock contention
@@ -38,7 +38,7 @@ These are hardcoded for optimal performance; no configuration is required.
 
 ## Automatic Migrations
 
-Schema migrations are embedded in the binary and run automatically when APIGate starts or during `apigate init`. There is no manual migration command.
+Schema migrations are embedded in the binary and run automatically when better-apigate starts or during `better-apigate init`. There is no manual migration command.
 
 ### Migration Tracking
 
@@ -70,17 +70,17 @@ Migration files are located in `adapters/sqlite/migrations/` in the source code:
 ### Backup
 
 ```bash
-# Simple file copy (while APIGate is stopped)
+# Simple file copy (while better-apigate is stopped)
 cp apigate.db apigate-backup-$(date +%Y%m%d).db
 
-# Or with SQLite backup command (can run while APIGate is running)
+# Or with SQLite backup command (can run while better-apigate is running)
 sqlite3 apigate.db ".backup 'backup.db'"
 ```
 
 ### Restore
 
 ```bash
-# Stop APIGate first, then:
+# Stop better-apigate first, then:
 cp backup.db apigate.db
 ```
 
@@ -97,7 +97,7 @@ cp backup.db apigate.db
 - Long-running transaction
 
 **Solutions**:
-- Ensure only one APIGate instance uses the database file
+- Ensure only one better-apigate instance uses the database file
 - Check for stale locks: `fuser apigate.db`
 - The built-in 5-second busy timeout handles most temporary locks
 
@@ -106,7 +106,7 @@ cp backup.db apigate.db
 **Error**: `database disk image is malformed`
 
 **Solutions**:
-1. Stop APIGate
+1. Stop better-apigate
 2. Try recovery:
 ```bash
 sqlite3 apigate.db ".recover" | sqlite3 recovered.db

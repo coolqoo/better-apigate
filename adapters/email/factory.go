@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // NewSender creates an email sender based on settings.
@@ -30,7 +30,7 @@ func NewSender(s settings.Settings) (ports.EmailSender, error) {
 			UseImplicit: port == 465,
 			Timeout:     30 * time.Second,
 			BaseURL:     s.Get(settings.KeyPortalBaseURL),
-			AppName:     s.GetOrDefault(settings.KeyPortalAppName, "APIGate"),
+			AppName:     s.GetOrDefault(settings.KeyPortalAppName, "better-apigate"),
 		}
 		if config.Host == "" {
 			return nil, fmt.Errorf("SMTP host is required")
@@ -39,7 +39,7 @@ func NewSender(s settings.Settings) (ports.EmailSender, error) {
 
 	case "mock":
 		baseURL := s.Get(settings.KeyPortalBaseURL)
-		appName := s.GetOrDefault(settings.KeyPortalAppName, "APIGate")
+		appName := s.GetOrDefault(settings.KeyPortalAppName, "better-apigate")
 		return NewMockSender(baseURL, appName), nil
 
 	case "none", "":

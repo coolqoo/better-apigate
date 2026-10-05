@@ -1,18 +1,18 @@
 # Quick Start
 
-Get APIGate running and proxy your first API in 5 minutes.
+Get better-apigate running and proxy your first API in 5 minutes.
 
 ---
 
-## Step 1: Start APIGate
+## Step 1: Start better-apigate
 
 ```bash
-./apigate serve
+./better-apigate serve
 ```
 
 You'll see:
 ```
-APIGate starting...
+better-apigate starting...
 Admin UI:    http://localhost:8080/ui
 Portal:      http://localhost:8080/portal
 Docs:        http://localhost:8080/docs
@@ -33,7 +33,7 @@ API:         http://localhost:8080/api
 
 ## Step 3: Create an Upstream
 
-An **upstream** is your backend API that APIGate will proxy requests to.
+An **upstream** is your backend API that better-apigate will proxy requests to.
 
 ### Via Admin UI
 
@@ -146,7 +146,7 @@ The key looks like: `ak_abc123def456...`
 ## Step 8: Test Your API
 
 ```bash
-# Make a request through APIGate
+# Make a request through better-apigate
 curl -H "X-API-Key: ak_YOUR_KEY_HERE" \
   http://localhost:8080/v1/endpoint
 
@@ -162,7 +162,7 @@ curl -H "X-API-Key: ak_YOUR_KEY_HERE" \
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────────┐
-│  Client  │────▶│ APIGate  │────▶│ Your Backend │
+│  Client  │────▶│ better-apigate  │────▶│ Your Backend │
 │          │     │          │     │              │
 │ API Key  │     │ • Auth   │     │ api.example  │
 │ X-API-Key│     │ • Rate   │     │ .com/v1/...  │
@@ -171,10 +171,10 @@ curl -H "X-API-Key: ak_YOUR_KEY_HERE" \
 ```
 
 1. Client sends request with API key
-2. APIGate validates the key
-3. APIGate checks rate limit
-4. APIGate forwards to upstream
-5. APIGate records usage
+2. better-apigate validates the key
+3. better-apigate checks rate limit
+4. better-apigate forwards to upstream
+5. better-apigate records usage
 6. Response returned to client
 
 ---

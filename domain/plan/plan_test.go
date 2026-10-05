@@ -3,7 +3,7 @@ package plan_test
 import (
 	"testing"
 
-	"github.com/artpar/apigate/domain/plan"
+	"github.com/coolqoo/better-apigate/domain/plan"
 )
 
 func TestGetCostMultiplier_DefaultMultiplier(t *testing.T) {
@@ -78,9 +78,9 @@ func TestGetCostMultiplier_MethodFiltering(t *testing.T) {
 	}{
 		{"POST", 5.0},
 		{"DELETE", 10.0},
-		{"GET", 1.0},    // no match
-		{"PUT", 1.0},    // no match
-		{"PATCH", 1.0},  // no match
+		{"GET", 1.0},   // no match
+		{"PUT", 1.0},   // no match
+		{"PATCH", 1.0}, // no match
 	}
 
 	for _, tt := range tests {
@@ -170,9 +170,9 @@ func TestFindPlan_EmptyList(t *testing.T) {
 
 func TestIsUnlimited(t *testing.T) {
 	tests := []struct {
-		name   string
-		plan   plan.Plan
-		want   bool
+		name string
+		plan plan.Plan
+		want bool
 	}{
 		{
 			"unlimited plan",

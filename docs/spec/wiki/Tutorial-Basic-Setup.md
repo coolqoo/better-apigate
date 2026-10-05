@@ -1,31 +1,31 @@
 # Tutorial: Basic Setup
 
-Set up APIGate from scratch and proxy your first API in 15 minutes.
+Set up better-apigate from scratch and proxy your first API in 15 minutes.
 
 ---
 
 ## Prerequisites
 
-- APIGate binary downloaded
+- better-apigate binary downloaded
 - Terminal access
 - A backend API to proxy (or use our test API)
 
 ---
 
-## Step 1: Start APIGate
+## Step 1: Start better-apigate
 
-Create a directory and start APIGate:
+Create a directory and start better-apigate:
 
 ```bash
 mkdir apigate-demo
 cd apigate-demo
 
-./apigate serve
+./better-apigate serve
 ```
 
 You'll see:
 ```
-APIGate v1.0.0 starting...
+better-apigate v1.0.0 starting...
 Database: ./data/apigate.db (created)
 Admin UI:    http://localhost:8080/ui
 Portal:      http://localhost:8080/portal
@@ -143,7 +143,7 @@ Open a terminal and test with curl:
 # Replace YOUR_API_KEY with the key you copied
 API_KEY="ak_your_key_here"
 
-# Make a request through APIGate
+# Make a request through better-apigate
 curl -H "X-API-Key: $API_KEY" \
   http://localhost:8080/api/users/1
 ```
@@ -215,7 +215,7 @@ You'll see:
 │       │                                                      │
 │       ▼                                                      │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │                   APIGate                            │    │
+│  │                   better-apigate                            │    │
 │  │  ✓ Authenticate API key                             │    │
 │  │  ✓ Check rate limit (60/min)                        │    │
 │  │  ✓ Check quota (1000/month)                         │    │
@@ -275,11 +275,11 @@ Now that you have a basic setup:
 If you prefer CLI over UI:
 
 ```bash
-# Start APIGate
-./apigate serve &
+# Start better-apigate
+./better-apigate serve &
 
 # Create admin user (you'll be prompted for password)
-./apigate admin create --email admin@example.com
+./better-apigate admin create --email admin@example.com
 
 # Create upstream
 ./apigate upstreams create \
@@ -324,7 +324,7 @@ curl -H "X-API-Key: ak_abc123def456..." \
 
 In this tutorial, you:
 
-1. ✅ Started APIGate
+1. ✅ Started better-apigate
 2. ✅ Completed setup wizard
 3. ✅ Created an upstream (backend API)
 4. ✅ Created a route (URL mapping)

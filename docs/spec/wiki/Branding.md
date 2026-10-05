@@ -1,6 +1,6 @@
 # Branding
 
-Customize the look and feel of APIGate's customer-facing pages.
+Customize the look and feel of better-apigate's customer-facing pages.
 
 ---
 
@@ -39,14 +39,14 @@ All branding settings use the `custom.*` namespace in the settings system.
 
 ```bash
 # Logo
-apigate settings set custom.logo_url "https://example.com/logo.png"
+better-apigate settings set custom.logo_url "https://example.com/logo.png"
 
 # Colors
-apigate settings set custom.primary_color "#4F46E5"
+better-apigate settings set custom.primary_color "#4F46E5"
 
 # Support contact
-apigate settings set custom.support_email "support@acme.com"
-apigate settings set custom.support_url "https://docs.acme.com"
+better-apigate settings set custom.support_email "support@acme.com"
+better-apigate settings set custom.support_url "https://docs.acme.com"
 ```
 
 ### Via Web UI
@@ -61,10 +61,10 @@ Inject custom CSS into docs or portal pages:
 
 ```bash
 # For documentation pages
-apigate settings set custom.docs_css ".header { background: linear-gradient(...); }"
+better-apigate settings set custom.docs_css ".header { background: linear-gradient(...); }"
 
 # For portal pages
-apigate settings set custom.portal_css ".button { border-radius: 8px; }"
+better-apigate settings set custom.portal_css ".button { border-radius: 8px; }"
 ```
 
 ---
@@ -75,13 +75,13 @@ Add custom HTML to pages:
 
 ```bash
 # Custom footer
-apigate settings set custom.footer_html "<p>© 2024 Acme Corp</p>"
+better-apigate settings set custom.footer_html "<p>© 2024 Acme Corp</p>"
 
 # Custom docs welcome section
-apigate settings set custom.docs_home_html "<div class='welcome'>...</div>"
+better-apigate settings set custom.docs_home_html "<div class='welcome'>...</div>"
 
 # Custom portal welcome
-apigate settings set custom.portal_welcome_html "<div class='intro'>...</div>"
+better-apigate settings set custom.portal_welcome_html "<div class='intro'>...</div>"
 ```
 
 ---

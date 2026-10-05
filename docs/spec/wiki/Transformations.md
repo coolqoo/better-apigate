@@ -1,6 +1,6 @@
 # Transformations
 
-**Transformations** modify requests and responses as they pass through APIGate using the [Expr expression language](https://expr-lang.org/).
+**Transformations** modify requests and responses as they pass through better-apigate using the [Expr expression language](https://expr-lang.org/).
 
 ---
 
@@ -63,7 +63,7 @@ Transforms are configured per-route as JSON objects:
   },
   "response_transform": {
     "set_headers": {
-      "X-Powered-By": "\"APIGate\""
+      "X-Powered-By": "\"better-apigate\""
     },
     "delete_headers": ["Server", "X-Debug"],
     "body_expr": "{\"success\": true, \"result\": respBody}"
@@ -317,7 +317,7 @@ Examples:
 {
   "response_transform": {
     "set_headers": {
-      "X-Powered-By": "\"APIGate\"",
+      "X-Powered-By": "\"better-apigate\"",
       "X-Request-User": "userID"
     },
     "delete_headers": ["Server", "X-Internal-Version", "X-Debug-Info"]

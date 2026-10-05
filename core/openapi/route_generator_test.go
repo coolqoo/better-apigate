@@ -3,7 +3,7 @@ package openapi
 import (
 	"testing"
 
-	"github.com/artpar/apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/route"
 )
 
 func TestNewRouteGenerator(t *testing.T) {

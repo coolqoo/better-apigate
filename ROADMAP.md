@@ -125,7 +125,7 @@ func (b *EventBus) Subscribe(event string, handler EventHandler)
 **Fix**: Add onAction handler that calls API endpoint
 
 ### 2.2 Add Usage Analytics Dashboard
-**Gap**: CLI has `apigate usage summary|history|recent`, WebUI has nothing
+**Gap**: CLI has `better-apigate usage summary|history|recent`, WebUI has nothing
 
 **Implementation**:
 - New page: `webui/src/pages/UsageDashboard.tsx`
@@ -133,7 +133,7 @@ func (b *EventBus) Subscribe(event string, handler EventHandler)
 - Components: Charts, tables, date range picker
 
 ### 2.3 Add Admin User Management
-**Gap**: CLI has `apigate admin`, WebUI has no equivalent
+**Gap**: CLI has `better-apigate admin`, WebUI has no equivalent
 
 **Implementation**:
 - New page: `webui/src/pages/AdminSettings.tsx`

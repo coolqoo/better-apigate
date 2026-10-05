@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/artpar/apigate/adapters/idgen"
+	"github.com/coolqoo/better-apigate/adapters/idgen"
 )
 
 func TestUUID_New(t *testing.T) {

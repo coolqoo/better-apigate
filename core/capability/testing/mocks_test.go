@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/artpar/apigate/core/capability"
-	captest "github.com/artpar/apigate/core/capability/testing"
+	"github.com/coolqoo/better-apigate/core/capability"
+	captest "github.com/coolqoo/better-apigate/core/capability/testing"
 )
 
 func TestMockPayment(t *testing.T) {
@@ -60,8 +60,8 @@ func TestMockEmail(t *testing.T) {
 	email := captest.NewMockEmail("smtp_test")
 
 	msg := capability.EmailMessage{
-		To:      "recipient@example.com",
-		Subject: "Test Subject",
+		To:       "recipient@example.com",
+		Subject:  "Test Subject",
 		HTMLBody: "<p>Hello</p>",
 	}
 

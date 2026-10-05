@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/artpar/apigate/domain/entitlement"
+	"github.com/coolqoo/better-apigate/domain/entitlement"
 )
 
 // PlanEntitlementStore implements ports.PlanEntitlementStore with SQLite.

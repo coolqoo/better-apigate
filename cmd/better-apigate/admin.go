@@ -10,9 +10,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/artpar/apigate/adapters/hasher"
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/hasher"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
@@ -21,15 +21,15 @@ import (
 var adminCmd = &cobra.Command{
 	Use:   "admin",
 	Short: "Manage admin users",
-	Long: `Manage APIGate admin users who can access the web UI.
+	Long: `Manage better-apigate admin users who can access the web UI.
 
 Admin users have a password and can log into the web dashboard
 to manage routes, upstreams, API keys, and view usage.
 
 Examples:
-  apigate admin list
-  apigate admin create --email=admin@example.com
-  apigate admin reset-password admin@example.com
+  better-apigate admin list
+  better-apigate admin create --email=admin@example.com
+  better-apigate admin reset-password admin@example.com
 
 Set APIGATE_DATABASE_DSN to the PostgreSQL connection URL before running
 administrative operations. The browser setup flow is available at /setup.`,
@@ -49,8 +49,8 @@ var adminCreateCmd = &cobra.Command{
 If --password is not provided, you will be prompted to enter it securely.
 
 Examples:
-  apigate admin create --email=admin@example.com
-  apigate admin create --email=admin@example.com --password=secret`,
+  better-apigate admin create --email=admin@example.com
+  better-apigate admin create --email=admin@example.com --password=secret`,
 	RunE: runAdminCreate,
 }
 
@@ -62,8 +62,8 @@ var adminResetPasswordCmd = &cobra.Command{
 If --password is not provided, you will be prompted to enter it securely.
 
 Examples:
-  apigate admin reset-password admin@example.com
-  apigate admin reset-password admin@example.com --password=newpassword`,
+  better-apigate admin reset-password admin@example.com
+  better-apigate admin reset-password admin@example.com --password=newpassword`,
 	Args: cobra.ExactArgs(1),
 	RunE: runAdminResetPassword,
 }
@@ -121,7 +121,7 @@ func runAdminList(cmd *cobra.Command, args []string) error {
 	if len(admins) == 0 {
 		fmt.Println("No admin users found.")
 		fmt.Println()
-		fmt.Println("Create an admin user with: apigate admin create --email=admin@example.com")
+		fmt.Println("Create an admin user with: better-apigate admin create --email=admin@example.com")
 		return nil
 	}
 

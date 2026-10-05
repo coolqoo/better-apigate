@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/webhook"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 
@@ -37,9 +37,9 @@ func NewWebhookService(
 	shutdownCtx, shutdownFn := context.WithCancel(context.Background())
 
 	return &WebhookService{
-		webhooks:    webhooks,
-		deliveries:  deliveries,
-		logger:      logger,
+		webhooks:   webhooks,
+		deliveries: deliveries,
+		logger:     logger,
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -136,7 +136,7 @@ func (s *WebhookService) sendWebhook(ctx context.Context, wh webhook.Webhook, de
 
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "APIGate-Webhook/1.0")
+	req.Header.Set("User-Agent", "better-apigate-Webhook/1.0")
 	req.Header.Set("X-Webhook-ID", wh.ID)
 	req.Header.Set("X-Event-ID", delivery.EventID)
 	req.Header.Set("X-Event-Type", string(delivery.EventType))

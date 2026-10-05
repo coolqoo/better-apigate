@@ -1,12 +1,12 @@
-// Package main is the entry point for APIGate.
+// Package main is the entry point for better-apigate.
 //
-//	@title						APIGate - API Monetization Proxy
+//	@title						better-apigate - API Monetization Proxy
 //	@version					1.0
 //	@description				Self-hosted API monetization solution with authentication, rate limiting, usage metering, and billing.
-//	@termsOfService				https://github.com/artpar/apigate
+//	@termsOfService				https://github.com/coolqoo/better-apigate
 //
-//	@contact.name				APIGate Support
-//	@contact.url				https://github.com/artpar/apigate/issues
+//	@contact.name				better-apigate Support
+//	@contact.url				https://github.com/coolqoo/better-apigate/issues
 //
 //	@license.name				MIT
 //	@license.url				https://opensource.org/licenses/MIT

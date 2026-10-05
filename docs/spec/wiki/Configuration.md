@@ -1,6 +1,6 @@
 # Configuration
 
-Configure APIGate via environment variables, command-line flags, or runtime settings.
+Configure better-apigate via environment variables, command-line flags, or runtime settings.
 
 ---
 
@@ -92,7 +92,7 @@ Configure APIGate via environment variables, command-line flags, or runtime sett
 |----------|---------|-------------|
 | `APIGATE_PORTAL_ENABLED` | `false` | Enable customer portal |
 | `APIGATE_PORTAL_BASE_URL` | - | Base URL for email links |
-| `APIGATE_PORTAL_APP_NAME` | `APIGate` | Application name in portal |
+| `APIGATE_PORTAL_APP_NAME` | `better-apigate` | Application name in portal |
 
 ### TLS/HTTPS
 
@@ -129,14 +129,14 @@ Configure APIGate via environment variables, command-line flags, or runtime sett
 
 ```bash
 # Start server with custom settings
-apigate serve \
+better-apigate serve \
   --host 0.0.0.0 \
   --port 8080 \
   --database ./data/apigate.db \
   --log-level debug
 
 # List all flags
-apigate serve --help
+better-apigate serve --help
 ```
 
 ### Common Flags
@@ -249,7 +249,7 @@ plans:
 ### Load Config File
 
 ```bash
-apigate serve --config ./apigate.yaml
+better-apigate serve --config ./apigate.yaml
 ```
 
 ---
@@ -262,8 +262,8 @@ Settings stored in database, manageable via UI/API/CLI.
 
 ```bash
 # CLI
-apigate settings list
-apigate settings get portal_enabled
+better-apigate settings list
+better-apigate settings get portal_enabled
 
 # API
 curl http://localhost:8080/admin/settings
@@ -274,8 +274,8 @@ curl http://localhost:8080/admin/settings/portal_enabled
 
 ```bash
 # CLI
-apigate settings set portal_enabled true
-apigate settings set portal_company_name "Acme API"
+better-apigate settings set portal_enabled true
+better-apigate settings set portal_company_name "Acme API"
 
 # API
 curl -X PUT http://localhost:8080/admin/settings/portal_enabled \
@@ -413,7 +413,7 @@ apigate secrets rotate --type encryption
 
 ### 3. Configure TLS/HTTPS
 
-APIGate supports built-in TLS with automatic certificate management (ACME/Let's Encrypt) or manual certificates.
+better-apigate supports built-in TLS with automatic certificate management (ACME/Let's Encrypt) or manual certificates.
 
 **Option A: Automatic ACME (Recommended)**
 ```bash

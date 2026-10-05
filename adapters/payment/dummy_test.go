@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/domain/billing"
 )
 
 func TestNewDummyProvider(t *testing.T) {

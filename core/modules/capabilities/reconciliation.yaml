@@ -4,7 +4,7 @@ capability: reconciliation
 
 description: |
   Reconciliation capability handles syncing and verifying payment data
-  between APIGate and external payment providers.
+  between better-apigate and external payment providers.
   Used for ensuring subscription status, invoice status, and usage data are in sync.
 
 schema:

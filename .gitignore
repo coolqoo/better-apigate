@@ -1,5 +1,6 @@
 # Binaries
 /apigate
+/better-apigate
 *.exe
 
 # Database files
@@ -29,6 +30,7 @@ e2e.test
 
 # Generated files
 apigate.yaml
+better-apigate.yaml
 apigate.db
 coverage.out
 

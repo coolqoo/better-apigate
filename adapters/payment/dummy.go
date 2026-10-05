@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/domain/billing"
 	"github.com/google/uuid"
 )
 

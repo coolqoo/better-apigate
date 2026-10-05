@@ -14,21 +14,21 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "apigate",
+	Use:   "better-apigate",
 	Short: "API monetization proxy with authentication, rate limiting, and billing",
-	Long: `APIGate is a self-hosted API monetization solution.
+	Long: `better-apigate is a self-hosted API monetization solution.
 
 It provides authentication, rate limiting, usage metering, and billing
 for your APIs. Deploy in front of any API to add monetization.
 
 Quick start:
-  apigate init      # Interactive setup wizard
-  apigate serve     # Start the proxy server
+  better-apigate init      # Interactive setup wizard
+  better-apigate serve     # Start the proxy server
 
 Management:
-  apigate mod      # Manage gateway configuration from YAML modules
-  apigate admin    # Manage administrators
-  apigate validate  # Validate configuration`,
+  better-apigate mod      # Manage gateway configuration from YAML modules
+  better-apigate admin    # Manage administrators
+  better-apigate validate  # Validate configuration`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -41,5 +41,5 @@ func Execute() {
 
 func init() {
 	// Global flags
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "apigate.yaml", "config file path")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "better-apigate.yaml", "config file path")
 }

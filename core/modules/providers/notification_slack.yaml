@@ -13,7 +13,7 @@ schema:
   webhook_url:       { type: secret, description: "Slack Incoming Webhook URL (simple integration)" }
   bot_token:         { type: secret, description: "Slack Bot Token (for API access, optional)" }
   default_channel:   { type: string, default: "#general", description: "Default channel for notifications" }
-  username:          { type: string, default: "APIGate", description: "Bot display name" }
+  username:          { type: string, default: "better-apigate", description: "Bot display name" }
   icon_emoji:        { type: string, default: ":robot_face:", description: "Bot icon emoji" }
   icon_url:          { type: string, description: "Bot icon URL (overrides emoji)" }
   rate_limit:        { type: int, default: 1, description: "Min seconds between messages to same channel" }

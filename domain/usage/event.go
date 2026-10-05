@@ -8,7 +8,7 @@ import "time"
 type EventSource string
 
 const (
-	SourceProxy    EventSource = "proxy"    // Event from APIGate proxy
+	SourceProxy    EventSource = "proxy"    // Event from better-apigate proxy
 	SourceExternal EventSource = "external" // Event from external service via metering API
 )
 

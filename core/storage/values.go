@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/artpar/apigate/core/convention"
+import "github.com/coolqoo/better-apigate/core/convention"
 
 // convertValue converts a Go value to a database value.
 func convertValue(val any, f convention.DerivedField) any {

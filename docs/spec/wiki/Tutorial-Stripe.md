@@ -17,7 +17,7 @@ Integrate Stripe to:
 
 ## Prerequisites
 
-- APIGate running with plans configured
+- better-apigate running with plans configured
 - Stripe account (test mode is fine)
 - Stripe CLI (optional, for webhook testing)
 
@@ -35,14 +35,14 @@ You'll need:
 
 ---
 
-## Step 2: Configure APIGate for Stripe
+## Step 2: Configure better-apigate for Stripe
 
 ```bash
 # Set payment provider
-apigate settings set payment.provider stripe
+better-apigate settings set payment.provider stripe
 
 # Configure API key (use --encrypted for secrets)
-apigate settings set payment.stripe.secret_key "sk_test_xxx" --encrypted
+better-apigate settings set payment.stripe.secret_key "sk_test_xxx" --encrypted
 
 # (We'll set webhook secret in Step 5)
 ```
@@ -57,7 +57,7 @@ export APIGATE_BILLING_STRIPE_KEY=sk_test_xxx
 
 ## Step 3: Create Products in Stripe
 
-Create products matching your APIGate plans:
+Create products matching your better-apigate plans:
 
 ### Via Stripe Dashboard
 
@@ -104,7 +104,7 @@ stripe prices create \
 
 ---
 
-## Step 4: Link Stripe Prices to APIGate Plans
+## Step 4: Link Stripe Prices to better-apigate Plans
 
 Link Stripe prices to plans via the Admin UI:
 
@@ -124,7 +124,7 @@ apigate plans get starter
 
 ## Step 5: Set Up Webhooks
 
-Stripe webhooks notify APIGate of payment events.
+Stripe webhooks notify better-apigate of payment events.
 
 ### Create Webhook Endpoint
 
@@ -145,7 +145,7 @@ In Stripe Dashboard → Developers → Webhooks:
 ### Configure Webhook Secret
 
 ```bash
-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
+better-apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
 ```
 
 ### Test Webhooks Locally
@@ -153,7 +153,7 @@ apigate settings set payment.stripe.webhook_secret "whsec_xxx" --encrypted
 Using Stripe CLI:
 
 ```bash
-# Forward webhooks to local APIGate
+# Forward webhooks to local better-apigate
 stripe listen --forward-to localhost:8080/webhooks/stripe
 
 # In another terminal, trigger test events
@@ -214,7 +214,7 @@ Use these test cards:
 5. Complete purchase
 6. User automatically upgraded to Starter plan
 
-### Verify in APIGate
+### Verify in better-apigate
 
 ```bash
 apigate users get test@example.com
@@ -229,9 +229,9 @@ Dashboard → Customers → Find customer → Shows active subscription
 
 ## Step 8: Handle Subscription Events
 
-APIGate automatically handles these events:
+better-apigate automatically handles these events:
 
-| Stripe Event | APIGate Action |
+| Stripe Event | better-apigate Action |
 |--------------|----------------|
 | `checkout.session.completed` | Create/update user, assign plan |
 | `customer.subscription.updated` | Change plan if price changed |
@@ -280,11 +280,11 @@ Stripe prorates automatically.
 
 1. Complete Stripe account verification
 2. Get live API keys
-3. Update APIGate:
+3. Update better-apigate:
 
 ```bash
-apigate settings set payment.stripe.secret_key "sk_live_xxx" --encrypted
-apigate settings set payment.stripe.webhook_secret "whsec_live_xxx" --encrypted
+better-apigate settings set payment.stripe.secret_key "sk_live_xxx" --encrypted
+better-apigate settings set payment.stripe.webhook_secret "whsec_live_xxx" --encrypted
 ```
 
 4. Create live webhook endpoint in Stripe
@@ -318,7 +318,7 @@ stripe prices create \
 
 ### Report Usage
 
-APIGate reports usage automatically at the end of each billing period.
+better-apigate reports usage automatically at the end of each billing period.
 
 ---
 
@@ -333,7 +333,7 @@ APIGate reports usage automatically at the end of each billing period.
 
 ### User Not Upgraded After Payment
 
-1. Check APIGate logs for webhook events
+1. Check better-apigate logs for webhook events
 2. Verify `customer.email` matches user email
 3. Check Stripe customer metadata
 
@@ -364,7 +364,7 @@ APIGate reports usage automatically at the end of each billing period.
 │  1. Customer clicks "Upgrade"                                    │
 │       │                                                          │
 │       ▼                                                          │
-│  2. APIGate creates Stripe Checkout Session                      │
+│  2. better-apigate creates Stripe Checkout Session                      │
 │       │                                                          │
 │       ▼                                                          │
 │  3. Customer enters payment on Stripe                            │
@@ -373,10 +373,10 @@ APIGate reports usage automatically at the end of each billing period.
 │  4. Stripe sends webhook: checkout.session.completed             │
 │       │                                                          │
 │       ▼                                                          │
-│  5. APIGate receives webhook                                     │
+│  5. better-apigate receives webhook                                     │
 │       │                                                          │
 │       ▼                                                          │
-│  6. APIGate assigns user to paid plan                            │
+│  6. better-apigate assigns user to paid plan                            │
 │       │                                                          │
 │       ▼                                                          │
 │  7. User immediately gets higher limits                          │
@@ -400,9 +400,9 @@ APIGate reports usage automatically at the end of each billing period.
 You've learned how to:
 
 1. ✅ Create Stripe account and get API keys
-2. ✅ Configure APIGate for Stripe
+2. ✅ Configure better-apigate for Stripe
 3. ✅ Create products and prices in Stripe
-4. ✅ Link Stripe prices to APIGate plans
+4. ✅ Link Stripe prices to better-apigate plans
 5. ✅ Set up webhooks for payment events
 6. ✅ Enable checkout in customer portal
 7. ✅ Test the complete payment flow

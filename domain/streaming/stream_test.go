@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/artpar/apigate/domain/streaming"
+	"github.com/coolqoo/better-apigate/domain/streaming"
 )
 
 type nopCloser struct {

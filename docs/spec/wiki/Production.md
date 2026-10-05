@@ -1,6 +1,6 @@
 # Production Deployment
 
-Guide to deploying APIGate in production.
+Guide to deploying better-apigate in production.
 
 ---
 
@@ -19,7 +19,7 @@ See [[Tutorial-Production]] for a step-by-step deployment guide.
 - [ ] Reverse proxy (nginx/caddy) for SSL termination (optional)
 - [ ] CDN for static assets (optional)
 
-> **Note**: APIGate uses SQLite for simplicity and portability. For high-traffic deployments, ensure SQLite is on fast storage (SSD) and consider running multiple read replicas behind a load balancer.
+> **Note**: better-apigate uses SQLite for simplicity and portability. For high-traffic deployments, ensure SQLite is on fast storage (SSD) and consider running multiple read replicas behind a load balancer.
 
 ### Security
 
@@ -65,10 +65,10 @@ Configure via settings:
 
 ```bash
 # ACME (Let's Encrypt)
-apigate settings set tls.enabled true
-apigate settings set tls.mode acme
-apigate settings set tls.domain "api.example.com"
-apigate settings set tls.acme_email "admin@example.com"
+better-apigate settings set tls.enabled true
+better-apigate settings set tls.mode acme
+better-apigate settings set tls.domain "api.example.com"
+better-apigate settings set tls.acme_email "admin@example.com"
 ```
 
 ---

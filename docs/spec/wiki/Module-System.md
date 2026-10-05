@@ -1,6 +1,6 @@
 # Module System
 
-APIGate uses a YAML-based module system to define entities, their schemas, APIs, and CLI commands.
+better-apigate uses a YAML-based module system to define entities, their schemas, APIs, and CLI commands.
 
 ---
 

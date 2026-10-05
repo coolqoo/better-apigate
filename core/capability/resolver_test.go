@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/artpar/apigate/core/capability"
-	captest "github.com/artpar/apigate/core/capability/testing"
+	"github.com/coolqoo/better-apigate/core/capability"
+	captest "github.com/coolqoo/better-apigate/core/capability/testing"
 )
 
 // =============================================================================

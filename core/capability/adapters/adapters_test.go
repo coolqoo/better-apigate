@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/core/capability"
-	"github.com/artpar/apigate/core/capability/adapters"
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/capability"
+	"github.com/coolqoo/better-apigate/core/capability/adapters"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // =============================================================================
@@ -1239,9 +1239,12 @@ func TestPaymentAdapterErrors(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "CreateCheckoutSession error",
-			mock:    &mockPaymentProvider{checkoutErr: testErr},
-			testFn:  func(a *adapters.PaymentAdapter) error { _, err := a.CreateCheckoutSession(ctx, "", "", "", "", 0); return err },
+			name: "CreateCheckoutSession error",
+			mock: &mockPaymentProvider{checkoutErr: testErr},
+			testFn: func(a *adapters.PaymentAdapter) error {
+				_, err := a.CreateCheckoutSession(ctx, "", "", "", "", 0)
+				return err
+			},
 			wantErr: true,
 		},
 		{

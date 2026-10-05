@@ -3,7 +3,7 @@ package hasher_test
 import (
 	"testing"
 
-	"github.com/artpar/apigate/adapters/hasher"
+	"github.com/coolqoo/better-apigate/adapters/hasher"
 	"golang.org/x/crypto/bcrypt"
 )
 

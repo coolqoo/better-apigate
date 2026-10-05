@@ -9,8 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 

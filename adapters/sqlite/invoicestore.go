@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // InvoiceStore implements ports.InvoiceStore using SQLite.

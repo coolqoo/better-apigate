@@ -1,6 +1,6 @@
 # Pagination
 
-APIGate uses JSON:API style pagination for collection endpoints.
+better-apigate uses JSON:API style pagination for collection endpoints.
 
 ---
 

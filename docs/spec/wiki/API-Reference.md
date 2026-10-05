@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for the APIGate Admin API.
+Complete reference for the better-apigate Admin API.
 
 ---
 

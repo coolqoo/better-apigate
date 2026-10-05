@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // ErrNotFound is returned when an entity is not found.
@@ -14,9 +14,9 @@ var ErrNotFound = ports.ErrNotFound
 
 // UserStore is an in-memory implementation of ports.UserStore.
 type UserStore struct {
-	mu    sync.RWMutex
-	users map[string]ports.User // by ID
-	byEmail map[string]string   // email -> ID
+	mu      sync.RWMutex
+	users   map[string]ports.User // by ID
+	byEmail map[string]string     // email -> ID
 }
 
 // NewUserStore creates a new in-memory user store.

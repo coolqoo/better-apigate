@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	"github.com/artpar/apigate/domain/auth"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/domain/auth"
 	"golang.org/x/crypto/bcrypt"
 )
 

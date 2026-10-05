@@ -7,15 +7,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/config"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/config"
 	"github.com/spf13/cobra"
 )
 
 var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate configuration before deployment",
-	Long: `Validate the APIGate configuration file.
+	Long: `Validate the better-apigate configuration file.
 
 Checks:
   - YAML syntax is valid
@@ -24,8 +24,8 @@ Checks:
   - PostgreSQL is reachable (optional)
 
 Examples:
-  apigate validate
-  apigate validate --config /etc/apigate/config.yaml`,
+  better-apigate validate
+  better-apigate validate --config /etc/better-apigate/config.yaml`,
 	RunE: runValidate,
 }
 

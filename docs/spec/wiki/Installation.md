@@ -1,6 +1,6 @@
 # Installation
 
-Deploy APIGate in your environment.
+Deploy better-apigate in your environment.
 
 ---
 
@@ -21,15 +21,15 @@ Download the latest release for your platform:
 
 ```bash
 # Linux (amd64)
-curl -L https://github.com/artpar/apigate/releases/latest/download/apigate-linux-amd64 -o apigate
+curl -L https://github.com/coolqoo/better-apigate/releases/latest/download/apigate-linux-amd64 -o apigate
 chmod +x apigate
 
 # macOS (Intel)
-curl -L https://github.com/artpar/apigate/releases/latest/download/apigate-darwin-amd64 -o apigate
+curl -L https://github.com/coolqoo/better-apigate/releases/latest/download/apigate-darwin-amd64 -o apigate
 chmod +x apigate
 
 # macOS (Apple Silicon)
-curl -L https://github.com/artpar/apigate/releases/latest/download/apigate-darwin-arm64 -o apigate
+curl -L https://github.com/coolqoo/better-apigate/releases/latest/download/apigate-darwin-arm64 -o apigate
 chmod +x apigate
 ```
 
@@ -39,14 +39,14 @@ chmod +x apigate
 
 ```bash
 # Clone repository
-git clone https://github.com/artpar/apigate.git
+git clone https://github.com/coolqoo/better-apigate.git
 cd apigate
 
 # Build
-go build -o apigate ./cmd/apigate
+go build -o apigate ./cmd/better-apigate
 
 # Verify
-./apigate version
+./better-apigate version
 ```
 
 ---
@@ -93,10 +93,10 @@ After installation, run the setup wizard:
 
 ```bash
 # Interactive setup
-./apigate init
+./better-apigate init
 
 # Or start the server and use web setup
-./apigate serve
+./better-apigate serve
 # Then visit http://localhost:8080
 ```
 
@@ -111,7 +111,7 @@ The setup wizard will:
 
 ```bash
 # Check version
-./apigate version
+./better-apigate version
 
 # Check health
 curl http://localhost:8080/health
@@ -124,7 +124,7 @@ curl http://localhost:8080/health
 
 ## Directory Structure
 
-After running, APIGate creates:
+After running, better-apigate creates:
 
 ```
 ./

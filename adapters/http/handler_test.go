@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/clock"
-	apihttp "github.com/artpar/apigate/adapters/http"
-	"github.com/artpar/apigate/adapters/memory"
-	"github.com/artpar/apigate/adapters/metrics"
-	"github.com/artpar/apigate/app"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/plan"
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/clock"
+	apihttp "github.com/coolqoo/better-apigate/adapters/http"
+	"github.com/coolqoo/better-apigate/adapters/memory"
+	"github.com/coolqoo/better-apigate/adapters/metrics"
+	"github.com/coolqoo/better-apigate/app"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/plan"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
@@ -1431,13 +1431,13 @@ func TestRootRedirect(t *testing.T) {
 	})
 
 	tests := []struct {
-		name           string
-		isSetup        func() bool
-		cookie         *http.Cookie
-		portalHandler  http.Handler
-		wantStatus     int
-		wantLocation   string
-		wantBody       string
+		name          string
+		isSetup       func() bool
+		cookie        *http.Cookie
+		portalHandler http.Handler
+		wantStatus    int
+		wantLocation  string
+		wantBody      string
 	}{
 		{
 			name:          "fresh install redirects to setup",
@@ -1469,11 +1469,11 @@ func TestRootRedirect(t *testing.T) {
 			wantLocation:  "/portal",
 		},
 		{
-			name:         "no portal handler serves web UI",
-			isSetup:      func() bool { return true },
+			name:          "no portal handler serves web UI",
+			isSetup:       func() bool { return true },
 			portalHandler: nil,
-			wantStatus:   200,
-			wantBody:     "web-ui",
+			wantStatus:    200,
+			wantBody:      "web-ui",
 		},
 	}
 
@@ -1644,4 +1644,3 @@ func TestConfigurableHandlerPaths(t *testing.T) {
 		})
 	}
 }
-

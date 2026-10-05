@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
-	"github.com/artpar/apigate/pkg/jsonapi"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
+	"github.com/coolqoo/better-apigate/pkg/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -326,4 +326,3 @@ func (h *SchemaHandler) buildEndpoints(actions []convention.DerivedAction, baseP
 
 	return endpoints
 }
-

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/artpar/apigate/core/capability"
+	"github.com/coolqoo/better-apigate/core/capability"
 )
 
 // =============================================================================

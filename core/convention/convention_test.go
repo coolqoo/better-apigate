@@ -3,7 +3,7 @@ package convention
 import (
 	"testing"
 
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // -----------------------------------------------------------------------------

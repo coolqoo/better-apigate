@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/ports"
 	redis "github.com/redis/go-redis/v9"
 )
 

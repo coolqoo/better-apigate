@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // inviteStore implements ports.InviteStore using SQLite.

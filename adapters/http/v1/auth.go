@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	emailadapter "github.com/artpar/apigate/adapters/email"
-	"github.com/artpar/apigate/adapters/postgres"
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/pkg/jsonapi"
-	"github.com/artpar/apigate/ports"
+	emailadapter "github.com/coolqoo/better-apigate/adapters/email"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/pkg/jsonapi"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )

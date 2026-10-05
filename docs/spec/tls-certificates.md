@@ -9,7 +9,7 @@
 
 ## Overview
 
-APIGate provides automatic TLS certificate management using direct ACME (Let's Encrypt) client or manual certificate provisioning.
+better-apigate provides automatic TLS certificate management using direct ACME (Let's Encrypt) client or manual certificate provisioning.
 
 ---
 
@@ -330,7 +330,7 @@ curl "http://localhost:8080/mod/api/certificates/expiring?days=30"
 sqlite3 apigate.db "UPDATE settings SET value='true' WHERE key='tls.acme_staging'"
 
 # 2. Watch logs for ACME flow
-./apigate serve 2>&1 | grep -E "ACME"
+./better-apigate serve 2>&1 | grep -E "ACME"
 
 # 3. Make TLS request
 curl -v --insecure https://yourdomain.com/

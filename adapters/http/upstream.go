@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // UpstreamClient forwards requests to the upstream service.
@@ -24,9 +24,9 @@ type UpstreamClient struct {
 
 // UpstreamConfig contains configuration for the upstream client.
 type UpstreamConfig struct {
-	BaseURL        string
-	Timeout        time.Duration
-	MaxIdleConns   int
+	BaseURL         string
+	Timeout         time.Duration
+	MaxIdleConns    int
 	IdleConnTimeout time.Duration
 }
 

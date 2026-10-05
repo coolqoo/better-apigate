@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Registry manages registered modules and their path claims.

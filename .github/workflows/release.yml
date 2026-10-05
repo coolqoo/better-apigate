@@ -27,17 +27,17 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: apigate-*
+          pattern: better-apigate-*
           path: dist
           merge-multiple: true
       - name: Package verified build artifacts
         run: |
           mkdir -p release
           for target in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64; do
-            chmod +x "dist/apigate-$target"
-            tar -C dist -czf "release/apigate-$target.tar.gz" "apigate-$target"
+            chmod +x "dist/better-apigate-$target"
+            tar -C dist -czf "release/better-apigate-$target.tar.gz" "better-apigate-$target"
           done
-          (cd dist && zip ../release/apigate-windows-amd64.zip apigate-windows-amd64.exe)
+          (cd dist && zip ../release/better-apigate-windows-amd64.zip better-apigate-windows-amd64.exe)
           (cd release && sha256sum *.tar.gz *.zip > checksums.txt)
       - name: Identify prerelease
         id: version
@@ -50,7 +50,7 @@ jobs:
           fi
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          name: APIGate ${{ github.ref_name }}
+          name: better-apigate ${{ github.ref_name }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |

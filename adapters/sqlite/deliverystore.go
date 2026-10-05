@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/artpar/apigate/domain/webhook"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // deliveryStore implements ports.DeliveryStore using SQLite.

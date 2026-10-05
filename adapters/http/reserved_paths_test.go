@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	apihttp "github.com/artpar/apigate/adapters/http"
-	"github.com/artpar/apigate/adapters/metrics"
+	apihttp "github.com/coolqoo/better-apigate/adapters/http"
+	"github.com/coolqoo/better-apigate/adapters/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 )

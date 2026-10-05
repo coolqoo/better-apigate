@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/memory"
-	"github.com/artpar/apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/adapters/memory"
+	"github.com/coolqoo/better-apigate/domain/usage"
 )
 
 func TestUsageStore_NewUsageStore(t *testing.T) {
@@ -151,10 +151,10 @@ func TestUsageStore_GetSummary_FilterByTimeRange(t *testing.T) {
 	baseTime := time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC)
 
 	events := []usage.Event{
-		{ID: "e1", UserID: "user1", Timestamp: baseTime.Add(-2 * time.Hour)}, // Before range
-		{ID: "e2", UserID: "user1", Timestamp: baseTime},                     // In range
+		{ID: "e1", UserID: "user1", Timestamp: baseTime.Add(-2 * time.Hour)},   // Before range
+		{ID: "e2", UserID: "user1", Timestamp: baseTime},                       // In range
 		{ID: "e3", UserID: "user1", Timestamp: baseTime.Add(30 * time.Minute)}, // In range
-		{ID: "e4", UserID: "user1", Timestamp: baseTime.Add(2 * time.Hour)}, // After range
+		{ID: "e4", UserID: "user1", Timestamp: baseTime.Add(2 * time.Hour)},    // After range
 	}
 
 	store.RecordBatch(ctx, events)

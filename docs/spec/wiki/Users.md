@@ -112,7 +112,7 @@ curl -X POST http://localhost:8080/admin/users \
 
 ## Admin Access
 
-APIGate uses an **invite-based admin system** rather than a role field on users.
+better-apigate uses an **invite-based admin system** rather than a role field on users.
 
 ### Customer (API Users)
 

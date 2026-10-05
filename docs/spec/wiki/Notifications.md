@@ -1,6 +1,6 @@
 # Notifications
 
-APIGate supports webhook-based notifications for important events.
+better-apigate supports webhook-based notifications for important events.
 
 ---
 
@@ -41,10 +41,10 @@ See [[Events]] for the list of supported events.
 To send notifications to Slack, you can use Slack's incoming webhooks:
 
 1. Create a Slack incoming webhook at https://api.slack.com/apps
-2. Create an APIGate webhook pointing to your Slack webhook URL
+2. Create an better-apigate webhook pointing to your Slack webhook URL
 3. Subscribe to desired events
 
-Note: APIGate sends its standard webhook payload format. For custom Slack formatting, you'll need an intermediate service to transform the payload.
+Note: better-apigate sends its standard webhook payload format. For custom Slack formatting, you'll need an intermediate service to transform the payload.
 
 ---
 

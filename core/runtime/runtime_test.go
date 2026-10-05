@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 	"github.com/rs/zerolog"
 )
 
@@ -31,10 +31,10 @@ type mockStorage struct {
 	// getDataByLookup allows returning different data based on lookup key/value
 	getDataByLookup map[string]map[string]map[string]map[string]any
 
-	listModule  string
-	listOpts    ListOptions
-	listData    []map[string]any
-	listCount   int64
+	listModule string
+	listOpts   ListOptions
+	listData   []map[string]any
+	listCount  int64
 
 	updateModule string
 	updateID     string
@@ -1144,7 +1144,7 @@ func TestValidationError(t *testing.T) {
 
 func TestParseHookPhase(t *testing.T) {
 	tests := []struct {
-		input         string
+		input          string
 		expectedAction string
 		expectedPhase  string
 	}{
@@ -1549,8 +1549,8 @@ func TestListOptions(t *testing.T) {
 
 func TestActionInput(t *testing.T) {
 	input := ActionInput{
-		Data:   map[string]any{"name": "John"},
-		Lookup: "123",
+		Data:    map[string]any{"name": "John"},
+		Lookup:  "123",
 		Channel: "http",
 		Auth: AuthContext{
 			UserID:  "user1",

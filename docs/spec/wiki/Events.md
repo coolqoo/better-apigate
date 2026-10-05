@@ -1,6 +1,6 @@
 # Events
 
-APIGate emits webhook events for usage, billing, and API key lifecycle actions.
+better-apigate emits webhook events for usage, billing, and API key lifecycle actions.
 
 ---
 

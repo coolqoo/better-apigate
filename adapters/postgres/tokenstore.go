@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/auth"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/auth"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // TokenStore implements ports.TokenStore using PostgreSQL.

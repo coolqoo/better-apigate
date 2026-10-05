@@ -3,7 +3,7 @@ package registry
 import (
 	"testing"
 
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Helper function to create a simple test module

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Store provides generic CRUD operations for any module.
@@ -148,8 +148,8 @@ func buildCheckConstraints(f convention.DerivedField) []string {
 				}
 				checks = append(checks, fmt.Sprintf("CHECK(%s IN (%s))", f.Name, strings.Join(quotedValues, ", ")))
 			}
-		// Note: pattern constraints require regex support which SQLite doesn't have natively
-		// We rely on application-level validation for patterns
+			// Note: pattern constraints require regex support which SQLite doesn't have natively
+			// We rely on application-level validation for patterns
 		}
 	}
 

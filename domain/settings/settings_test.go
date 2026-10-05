@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/domain/settings"
 )
 
 func TestSettings_Get(t *testing.T) {
@@ -67,11 +67,11 @@ func TestSettings_GetBool(t *testing.T) {
 
 func TestSettings_GetInt(t *testing.T) {
 	s := settings.Settings{
-		"valid":   "42",
-		"zero":    "0",
+		"valid":    "42",
+		"zero":     "0",
 		"negative": "-10",
-		"invalid": "not-a-number",
-		"empty":   "",
+		"invalid":  "not-a-number",
+		"empty":    "",
 	}
 
 	if s.GetInt("valid", 0) != 42 {
@@ -182,9 +182,9 @@ func TestDefaults(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	loaded := settings.Settings{
-		settings.KeyServerPort:     "9000",
-		settings.KeyEmailProvider:  "smtp",
-		"custom.key":               "custom-value",
+		settings.KeyServerPort:    "9000",
+		settings.KeyEmailProvider: "smtp",
+		"custom.key":              "custom-value",
 	}
 
 	merged := settings.Merge(loaded)

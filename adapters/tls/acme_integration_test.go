@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	domaintls "github.com/artpar/apigate/domain/tls"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	domaintls "github.com/coolqoo/better-apigate/domain/tls"
 	"golang.org/x/crypto/acme"
 )
 

@@ -14,9 +14,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/artpar/apigate/adapters/email"
-	"github.com/artpar/apigate/domain/webhook"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/email"
+	"github.com/coolqoo/better-apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // Notifications are at-least-once externally. Stable event IDs let receivers
@@ -156,7 +156,7 @@ func (a *App) deliverNotification(ctx context.Context) error {
 		var sender ports.EmailSender
 		sender, err = email.NewSender(a.Settings.Get())
 		if err == nil {
-			err = sender.Send(sendCtx, ports.EmailMessage{To: target, Subject: "APIGate · " + event.Type, HTMLBody: "<p>" + html.EscapeString(fmt.Sprint(event.Data["description"])) + "</p><p>Review your wallet and plan in the customer portal.</p>"})
+			err = sender.Send(sendCtx, ports.EmailMessage{To: target, Subject: "better-apigate · " + event.Type, HTMLBody: "<p>" + html.EscapeString(fmt.Sprint(event.Data["description"])) + "</p><p>Review your wallet and plan in the customer portal.</p>"})
 		}
 	}
 	if err == nil {

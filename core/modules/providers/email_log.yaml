@@ -17,7 +17,7 @@ schema:
   # Configuration
   enabled:        { type: bool, default: true, description: "Whether this email provider is active" }
   from_email:     { type: email, default: "noreply@example.com", description: "Default sender email address" }
-  from_name:      { type: string, default: "APIGate", description: "Default sender name" }
+  from_name:      { type: string, default: "better-apigate", description: "Default sender name" }
 
   # Logging options
   log_to_console: { type: bool, default: true, description: "Log emails to console/stdout" }

@@ -1,14 +1,14 @@
 # Frequently Asked Questions
 
-Common questions about APIGate.
+Common questions about better-apigate.
 
 ---
 
 ## General
 
-### What is APIGate?
+### What is better-apigate?
 
-APIGate is a self-hosted API gateway that adds authentication, rate limiting, usage tracking, and billing to any API.
+better-apigate is a self-hosted API gateway that adds authentication, rate limiting, usage tracking, and billing to any API.
 
 ### What are the system requirements?
 
@@ -16,15 +16,15 @@ APIGate is a self-hosted API gateway that adds authentication, rate limiting, us
 - **Recommended**: 2GB RAM, 2 CPU, 10GB disk
 - **OS**: Linux, macOS, Windows (Docker recommended)
 
-### Is APIGate free?
+### Is better-apigate free?
 
-Yes, APIGate is open source and free to self-host.
+Yes, better-apigate is open source and free to self-host.
 
 ---
 
 ## Installation
 
-### How do I install APIGate?
+### How do I install better-apigate?
 
 Several options:
 
@@ -33,26 +33,26 @@ Several options:
 docker run -p 8080:8080 -p 9090:9090 artpar/apigate
 
 # Binary
-curl -L https://github.com/artpar/apigate/releases/latest/download/apigate-linux-amd64 -o apigate
+curl -L https://github.com/coolqoo/better-apigate/releases/latest/download/apigate-linux-amd64 -o apigate
 chmod +x apigate
-./apigate serve
+./better-apigate serve
 
 # From source
-git clone https://github.com/artpar/apigate
+git clone https://github.com/coolqoo/better-apigate
 cd apigate
 make build
-./apigate serve
+./better-apigate serve
 ```
 
 See [[Installation]] for details.
 
-### What database does APIGate use?
+### What database does better-apigate use?
 
 SQLite. This is the only supported database. Data is stored in a single file (default: `apigate.db`).
 
 ### Can I run multiple instances?
 
-APIGate uses SQLite which supports single-instance deployments. For horizontal scaling, you would need to deploy multiple independent instances or use a load balancer with sticky sessions.
+better-apigate uses SQLite which supports single-instance deployments. For horizontal scaling, you would need to deploy multiple independent instances or use a load balancer with sticky sessions.
 
 ---
 
@@ -124,10 +124,10 @@ apigate plans create \
 ### How do I integrate with Stripe?
 
 1. Get Stripe API keys
-2. Configure in APIGate:
+2. Configure in better-apigate:
 ```bash
-apigate settings set payment.provider stripe
-apigate settings set payment.stripe.api_key "sk_xxx" --encrypted
+better-apigate settings set payment.provider stripe
+better-apigate settings set payment.stripe.api_key "sk_xxx" --encrypted
 ```
 3. Link plans to Stripe prices
 
@@ -175,18 +175,18 @@ Yes. See [[Transformations]].
 
 Option 1: ACME (automatic):
 ```bash
-apigate settings set tls.enabled true
-apigate settings set tls.mode acme
-apigate settings set tls.domain "api.example.com"
-apigate settings set tls.acme_email "admin@example.com"
+better-apigate settings set tls.enabled true
+better-apigate settings set tls.mode acme
+better-apigate settings set tls.domain "api.example.com"
+better-apigate settings set tls.acme_email "admin@example.com"
 ```
 
 Option 2: Manual certificates:
 ```bash
-apigate settings set tls.enabled true
-apigate settings set tls.mode manual
-apigate settings set tls.cert_path "/path/to/cert.pem"
-apigate settings set tls.key_path "/path/to/key.pem"
+better-apigate settings set tls.enabled true
+better-apigate settings set tls.mode manual
+better-apigate settings set tls.cert_path "/path/to/cert.pem"
+better-apigate settings set tls.key_path "/path/to/key.pem"
 ```
 
 ### How do I secure the admin UI?
@@ -213,11 +213,11 @@ Yes. Passwords are bcrypt hashed. Sensitive data (API keys, certificates, OAuth 
 ### How do I enable "Sign in with Google"?
 
 1. Create OAuth credentials in Google Cloud Console
-2. Configure in APIGate:
+2. Configure in better-apigate:
 ```bash
-apigate settings set oauth.google.enabled true
-apigate settings set oauth.google.client_id "xxx"
-apigate settings set oauth.google.client_secret "xxx" --encrypted
+better-apigate settings set oauth.google.enabled true
+better-apigate settings set oauth.google.client_id "xxx"
+better-apigate settings set oauth.google.client_secret "xxx" --encrypted
 ```
 
 See [[OAuth]] for details.
@@ -272,12 +272,12 @@ curl -v <upstream-url>/health
 Logs are output to stdout/stderr by default. Use your system's logging infrastructure or redirect to a file:
 
 ```bash
-./apigate serve 2>&1 | tee apigate.log
+./better-apigate serve 2>&1 | tee apigate.log
 ```
 
 For debug logging:
 ```bash
-APIGATE_LOG_LEVEL=debug ./apigate serve
+APIGATE_LOG_LEVEL=debug ./better-apigate serve
 ```
 
 See [[Troubleshooting]] for more.
@@ -286,12 +286,12 @@ See [[Troubleshooting]] for more.
 
 ## Performance
 
-### How many requests can APIGate handle?
+### How many requests can better-apigate handle?
 
 Depends on hardware, but typically:
 - Single instance: 10,000+ req/sec on modern hardware
 
-### How do I scale APIGate?
+### How do I scale better-apigate?
 
 For a single instance:
 1. Use adequate hardware (SSD for database)

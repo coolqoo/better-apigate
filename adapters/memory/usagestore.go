@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // UsageStore is an in-memory implementation of ports.UsageStore.

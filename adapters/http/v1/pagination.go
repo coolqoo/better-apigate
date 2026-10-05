@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/artpar/apigate/pkg/jsonapi"
+	"github.com/coolqoo/better-apigate/pkg/jsonapi"
 )
 
 // History uses the same bounded JSON:API pagination as module collections.

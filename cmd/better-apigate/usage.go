@@ -7,7 +7,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/artpar/apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
 	"github.com/spf13/cobra"
 )
 

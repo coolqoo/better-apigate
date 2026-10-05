@@ -1,12 +1,12 @@
 # Architecture
 
-How APIGate is designed and how requests flow through the system.
+How better-apigate is designed and how requests flow through the system.
 
 ---
 
 ## System Overview
 
-APIGate is built with a clean architecture separating concerns into distinct layers:
+better-apigate is built with a clean architecture separating concerns into distinct layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -79,7 +79,7 @@ APIGate is built with a clean architecture separating concerns into distinct lay
 
 ## Request Lifecycle
 
-When a client makes an API request through APIGate:
+When a client makes an API request through better-apigate:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -140,7 +140,7 @@ When a client makes an API request through APIGate:
 
 ### Proxy Handler
 
-The heart of APIGate - handles all proxied API requests.
+The heart of better-apigate - handles all proxied API requests.
 
 - Matches routes based on path, method, headers
 - Authenticates API keys
@@ -224,7 +224,7 @@ Records every API request for analytics and billing.
 
 ## Module System
 
-APIGate uses a YAML-based module system for extensibility.
+better-apigate uses a YAML-based module system for extensibility.
 
 ```yaml
 module: route
@@ -260,7 +260,7 @@ Pluggable implementations for external integrations:
 | **email** | SMTP, Mock, None |
 | **oauth** | Google, GitHub, OIDC |
 
-> **Note**: Module YAML definitions exist for Redis cache and SendGrid email as future capabilities, but these are not yet implemented in Go. APIGate currently uses SQLite for persistence and in-memory stores for rate limiting.
+> **Note**: Module YAML definitions exist for Redis cache and SendGrid email as future capabilities, but these are not yet implemented in Go. better-apigate currently uses SQLite for persistence and in-memory stores for rate limiting.
 
 ---
 

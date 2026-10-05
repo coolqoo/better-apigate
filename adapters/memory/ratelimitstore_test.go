@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/memory"
-	"github.com/artpar/apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/adapters/memory"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
 )
 
 // RateLimitStore tests

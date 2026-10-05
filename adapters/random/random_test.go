@@ -3,7 +3,7 @@ package random_test
 import (
 	"testing"
 
-	"github.com/artpar/apigate/adapters/random"
+	"github.com/coolqoo/better-apigate/adapters/random"
 )
 
 func TestReal_Bytes(t *testing.T) {

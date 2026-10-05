@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/artpar/apigate/app"
-	"github.com/artpar/apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/app"
+	"github.com/coolqoo/better-apigate/domain/settings"
 	"github.com/rs/zerolog"
 )
 

@@ -9,10 +9,10 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "https://github.com/artpar/apigate",
+        "termsOfService": "https://github.com/coolqoo/better-apigate",
         "contact": {
-            "name": "APIGate Support",
-            "url": "https://github.com/artpar/apigate/issues"
+            "name": "better-apigate Support",
+            "url": "https://github.com/coolqoo/better-apigate/issues"
         },
         "license": {
             "name": "MIT",
@@ -101,7 +101,7 @@ const docTemplate = `{
         },
         "/version": {
             "get": {
-                "description": "Returns the version information for the APIGate service",
+                "description": "Returns the version information for the better-apigate service",
                 "produces": [
                     "application/json"
                 ],
@@ -470,7 +470,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "APIGate - API Monetization Proxy",
+	Title:            "better-apigate - API Monetization Proxy",
 	Description:      "Self-hosted API monetization solution with authentication, rate limiting, usage metering, and billing.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

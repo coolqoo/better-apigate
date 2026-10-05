@@ -1,6 +1,6 @@
 # API Keys
 
-**API keys** authenticate requests to your API through APIGate.
+**API keys** authenticate requests to your API through better-apigate.
 
 ---
 
@@ -20,7 +20,7 @@ API keys are the primary authentication mechanism for API access:
 │  └─────────────────────────────────────────────────────────┘ │
 │                          │                                    │
 │                          ▼                                    │
-│  APIGate validates:                                           │
+│  better-apigate validates:                                           │
 │  ✓ Key exists                                                 │
 │  ✓ Key not revoked                                            │
 │  ✓ Key not expired                                            │
@@ -244,7 +244,7 @@ apigate keys revoke <old-key-id>
 
 ### 4. Never Log Full Keys
 
-The full key is only shown at creation. APIGate stores only:
+The full key is only shown at creation. better-apigate stores only:
 - Prefix (for identification)
 - bcrypt hash (for validation)
 
@@ -285,7 +285,7 @@ Service API keys are special keys for trusted backend services that need to perf
 Service keys enable downstream services to:
 - Submit usage events via the [[Metering-API]]
 - Perform admin operations on behalf of users
-- Integrate with APIGate from trusted backends
+- Integrate with better-apigate from trusted backends
 
 ### Creating Service Keys
 

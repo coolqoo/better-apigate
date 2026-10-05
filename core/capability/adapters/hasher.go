@@ -1,8 +1,8 @@
 package adapters
 
 import (
-	"github.com/artpar/apigate/core/capability"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/capability"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // HasherAdapter wraps a ports.Hasher to implement capability.HasherProvider.

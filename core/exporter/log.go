@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/artpar/apigate/core/analytics"
+	"github.com/coolqoo/better-apigate/core/analytics"
 	"github.com/rs/zerolog"
 )
 

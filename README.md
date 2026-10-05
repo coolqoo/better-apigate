@@ -1,4 +1,4 @@
-# APIGate v2
+# better-apigate
 
 A Go API gateway with prepaid billing, PostgreSQL, Redis and one React/shadcn UI for customers, administrators, onboarding and API documentation.
 
@@ -20,6 +20,6 @@ Open `/setup` with the deployment setup token, then configure pricing, upstreams
 
 Go 1.27.1 and Node 22.23.2 are pinned across local manifests, Docker and CI. Build with `npm ci --prefix webui && make all`. The only embedded frontend bundle is `core/channel/http/webui/dist`; YAML remains the source for configuration fields, validation and action metadata. Billing mutations use typed transactional handlers and cannot pass through generic CRUD.
 
-CI checks the generated contracts, builds the frontend and cross-compiles five native targets. Pushes to `main` and `codex/**` also publish Linux amd64/arm64 images to Docker Hub using repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`. The image repository is `<DOCKERHUB_USERNAME>/better-apigate`; `main` updates `edge`, and this branch updates `branch-codex-apigate-v2`. Pushing a semantic version tag such as `v2.0.0` publishes checksummed GitHub release archives and Docker tags `v2.0.0`, `2.0.0`, `2.0`, and `latest`. Prereleases do not update `latest`. See the [publishing instructions](docs/deployment-v2.md#cicd-and-docker-hub).
+`main` contains better-apigate. The first release is `v1.0.0`, with native binaries named `better-apigate`. CI checks the generated contracts, builds the frontend and cross-compiles five native targets. Only semantic version tags publish images, using repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`. Tag `v1.0.0` publishes checksummed GitHub release archives and the single Docker Hub image `<DOCKERHUB_USERNAME>/better-apigate:1.0.0`. No branch, SHA, short-version or `latest` tags are published. See the [publishing instructions](docs/deployment-v2.md#cicd-and-docker-hub).
 
 This upgrade targets a fresh deployment. Production migration and legacy credential compatibility are outside its scope. Production acceptance still requires accounting/security checks, UI flows, provider sandbox smoke checks, reproducible installation, and both ten-minute 1,000 accepted RPS load scenarios with ledger reconciliation. Test tooling and reports are kept locally and excluded from this implementation delivery. CI does not run those test suites; a successful image build alone does not establish production readiness.

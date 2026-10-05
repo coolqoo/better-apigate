@@ -1,12 +1,12 @@
 # Request Lifecycle
 
-This page describes the complete journey of an API request through APIGate.
+This page describes the complete journey of an API request through better-apigate.
 
 ---
 
 ## Overview
 
-APIGate processes requests differently based on whether the matched route requires authentication.
+better-apigate processes requests differently based on whether the matched route requires authentication.
 
 ### Route Matching First
 
@@ -170,7 +170,7 @@ authToken := extractAPIKey(r)
 
 ### 3. Detect Token Type & Authenticate
 
-APIGate detects the token type by checking if it starts with the API key prefix (e.g., `ak_`):
+better-apigate detects the token type by checking if it starts with the API key prefix (e.g., `ak_`):
 
 - **Starts with prefix** → API key authentication (steps 4-7)
 - **Doesn't start with prefix** → JWT session token validation

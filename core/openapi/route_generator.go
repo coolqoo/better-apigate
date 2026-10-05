@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/artpar/apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/route"
 )
 
 // RouteGenerator generates OpenAPI specs from route configurations.
@@ -90,12 +90,12 @@ func (g *RouteGenerator) Generate() *Spec {
 
 // collectSecuritySchemes collects unique security schemes from upstreams.
 func (g *RouteGenerator) collectSecuritySchemes(spec *Spec) {
-	// Always add API key auth (used by APIGate itself)
+	// Always add API key auth (used by better-apigate itself)
 	spec.Components.SecuritySchemes["apiKey"] = SecurityScheme{
 		Type:        "apiKey",
 		In:          "header",
 		Name:        "X-API-Key",
-		Description: "API key authentication for APIGate",
+		Description: "API key authentication for better-apigate",
 	}
 
 	// Collect from upstreams
@@ -108,9 +108,9 @@ func (g *RouteGenerator) collectSecuritySchemes(spec *Spec) {
 		case route.AuthBearer:
 			schemeName := sanitizeSchemeName(upstream.Name) + "_bearer"
 			spec.Components.SecuritySchemes[schemeName] = SecurityScheme{
-				Type:         "http",
-				Scheme:       "bearer",
-				Description:  "Bearer authentication for " + upstream.Name,
+				Type:        "http",
+				Scheme:      "bearer",
+				Description: "Bearer authentication for " + upstream.Name,
 			}
 		case route.AuthBasic:
 			schemeName := sanitizeSchemeName(upstream.Name) + "_basic"

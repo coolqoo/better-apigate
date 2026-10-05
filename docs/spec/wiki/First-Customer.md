@@ -6,7 +6,7 @@ Guide to onboarding your first API customer.
 
 ## Prerequisites
 
-1. APIGate is installed and running
+1. better-apigate is installed and running
 2. At least one plan exists
 3. Upstream configured
 
@@ -81,10 +81,10 @@ After customer makes requests:
 
 ```bash
 # Check usage summary
-apigate usage summary --user <user-id>
+better-apigate usage summary --user <user-id>
 
 # View recent requests
-apigate usage recent --user <user-id> --limit 20
+better-apigate usage recent --user <user-id> --limit 20
 ```
 
 ---

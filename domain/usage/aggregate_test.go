@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/usage"
 )
 
 var (

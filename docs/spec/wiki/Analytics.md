@@ -1,6 +1,6 @@
 # Analytics
 
-APIGate provides usage tracking and Prometheus metrics for monitoring.
+better-apigate provides usage tracking and Prometheus metrics for monitoring.
 
 ---
 

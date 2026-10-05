@@ -1,19 +1,19 @@
 # Pricing Integration
 
-Connect APIGate plans to your payment provider's pricing.
+Connect better-apigate plans to your payment provider's pricing.
 
 ---
 
 ## Overview
 
-APIGate plans map to payment provider prices:
+better-apigate plans map to payment provider prices:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Price Mapping                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│   APIGate Plan          Payment Provider                   │
+│   better-apigate Plan          Payment Provider                   │
 │   ─────────────         ─────────────────                  │
 │   Pro Plan        ────▶  Stripe: price_xxx                 │
 │   ($29/month)            Paddle: pri_xxx                   │
@@ -30,7 +30,7 @@ Payment provider price IDs must be linked via the **Admin UI**, not CLI.
 
 ### Steps
 
-1. Create your plan in APIGate via CLI:
+1. Create your plan in better-apigate via CLI:
 
    ```bash
    apigate plans create \
@@ -42,7 +42,7 @@ Payment provider price IDs must be linked via the **Admin UI**, not CLI.
 
 2. Create the corresponding price in your payment provider's dashboard
 
-3. In APIGate Admin UI:
+3. In better-apigate Admin UI:
    - Go to **Plans**
    - Click on the plan to edit
    - Enter the price ID in the appropriate field:
@@ -60,7 +60,7 @@ Payment provider price IDs must be linked via the **Admin UI**, not CLI.
 Plans sync automatically via webhooks:
 
 1. User subscribes → Webhook received
-2. APIGate matches price ID to plan
+2. better-apigate matches price ID to plan
 3. User's plan updated
 
 ---

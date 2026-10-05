@@ -1,21 +1,21 @@
 # Tutorial: Basic API Setup
 
-Set up APIGate to protect a simple REST API.
+Set up better-apigate to protect a simple REST API.
 
 ---
 
 ## Prerequisites
 
-- APIGate installed
+- better-apigate installed
 - A backend API to protect
 
 ---
 
-## Step 1: Start APIGate
+## Step 1: Start better-apigate
 
 ```bash
 # Start with default settings
-apigate serve
+better-apigate serve
 
 # Or with Docker
 docker run -p 8080:8080 -p 9090:9090 artpar/apigate
@@ -96,7 +96,7 @@ curl -H "X-API-Key: ak_abc123..." http://localhost:8080/api/users
 
 ```bash
 # View user's usage summary
-apigate usage summary --user <user-id>
+better-apigate usage summary --user <user-id>
 
 # View in admin UI
 open http://localhost:8080/ui/users/<user-id>

@@ -1,6 +1,6 @@
 # Security
 
-APIGate implements multiple security layers to protect your API and data.
+better-apigate implements multiple security layers to protect your API and data.
 
 ---
 
@@ -46,7 +46,7 @@ OAuth implementation includes:
 
 ```bash
 # Enable PKCE (recommended)
-apigate settings set oauth.use_pkce true
+better-apigate settings set oauth.use_pkce true
 ```
 
 ### Password Security
@@ -255,7 +255,7 @@ Reject requests older than 5 minutes.
 │          │                                                  │
 │          ▼                                                  │
 │   ┌─────────────┐                                           │
-│   │  APIGate    │  API gateway                             │
+│   │  better-apigate    │  API gateway                             │
 │   └──────┬──────┘                                           │
 │          │                                                  │
 │          ▼                                                  │
@@ -271,14 +271,14 @@ Reject requests older than 5 minutes.
 
 - Allow 80/443 inbound (public)
 - Allow admin port only from trusted IPs
-- Restrict upstream access to APIGate only
+- Restrict upstream access to better-apigate only
 - Block direct database access
 
 ---
 
 ## Security Headers
 
-APIGate sets security headers on responses:
+better-apigate sets security headers on responses:
 
 ```http
 X-Content-Type-Options: nosniff

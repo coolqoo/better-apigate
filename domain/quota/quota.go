@@ -5,7 +5,7 @@ package quota
 import (
 	"time"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // MeterType determines which metric to use for quota enforcement.
@@ -18,12 +18,12 @@ const (
 
 // Config represents quota limits and enforcement settings (value type).
 type Config struct {
-	RequestsPerMonth int64            // -1 = unlimited (also used as UnitsPerMonth for compute_units)
-	BytesPerMonth    int64            // 0 = unlimited
-	EnforceMode      EnforceMode      // How to handle quota exceeded
-	GracePct         float64          // Grace percentage before hard block (e.g., 0.05 = 5%)
-	MeterType        MeterType        // Which metric to enforce: requests or compute_units
-	EstimatedCost    float64          // Estimated cost per request for pre-check (compute_units mode)
+	RequestsPerMonth int64       // -1 = unlimited (also used as UnitsPerMonth for compute_units)
+	BytesPerMonth    int64       // 0 = unlimited
+	EnforceMode      EnforceMode // How to handle quota exceeded
+	GracePct         float64     // Grace percentage before hard block (e.g., 0.05 = 5%)
+	MeterType        MeterType   // Which metric to enforce: requests or compute_units
+	EstimatedCost    float64     // Estimated cost per request for pre-check (compute_units mode)
 }
 
 // EnforceMode determines how quota limits are enforced.
@@ -39,10 +39,10 @@ const (
 type WarningLevel int
 
 const (
-	WarningNone       WarningLevel = iota // < 80%
-	WarningApproaching                    // >= 80%
-	WarningCritical                       // >= 95%
-	WarningExceeded                       // > 100%
+	WarningNone        WarningLevel = iota // < 80%
+	WarningApproaching                     // >= 80%
+	WarningCritical                        // >= 95%
+	WarningExceeded                        // > 100%
 )
 
 // CheckResult represents the outcome of a quota check (value type).

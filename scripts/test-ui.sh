@@ -5,18 +5,18 @@ set -e
 
 BASE="http://localhost:8080"
 
-echo "=== APIGate UI Test ==="
+echo "=== better-apigate UI Test ==="
 
 # Rebuild
 echo "Building..."
-go build -o apigate ./cmd/apigate
+go build -o better-apigate ./cmd/better-apigate
 
 # Restart server
 echo "Restarting server..."
-pkill -f "apigate serve" 2>/dev/null || true
+pkill -f "better-apigate serve" 2>/dev/null || true
 sleep 1
 rm -f data/test.db*
-./apigate serve --config configs/test.yaml &
+./better-apigate serve --config configs/test.yaml &
 SERVER_PID=$!
 sleep 2
 
@@ -35,7 +35,7 @@ test_page() {
 }
 
 test_page "/login" "Admin Login"
-test_page "/setup" "Welcome to APIGate"
+test_page "/setup" "Welcome to better-apigate"
 test_page "/health" '{"status":"ok"}'
 
 # Test setup flow

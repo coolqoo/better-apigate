@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/adapters/postgres"
 	"github.com/google/uuid"
 )
 

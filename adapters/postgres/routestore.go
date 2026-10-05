@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // RouteStore implements ports.RouteStore using PostgreSQL.

@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/adapters/payment"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/portal"
-	"github.com/artpar/apigate/domain/wallet"
-	"github.com/artpar/apigate/pkg/jsonapi"
+	"github.com/coolqoo/better-apigate/adapters/payment"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/portal"
+	"github.com/coolqoo/better-apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/pkg/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -10,20 +10,20 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Generator generates test files from module schemas.
 type Generator struct {
-	modules    map[string]convention.Derived
+	modules     map[string]convention.Derived
 	packageName string
 }
 
 // NewGenerator creates a new test generator.
 func NewGenerator(modules map[string]convention.Derived) *Generator {
 	return &Generator{
-		modules:    modules,
+		modules:     modules,
 		packageName: "generated_test",
 	}
 }
@@ -73,15 +73,15 @@ type TestCase struct {
 
 // ModuleTestData holds all test data for a module.
 type ModuleTestData struct {
-	PackageName   string
-	ModuleName    string
-	ModuleTitle   string
-	Plural        string
-	GeneratedAt   string
-	TestCases     []TestCase
-	Fields        []FieldTestData
-	Actions       []ActionTestData
-	HasCustom     bool
+	PackageName    string
+	ModuleName     string
+	ModuleTitle    string
+	Plural         string
+	GeneratedAt    string
+	TestCases      []TestCase
+	Fields         []FieldTestData
+	Actions        []ActionTestData
+	HasCustom      bool
 	RequiredFields []string
 	UniqueFields   []string
 	EnumFields     []EnumFieldData
@@ -89,12 +89,12 @@ type ModuleTestData struct {
 
 // FieldTestData holds test data for a field.
 type FieldTestData struct {
-	Name       string
-	Type       string
-	Required   bool
-	Unique     bool
-	IsEnum     bool
-	Values     []string
+	Name        string
+	Type        string
+	Required    bool
+	Unique      bool
+	IsEnum      bool
+	Values      []string
 	Constraints []ConstraintTestData
 }
 
@@ -253,7 +253,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/core/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

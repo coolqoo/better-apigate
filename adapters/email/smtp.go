@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // SMTPConfig holds SMTP server configuration.
@@ -43,10 +43,10 @@ func DefaultConfig() SMTPConfig {
 		Host:     "localhost",
 		Port:     25,
 		From:     "noreply@localhost",
-		FromName: "APIGate",
+		FromName: "better-apigate",
 		UseTLS:   true,
 		Timeout:  30 * time.Second,
-		AppName:  "APIGate",
+		AppName:  "better-apigate",
 	}
 }
 

@@ -8,17 +8,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/artpar/apigate/adapters/auth"
-	"github.com/artpar/apigate/domain/entitlement"
+	"github.com/coolqoo/better-apigate/adapters/auth"
+	"github.com/coolqoo/better-apigate/domain/entitlement"
 
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/plan"
-	"github.com/artpar/apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/plan"
+	"github.com/coolqoo/better-apigate/domain/proxy"
 
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/domain/wallet"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // ProxyService handles incoming proxy requests.

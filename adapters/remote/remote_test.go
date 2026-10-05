@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/usage"
 )
 
 // =============================================================================
@@ -830,19 +830,19 @@ func TestUsageRecorder_Record(t *testing.T) {
 	// Record events
 	for i := 0; i < 3; i++ {
 		recorder.Record(usage.Event{
-			ID:            "event-" + string(rune('0'+i)),
-			KeyID:         "key-123",
-			UserID:        "user-456",
-			Method:        "POST",
-			Path:          "/api/test",
-			StatusCode:    200,
-			LatencyMs:     50,
-			RequestBytes:  100,
-			ResponseBytes: 200,
+			ID:             "event-" + string(rune('0'+i)),
+			KeyID:          "key-123",
+			UserID:         "user-456",
+			Method:         "POST",
+			Path:           "/api/test",
+			StatusCode:     200,
+			LatencyMs:      50,
+			RequestBytes:   100,
+			ResponseBytes:  200,
 			CostMultiplier: 1.0,
-			IPAddress:     "127.0.0.1",
-			UserAgent:     "test-agent",
-			Timestamp:     time.Now().UTC(),
+			IPAddress:      "127.0.0.1",
+			UserAgent:      "test-agent",
+			Timestamp:      time.Now().UTC(),
 		})
 	}
 

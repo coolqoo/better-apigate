@@ -2,9 +2,9 @@ package ports
 
 import (
 	"context"
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/domain/wallet"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/wallet"
 	"net/http"
 	"time"
 )

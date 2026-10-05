@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 
@@ -51,7 +51,7 @@ type ServiceConfig struct {
 func NewService(cfg ServiceConfig) *Service {
 	appName := cfg.AppName
 	if appName == "" {
-		appName = "APIGate"
+		appName = "better-apigate"
 	}
 
 	return &Service{

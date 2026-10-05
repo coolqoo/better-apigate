@@ -4,24 +4,24 @@
 package ports
 
 import (
-	"errors"
 	"context"
+	"errors"
 	"io"
 	"time"
 
-	"github.com/artpar/apigate/domain/auth"
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/domain/entitlement"
-	"github.com/artpar/apigate/domain/group"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/oauth"
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/domain/settings"
-	"github.com/artpar/apigate/domain/tls"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/domain/webhook"
+	"github.com/coolqoo/better-apigate/domain/auth"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/domain/entitlement"
+	"github.com/coolqoo/better-apigate/domain/group"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/oauth"
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/domain/tls"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/domain/webhook"
 )
 
 // -----------------------------------------------------------------------------
@@ -256,22 +256,22 @@ const (
 
 // Plan represents a pricing tier.
 type Plan struct {
-	ID                 string
-	Name               string
-	Description        string
-	RateLimitPerMinute int
-	RequestsPerMonth   int64
-	PriceMonthly       int64 // cents
-	OveragePrice       int64 // hundredths of cents per request (10000 = $1)
-	IsDefault          bool
-	Enabled            bool
-	QuotaEnforceMode   QuotaEnforceMode // "hard", "warn", "soft" - defaults to "hard"
-	QuotaGracePct      float64          // Grace percentage before hard block (e.g., 0.05 = 5%)
-	TrialDays          int              // Number of trial days (0 = no trial)
-	MeterType          MeterType        // Which metric to enforce: "requests" or "compute_units"
-	EstimatedCostPerReq float64         // Estimated cost per request for pre-check (default 1.0)
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	ID                  string
+	Name                string
+	Description         string
+	RateLimitPerMinute  int
+	RequestsPerMonth    int64
+	PriceMonthly        int64 // cents
+	OveragePrice        int64 // hundredths of cents per request (10000 = $1)
+	IsDefault           bool
+	Enabled             bool
+	QuotaEnforceMode    QuotaEnforceMode // "hard", "warn", "soft" - defaults to "hard"
+	QuotaGracePct       float64          // Grace percentage before hard block (e.g., 0.05 = 5%)
+	TrialDays           int              // Number of trial days (0 = no trial)
+	MeterType           MeterType        // Which metric to enforce: "requests" or "compute_units"
+	EstimatedCostPerReq float64          // Estimated cost per request for pre-check (default 1.0)
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 
 	// Provider-specific price IDs for payment integration
 	StripePriceID  string // Stripe price ID (e.g., price_xxx)

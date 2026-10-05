@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/domain/billing"
 )
 
 func TestSubscription_IsActive(t *testing.T) {
@@ -165,10 +165,10 @@ func TestCalculateInvoice_NoOverage(t *testing.T) {
 		"user_123",
 		start, end,
 		"Pro Plan",
-		2999,  // $29.99
-		50000, // 50k requests used
+		2999,   // $29.99
+		50000,  // 50k requests used
 		100000, // 100k included
-		1,     // 1 cent overage
+		1,      // 1 cent overage
 	)
 
 	if inv.UserID != "user_123" {

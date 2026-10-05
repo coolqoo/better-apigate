@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Validator validates input data against module schemas.

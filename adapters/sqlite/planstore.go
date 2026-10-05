@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // PlanStore implements ports.PlanStore with SQLite.

@@ -367,11 +367,11 @@ First run: Open browser → Redirected to setup wizard → Done in 2 minutes.
 ## CLI Structure
 
 ```
-apigate serve               # Run proxy server (default)
-apigate init                # Interactive CLI setup wizard
-apigate validate            # Validate config before deploy
+better-apigate serve               # Run proxy server (default)
+better-apigate init                # Interactive CLI setup wizard
+better-apigate validate            # Validate config before deploy
 apigate migrate             # Run database migrations
-apigate version             # Show version info
+better-apigate version             # Show version info
 
 apigate users list          # List all users
 apigate users create        # Create user (interactive or flags)

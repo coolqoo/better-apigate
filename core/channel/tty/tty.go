@@ -12,26 +12,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Channel implements the TTY channel for interactive terminal sessions.
 type Channel struct {
-	runtime  *runtime.Runtime
-	modules  map[string]convention.Derived
-	prompt   string
-	running  bool
+	runtime   *runtime.Runtime
+	modules   map[string]convention.Derived
+	prompt    string
+	running   bool
 	showStats bool // Show execution stats after each command
 }
 
 // ExecStats holds execution statistics.
 type ExecStats struct {
-	Duration   time.Duration
-	MemAlloc   uint64 // bytes allocated
-	MemTotal   uint64 // total memory from system
-	NumGC      uint32 // number of GCs
+	Duration time.Duration
+	MemAlloc uint64 // bytes allocated
+	MemTotal uint64 // total memory from system
+	NumGC    uint32 // number of GCs
 }
 
 // New creates a new TTY channel.
@@ -111,7 +111,7 @@ func (c *Channel) Run(ctx context.Context) error {
 	c.running = true
 	scanner := bufio.NewScanner(os.Stdin)
 
-	fmt.Println("APIGate Interactive Shell")
+	fmt.Println("better-apigate Interactive Shell")
 	fmt.Println("Type 'help' for available commands, 'quit' to exit")
 	fmt.Println()
 

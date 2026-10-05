@@ -1,4 +1,4 @@
-# APIGate API Specification
+# better-apigate API Specification
 
 > **This is the single source of truth for API behavior.**
 >
@@ -22,7 +22,7 @@
 
 ### JSON:API Specification
 
-APIGate implements [JSON:API v1.1](https://jsonapi.org/) with the following characteristics:
+better-apigate implements [JSON:API v1.1](https://jsonapi.org/) with the following characteristics:
 
 - **Content-Type**: `application/vnd.api+json`
 - **Version**: 1.1

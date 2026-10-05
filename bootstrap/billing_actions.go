@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/ports"
 	"time"
 )
 

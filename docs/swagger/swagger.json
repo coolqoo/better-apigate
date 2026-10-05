@@ -2,11 +2,11 @@
     "swagger": "2.0",
     "info": {
         "description": "Self-hosted API monetization solution with authentication, rate limiting, usage metering, and billing.",
-        "title": "APIGate - API Monetization Proxy",
-        "termsOfService": "https://github.com/artpar/apigate",
+        "title": "better-apigate - API Monetization Proxy",
+        "termsOfService": "https://github.com/coolqoo/better-apigate",
         "contact": {
-            "name": "APIGate Support",
-            "url": "https://github.com/artpar/apigate/issues"
+            "name": "better-apigate Support",
+            "url": "https://github.com/coolqoo/better-apigate/issues"
         },
         "license": {
             "name": "MIT",
@@ -95,7 +95,7 @@
         },
         "/version": {
             "get": {
-                "description": "Returns the version information for the APIGate service",
+                "description": "Returns the version information for the better-apigate service",
                 "produces": [
                     "application/json"
                 ],

@@ -4,7 +4,7 @@ package modules
 import (
 	"embed"
 	"fmt"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 //go:embed *.yaml

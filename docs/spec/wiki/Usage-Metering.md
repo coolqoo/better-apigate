@@ -115,7 +115,7 @@ apigate plans update <id> \
 
 ## External Event Ingestion
 
-External services (like downstream applications) can submit usage events directly to APIGate for billing purposes. This enables tracking usage that doesn't pass through the proxy.
+External services (like downstream applications) can submit usage events directly to better-apigate for billing purposes. This enables tracking usage that doesn't pass through the proxy.
 
 ### Use Cases
 

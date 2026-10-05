@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/artpar/apigate/domain/ratelimit"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // RateLimitStore is an in-memory implementation of ports.RateLimitStore.

@@ -112,7 +112,7 @@ curl -X POST http://localhost:8080/admin/plans \
 
 ## Quota Settings
 
-When a user exceeds their monthly quota (`requests_per_month`), APIGate returns HTTP 402 (Payment Required).
+When a user exceeds their monthly quota (`requests_per_month`), better-apigate returns HTTP 402 (Payment Required).
 
 ### Overage Billing
 
@@ -143,7 +143,7 @@ apigate plans create --name "Pro" --rate-limit 600
 
 ### Rate Limiting Behavior
 
-When the rate limit is exceeded, APIGate returns HTTP 429 with headers:
+When the rate limit is exceeded, better-apigate returns HTTP 429 with headers:
 
 ```
 X-RateLimit-Limit: 60
@@ -168,7 +168,7 @@ apigate plans create \
 
 When a user subscribes:
 1. Stripe checkout completed
-2. Webhook received by APIGate
+2. Webhook received by better-apigate
 3. User automatically assigned to plan
 
 ### Paddle
@@ -197,7 +197,7 @@ Control access to specific features per plan using the Entitlements system:
 
 1. Create entitlements (e.g., "webhooks", "analytics")
 2. Assign entitlements to plans via Plan-Entitlements
-3. APIGate injects entitlement headers to upstream
+3. better-apigate injects entitlement headers to upstream
 
 ```bash
 # Entitlements are passed to upstream as headers:

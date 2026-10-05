@@ -1,6 +1,6 @@
 # Admin Invites
 
-Admin access in APIGate is managed through an invite system via the web UI.
+Admin access in better-apigate is managed through an invite system via the web UI.
 
 ---
 
@@ -35,7 +35,7 @@ The first admin can be created via CLI:
 
 ```bash
 # Create first admin via CLI
-apigate admin create --email=admin@example.com
+better-apigate admin create --email=admin@example.com
 
 # You will be prompted for a password
 # Then visit the web UI to log in
@@ -59,10 +59,10 @@ For immediate admin creation without the invite flow:
 
 ```bash
 # Create admin directly
-apigate admin create --email=newadmin@example.com
+better-apigate admin create --email=newadmin@example.com
 
 # With password (not recommended, prompts are safer)
-apigate admin create --email=admin@example.com --password=secret
+better-apigate admin create --email=admin@example.com --password=secret
 ```
 
 ---
@@ -85,19 +85,19 @@ apigate admin create --email=admin@example.com --password=secret
 ### List Admin Users
 
 ```bash
-apigate admin list
+better-apigate admin list
 ```
 
 ### Delete Admin User
 
 ```bash
-apigate admin delete <email>
+better-apigate admin delete <email>
 ```
 
 ### Reset Admin Password
 
 ```bash
-apigate admin reset-password <email>
+better-apigate admin reset-password <email>
 ```
 
 ---
@@ -125,7 +125,7 @@ APIGATE_SMTP_PORT=587
 APIGATE_SMTP_USERNAME=user
 APIGATE_SMTP_PASSWORD=secret
 APIGATE_SMTP_FROM=noreply@example.com
-APIGATE_SMTP_FROM_NAME=APIGate
+APIGATE_SMTP_FROM_NAME=better-apigate
 APIGATE_SMTP_USE_TLS=true
 ```
 

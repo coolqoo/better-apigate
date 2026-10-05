@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // BillingProvider delegates billing operations to an external HTTP service.
@@ -42,30 +42,30 @@ func NewBillingProvider(client *Client) *BillingProvider {
 
 // RemoteSubscription is the wire format for subscriptions.
 type RemoteSubscription struct {
-	ID                 string    `json:"id"`
-	UserID             string    `json:"user_id"`
-	CustomerID         string    `json:"customer_id"`
-	PlanID             string    `json:"plan_id"`
-	Status             string    `json:"status"`
-	CurrentPeriodStart time.Time `json:"current_period_start"`
-	CurrentPeriodEnd   time.Time `json:"current_period_end"`
+	ID                 string     `json:"id"`
+	UserID             string     `json:"user_id"`
+	CustomerID         string     `json:"customer_id"`
+	PlanID             string     `json:"plan_id"`
+	Status             string     `json:"status"`
+	CurrentPeriodStart time.Time  `json:"current_period_start"`
+	CurrentPeriodEnd   time.Time  `json:"current_period_end"`
 	CanceledAt         *time.Time `json:"canceled_at,omitempty"`
-	CreatedAt          time.Time `json:"created_at"`
+	CreatedAt          time.Time  `json:"created_at"`
 }
 
 // RemoteInvoice is the wire format for invoices.
 type RemoteInvoice struct {
-	ID            string               `json:"id"`
-	UserID        string               `json:"user_id"`
-	CustomerID    string               `json:"customer_id"`
-	Amount        int64                `json:"amount"`
-	Currency      string               `json:"currency"`
-	Status        string               `json:"status"`
-	PeriodStart   time.Time            `json:"period_start"`
-	PeriodEnd     time.Time            `json:"period_end"`
-	Items         []RemoteInvoiceItem  `json:"items"`
-	PaidAt        *time.Time           `json:"paid_at,omitempty"`
-	CreatedAt     time.Time            `json:"created_at"`
+	ID          string              `json:"id"`
+	UserID      string              `json:"user_id"`
+	CustomerID  string              `json:"customer_id"`
+	Amount      int64               `json:"amount"`
+	Currency    string              `json:"currency"`
+	Status      string              `json:"status"`
+	PeriodStart time.Time           `json:"period_start"`
+	PeriodEnd   time.Time           `json:"period_end"`
+	Items       []RemoteInvoiceItem `json:"items"`
+	PaidAt      *time.Time          `json:"paid_at,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
 }
 
 // RemoteInvoiceItem is a line item on an invoice.
@@ -162,14 +162,14 @@ func (p *BillingProvider) CreateInvoice(ctx context.Context, customerID string, 
 
 func toSubscription(rs RemoteSubscription) billing.Subscription {
 	return billing.Subscription{
-		ID:                   rs.ID,
-		UserID:               rs.UserID,
-		PlanID:               rs.PlanID,
-		Status:               billing.SubscriptionStatus(rs.Status),
-		CurrentPeriodStart:   rs.CurrentPeriodStart,
-		CurrentPeriodEnd:     rs.CurrentPeriodEnd,
-		CancelledAt:          rs.CanceledAt,
-		CreatedAt:            rs.CreatedAt,
+		ID:                 rs.ID,
+		UserID:             rs.UserID,
+		PlanID:             rs.PlanID,
+		Status:             billing.SubscriptionStatus(rs.Status),
+		CurrentPeriodStart: rs.CurrentPeriodStart,
+		CurrentPeriodEnd:   rs.CurrentPeriodEnd,
+		CancelledAt:        rs.CanceledAt,
+		CreatedAt:          rs.CreatedAt,
 	}
 }
 

@@ -10,10 +10,10 @@ import (
 	"context"
 	"os"
 
-	"github.com/artpar/apigate/adapters/hasher"
-	"github.com/artpar/apigate/core/runtime"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/hasher"
+	"github.com/coolqoo/better-apigate/core/runtime"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 

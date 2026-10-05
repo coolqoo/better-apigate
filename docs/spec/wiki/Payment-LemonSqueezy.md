@@ -12,14 +12,14 @@ LemonSqueezy is a simple payment solution ideal for indie developers and small t
 2. Create a store
 3. Get API key from Settings > API
 
-### 2. Configure APIGate
+### 2. Configure better-apigate
 
 ```bash
 # Via CLI settings
-apigate settings set payment.provider lemonsqueezy
-apigate settings set payment.lemonsqueezy.api_key "xxx" --encrypted
-apigate settings set payment.lemonsqueezy.store_id "xxx"
-apigate settings set payment.lemonsqueezy.webhook_secret "xxx" --encrypted
+better-apigate settings set payment.provider lemonsqueezy
+better-apigate settings set payment.lemonsqueezy.api_key "xxx" --encrypted
+better-apigate settings set payment.lemonsqueezy.store_id "xxx"
+better-apigate settings set payment.lemonsqueezy.webhook_secret "xxx" --encrypted
 ```
 
 ### 3. Set Up Webhooks
@@ -39,7 +39,7 @@ In LemonSqueezy Dashboard > Settings > Webhooks:
 
 ## Plan Configuration
 
-### 1. Create Plans in APIGate
+### 1. Create Plans in better-apigate
 
 ```bash
 apigate plans create \
@@ -54,7 +54,7 @@ apigate plans create \
 After creating the plan:
 
 1. Create a product with variants in LemonSqueezy Dashboard
-2. In APIGate Admin UI, go to **Plans** and edit the plan
+2. In better-apigate Admin UI, go to **Plans** and edit the plan
 3. Enter the LemonSqueezy variant ID in the LemonSqueezy Variant ID field
 4. Save the plan
 
@@ -78,14 +78,14 @@ LemonSqueezy uses hosted checkout:
 1. User clicks "Subscribe"
 2. Redirected to LemonSqueezy checkout
 3. User completes payment
-4. Webhook notifies APIGate
+4. Webhook notifies better-apigate
 5. User redirected back, plan activated
 
 ---
 
 ## Webhook Events
 
-| Event | APIGate Action |
+| Event | better-apigate Action |
 |-------|----------------|
 | `subscription_created` | Activate user plan |
 | `subscription_updated` | Update user plan |

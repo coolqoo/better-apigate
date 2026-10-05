@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 	"golang.org/x/term"
 )
 

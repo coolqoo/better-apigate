@@ -2,7 +2,7 @@ package v1
 
 import (
 	"encoding/json"
-	"github.com/artpar/apigate/internal/contracts"
+	"github.com/coolqoo/better-apigate/internal/contracts"
 	"net/http"
 	"strings"
 )

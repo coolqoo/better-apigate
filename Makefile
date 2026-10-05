@@ -23,25 +23,25 @@ webui-install:
 
 # Build Go binary (embeds webui assets)
 build:
-	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/apigate ./cmd/apigate
+	CGO_ENABLED=0 go build $(LDFLAGS) -o bin/better-apigate ./cmd/better-apigate
 
 run: build
-	./bin/apigate serve
+	./bin/better-apigate serve
 
 dev:
-	go run ./cmd/apigate serve
+	go run ./cmd/better-apigate serve
 
 test:
 	go test -v ./...
 
 clean:
 	rm -rf bin/
-	rm -f apigate
+	rm -f better-apigate
 	rm -rf webui/build
 	rm -rf core/channel/http/webui/dist
 
 docker:
-	docker build -t apigate:$(VERSION) .
+	docker build -t better-apigate:$(VERSION) .
 
 docker-run:
 	docker compose up --build
@@ -55,6 +55,7 @@ DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
 .PHONY: docker-publish-config
 docker-publish-config:
 	@test -n "$(DOCKER_REPO)" || (echo "Set DOCKERHUB_USERNAME or DOCKER_REPO=your-namespace/better-apigate"; exit 1)
+	@printf '%s\n' "$(DOCKER_TAG)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$$' || (echo "DOCKER_TAG must be a version such as 1.0.0"; exit 1)
 
 docker-publish: docker-publish-config docker-build-binaries
 	@echo "Building and publishing multi-arch image to $(DOCKER_REPO)..."
@@ -71,18 +72,18 @@ docker-publish: docker-publish-config docker-build-binaries
 docker-build-binaries: webui
 	@echo "Building binaries for Docker..."
 	@mkdir -p build/linux/amd64 build/linux/arm64
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o build/linux/amd64/apigate ./cmd/apigate
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o build/linux/arm64/apigate ./cmd/apigate
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o build/linux/amd64/better-apigate ./cmd/better-apigate
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o build/linux/arm64/better-apigate ./cmd/better-apigate
 	@echo "Binaries built in build/linux/"
 
 # Create a release
 release: contracts webui
 	@echo "Building for multiple platforms..."
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-linux-amd64 ./cmd/apigate
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-linux-arm64 ./cmd/apigate
-	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-darwin-amd64 ./cmd/apigate
-	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-darwin-arm64 ./cmd/apigate
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/apigate-windows-amd64.exe ./cmd/apigate
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/better-apigate-linux-amd64 ./cmd/better-apigate
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/better-apigate-linux-arm64 ./cmd/better-apigate
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/better-apigate-darwin-amd64 ./cmd/better-apigate
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/better-apigate-darwin-arm64 ./cmd/better-apigate
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build $(LDFLAGS) -o dist/better-apigate-windows-amd64.exe ./cmd/better-apigate
 
 # Generate API key for testing
 genkey:

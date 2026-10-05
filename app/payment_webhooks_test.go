@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/domain/billing"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/billing"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/rs/zerolog"
 )
 
@@ -124,9 +124,9 @@ func (m *mockPlanStore) Get(ctx context.Context, id string) (ports.Plan, error) 
 	}
 	return ports.Plan{}, errors.New("not found")
 }
-func (m *mockPlanStore) Create(ctx context.Context, p ports.Plan) error                  { return nil }
-func (m *mockPlanStore) Update(ctx context.Context, p ports.Plan) error                  { return nil }
-func (m *mockPlanStore) Delete(ctx context.Context, id string) error                     { return nil }
+func (m *mockPlanStore) Create(ctx context.Context, p ports.Plan) error                { return nil }
+func (m *mockPlanStore) Update(ctx context.Context, p ports.Plan) error                { return nil }
+func (m *mockPlanStore) Delete(ctx context.Context, id string) error                   { return nil }
 func (m *mockPlanStore) ClearOtherDefaults(ctx context.Context, exceptID string) error { return nil }
 
 type mockIDGenerator struct {

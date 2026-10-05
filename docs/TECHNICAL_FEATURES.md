@@ -834,16 +834,16 @@ Result:
 
 ```bash
 # Start server
-apigate serve
+better-apigate serve
 
 # Initialize setup
-apigate init
+better-apigate init
 
 # Validate configuration
-apigate validate
+better-apigate validate
 
 # Show version
-apigate version
+better-apigate version
 
 # Run migrations
 apigate migrate
@@ -885,19 +885,19 @@ apigate upstreams create --name "api" --url "https://api.example.com"
 apigate upstreams health <id>
 
 # Settings
-apigate settings list
-apigate settings set --key "smtp.host" --value "smtp.example.com"
+better-apigate settings list
+better-apigate settings set --key "smtp.host" --value "smtp.example.com"
 ```
 
 ### 15.3 Module Commands
 
 ```bash
 # Generic module operations
-apigate mod <module> list
-apigate mod <module> get <id>
-apigate mod <module> create [flags]
-apigate mod <module> update <id> [flags]
-apigate mod <module> delete <id>
+better-apigate mod <module> list
+better-apigate mod <module> get <id>
+better-apigate mod <module> create [flags]
+better-apigate mod <module> update <id> [flags]
+better-apigate mod <module> delete <id>
 ```
 
 ---

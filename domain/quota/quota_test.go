@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // -----------------------------------------------------------------------------

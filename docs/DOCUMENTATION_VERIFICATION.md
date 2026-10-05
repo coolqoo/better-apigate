@@ -169,7 +169,7 @@ ls core/modules/*.yaml
 
 | Document | Status | Verification Method |
 |----------|--------|---------------------|
-| `CLI-Reference.md` | [ ] | Run `apigate --help`, compare all commands |
+| `CLI-Reference.md` | [ ] | Run `better-apigate --help`, compare all commands |
 | `API-Reference.md` | [ ] | Compare with route registrations |
 | `Error-Codes.md` (wiki) | [ ] | Should match `docs/spec/error-codes.md` |
 

@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 
-	"github.com/artpar/apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/bootstrap"
 	"github.com/spf13/cobra"
 )
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the API proxy server",
-	Long: `Start the APIGate proxy server.
+	Long: `Start the better-apigate proxy server.
 
 All configuration is loaded from the database after connection.
 Only minimal bootstrap settings come from environment variables:
@@ -36,9 +36,9 @@ via the admin UI or API:
   - Upstream settings
 
 Examples:
-  apigate serve
-  APIGATE_DATABASE_DSN=postgres://apigate@localhost:5432/apigate apigate serve
-  APIGATE_LOG_LEVEL=debug APIGATE_LOG_FORMAT=console apigate serve`,
+  better-apigate serve
+  APIGATE_DATABASE_DSN=postgres://apigate@localhost:5432/apigate better-apigate serve
+  APIGATE_LOG_LEVEL=debug APIGATE_LOG_FORMAT=console better-apigate serve`,
 	RunE: runServe,
 }
 
@@ -48,7 +48,7 @@ func init() {
 
 func runServe(cmd *cobra.Command, args []string) error {
 	// Log version info at startup to help diagnose issues with stale builds (#32)
-	fmt.Printf("apigate %s (commit: %s, built: %s)\n", version, commit, buildDate)
+	fmt.Printf("better-apigate %s (commit: %s, built: %s)\n", version, commit, buildDate)
 
 	// Create application with root command for module CLI integration
 	app, err := bootstrap.NewWithConfig(bootstrap.Config{

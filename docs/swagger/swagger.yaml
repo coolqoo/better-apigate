@@ -26,15 +26,15 @@ definitions:
 host: localhost:8080
 info:
   contact:
-    name: APIGate Support
-    url: https://github.com/artpar/apigate/issues
+    name: better-apigate Support
+    url: https://github.com/coolqoo/better-apigate/issues
   description: Self-hosted API monetization solution with authentication, rate limiting,
     usage metering, and billing.
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-  termsOfService: https://github.com/artpar/apigate
-  title: APIGate - API Monetization Proxy
+  termsOfService: https://github.com/coolqoo/better-apigate
+  title: better-apigate - API Monetization Proxy
   version: "1.0"
 paths:
   /{path}:
@@ -275,7 +275,7 @@ paths:
       - Health
   /version:
     get:
-      description: Returns the version information for the APIGate service
+      description: Returns the version information for the better-apigate service
       produces:
       - application/json
       responses:

@@ -34,14 +34,14 @@ if [[ -z "$apigate_version" ]]; then
   fi
 fi
 if [[ ! "$apigate_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][a-zA-Z0-9.-]+)?$ ]]; then
-  echo "Cannot resolve a release. Set VERSION to a published version such as v2.0.0." >&2; exit 1
+  echo "Cannot resolve a release. Set VERSION to a published version such as v1.0.0." >&2; exit 1
 fi
 
 apigate_platform="$apigate_os-$apigate_arch"
 apigate_extension=tar.gz
 apigate_suffix=""
 if [[ "$apigate_os" == windows ]]; then apigate_extension=zip; apigate_suffix=.exe; fi
-apigate_archive="apigate-$apigate_platform.$apigate_extension"
+apigate_archive="better-apigate-$apigate_platform.$apigate_extension"
 apigate_tmp="$(mktemp -d)"
 if [[ "$apigate_gh" == true ]]; then
   gh release download "$apigate_version" --repo "$apigate_repo" --dir "$apigate_tmp" --pattern "$apigate_archive" --pattern checksums.txt
@@ -60,21 +60,21 @@ if command -v sha256sum >/dev/null 2>&1; then
 elif command -v shasum >/dev/null 2>&1; then
   apigate_actual="$(shasum -a 256 "$apigate_archive" | awk '{print $1}')"
 else
-  echo "Install sha256sum or shasum before installing APIGate." >&2; exit 1
+  echo "Install sha256sum or shasum before installing better-apigate." >&2; exit 1
 fi
 if [[ "$apigate_actual" != "$apigate_expected" ]]; then
   echo "Release checksum mismatch. Installation stopped." >&2; exit 1
 fi
 
-# CI archives contain the platform name; GoReleaser archives contain apigate.
-apigate_binary="apigate-$apigate_platform$apigate_suffix"
+# CI archives contain the platform name; GoReleaser archives contain better-apigate.
+apigate_binary="better-apigate-$apigate_platform$apigate_suffix"
 if [[ "$apigate_extension" == zip ]]; then
   apigate_entries="$(unzip -Z1 "$apigate_archive")"
 else
   apigate_entries="$(tar -tzf "$apigate_archive")"
 fi
 if ! printf '%s\n' "$apigate_entries" | awk -v target="$apigate_binary" '$0==target {found=1} END {exit !found}'; then
-  apigate_binary="apigate$apigate_suffix"
+  apigate_binary="better-apigate$apigate_suffix"
 fi
 if ! printf '%s\n' "$apigate_entries" | awk -v target="$apigate_binary" '$0==target {found=1} END {exit !found}'; then
   echo "Release archive does not contain the expected executable." >&2; exit 1
@@ -84,7 +84,7 @@ if [[ "$apigate_extension" == zip ]]; then
 else
   tar -xzf "$apigate_archive" -- "$apigate_binary"
 fi
-apigate_destination="$apigate_install_dir/apigate$apigate_suffix"
+apigate_destination="$apigate_install_dir/better-apigate$apigate_suffix"
 if [[ -w "$apigate_install_dir" ]] || { [[ ! -e "$apigate_install_dir" ]] && [[ -w "$(dirname "$apigate_install_dir")" ]]; }; then
   mkdir -p "$apigate_install_dir"
   install -m 0755 "$apigate_binary" "$apigate_destination"
@@ -92,4 +92,4 @@ else
   sudo install -d "$apigate_install_dir"
   sudo install -m 0755 "$apigate_binary" "$apigate_destination"
 fi
-printf 'Installed APIGate %s at %s\nConfigure PostgreSQL, Redis and deployment secrets before running apigate serve.\n' "$apigate_version" "$apigate_destination"
+printf 'Installed better-apigate %s at %s\nConfigure PostgreSQL, Redis and deployment secrets before running better-apigate serve.\n' "$apigate_version" "$apigate_destination"

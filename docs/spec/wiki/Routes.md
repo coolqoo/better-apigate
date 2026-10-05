@@ -6,7 +6,7 @@ A **route** defines how incoming requests are matched and forwarded to upstreams
 
 ## Overview
 
-Routes are the traffic rules of APIGate. Each route specifies:
+Routes are the traffic rules of better-apigate. Each route specifies:
 - **What to match**: Host, path pattern, HTTP methods, headers
 - **Where to send**: Which upstream to forward to
 - **How to transform**: Modify request/response

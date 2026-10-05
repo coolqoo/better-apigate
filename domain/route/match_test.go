@@ -3,7 +3,7 @@ package route_test
 import (
 	"testing"
 
-	"github.com/artpar/apigate/domain/route"
+	"github.com/coolqoo/better-apigate/domain/route"
 )
 
 func TestMatcher_ExactMatch(t *testing.T) {
@@ -32,11 +32,11 @@ func TestMatcher_ExactMatch(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		path     string
-		method   string
-		wantID   string
-		wantNil  bool
+		name    string
+		path    string
+		method  string
+		wantID  string
+		wantNil bool
 	}{
 		{"exact match /api/users", "/api/users", "GET", "r1", false},
 		{"exact match /api/posts", "/api/posts", "GET", "r2", false},
@@ -90,10 +90,10 @@ func TestMatcher_PrefixMatch(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		path     string
-		wantID   string
-		wantNil  bool
+		name    string
+		path    string
+		wantID  string
+		wantNil bool
 	}{
 		{"prefix /api/users", "/api/users", "r1", false},
 		{"prefix /api/users/123", "/api/users/123", "r1", false},
@@ -1507,13 +1507,13 @@ func TestMatcher_HostPriority(t *testing.T) {
 			Priority:      0,
 		},
 		{
-			ID:            "r3",
-			Name:          "no-host",
-			PathPattern:   "/v1/*",
-			MatchType:     route.MatchPrefix,
-			UpstreamID:    "up3",
-			Enabled:       true,
-			Priority:      0,
+			ID:          "r3",
+			Name:        "no-host",
+			PathPattern: "/v1/*",
+			MatchType:   route.MatchPrefix,
+			UpstreamID:  "up3",
+			Enabled:     true,
+			Priority:    0,
 		},
 	}
 

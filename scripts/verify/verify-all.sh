@@ -6,7 +6,7 @@ set -e
 cd "$(dirname "$0")/../.."
 
 echo "========================================"
-echo "  APIGate Documentation Verification"
+echo "  better-apigate Documentation Verification"
 echo "========================================"
 echo ""
 

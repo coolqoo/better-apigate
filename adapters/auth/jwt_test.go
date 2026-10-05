@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/auth"
+	"github.com/coolqoo/better-apigate/adapters/auth"
 )
 
 func TestNewTokenService_WithSecret(t *testing.T) {

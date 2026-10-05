@@ -1,10 +1,10 @@
-# APIGate v2 deployment
+# better-apigate deployment
 
 This is a fresh-deployment release. PostgreSQL owns users, configuration, sessions, terms, reservations, payment orders, the immutable wallet ledger and durable outboxes. Redis owns shared account limits and short-lived credential/configuration caches. All gateway instances must use the same PostgreSQL database, Redis deployment and API-key secret.
 
 ## Clean installation
 
-Run these commands from the repository checkout. The v2 implementation currently lives on `codex/apigate-v2`. Requires Docker Engine and the Compose plugin. The pinned builds use Go 1.27.1 and Node 22.23.2. No SQLite runtime or C compiler is needed.
+Run these commands from the `main` branch of `coolqoo/better-apigate`. The first release is `v1.0.0`. Requires Docker Engine and the Compose plugin. The pinned builds use Go 1.27.1 and Node 22.23.2. No SQLite runtime or C compiler is needed.
 
 ```sh
 scripts/init-env.sh
@@ -23,9 +23,9 @@ The Compose database uses 1 GiB of shared buffers, a 4 GiB WAL size target and a
 
 ## Published images and native binaries
 
-Set `APIGATE_IMAGE=your-dockerhub-username/better-apigate:2.0.0` to a published version in `.env`, replacing the namespace with the repository's `DOCKERHUB_USERNAME` value. Then run `docker compose pull && docker compose up -d --no-build --wait`. For the v2 branch preview, use `branch-codex-apigate-v2` instead of `2.0.0`. The source deployment above builds from your checkout and defaults to the local image `better-apigate:local`. Published images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed.
+Set `APIGATE_IMAGE=your-dockerhub-username/better-apigate:1.0.0` in `.env`, replacing the namespace with the repository's `DOCKERHUB_USERNAME` value. Then run `docker compose pull && docker compose up -d --no-build --wait`. The source deployment above builds from your checkout and defaults to the local image `better-apigate:local`. Published images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed.
 
-`scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs only the expected executable. `VERSION` selects a published tag; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `apigate serve`. Use database and Redis URLs reachable from the native process; Docker service names resolve only inside the Compose network.
+`scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs `better-apigate` (`better-apigate.exe` on Windows). `VERSION=v1.0.0` selects the first release; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `better-apigate serve`. Use database and Redis URLs reachable from the native process; Docker service names resolve only inside the Compose network.
 
 For a second gateway, run `docker compose --profile replica up --build -d --wait` and put ports 8080 and 8082 behind the same public HTTPS origin. Both instances share database state, secrets and account limits. Include both pools in the database connection budget. A provider callback may reach either instance.
 
@@ -79,16 +79,16 @@ Configure these GitHub repository secrets under **Settings → Secrets and varia
 - `DOCKERHUB_USERNAME`: the Docker Hub account that owns the `better-apigate` image repository.
 - `DOCKERHUB_TOKEN`: a Docker Hub access token with write access to that repository.
 
-No other release variable or registry credential is required. Pull requests only validate and build. Trusted branch pushes and the CI workflow's manual dispatch publish a single Linux amd64/arm64 manifest to `<DOCKERHUB_USERNAME>/better-apigate` after the build succeeds. The pipeline checks the published manifest by digest and reports it in the job summary. GitHub releases reuse the same binaries, with the same embedded frontend, and attach SHA256 checksums for installation.
+No other release variable or registry credential is required. Pull requests, branch pushes and branch CI dispatches only validate and build. Semantic version tag pushes publish a single Linux amd64/arm64 manifest to `<DOCKERHUB_USERNAME>/better-apigate:<version>` after the build succeeds. The pipeline checks the published manifest by digest and reports it in the job summary. GitHub releases reuse the same binaries, with the same embedded frontend, and attach SHA256 checksums for installation.
 
 | Trigger | Docker Hub tags |
 | --- | --- |
-| Push to `codex/apigate-v2` | `branch-codex-apigate-v2`, `sha-<full-commit>` |
-| Push to `main` | `edge`, `branch-main`, `sha-<full-commit>` |
-| Push `v2.0.0` | `v2.0.0`, `2.0.0`, `2.0`, `latest`, `sha-<full-commit>` |
-| Push `v2.0.0-rc.1` | `v2.0.0-rc.1`, `2.0.0-rc.1`, `sha-<full-commit>` |
+| Branch push or pull request | None |
+| Push `v1.0.0` | `1.0.0` |
+| Push `v1.1.0` | `1.1.0` |
+| Push `v1.1.0-rc.1` | `1.1.0-rc.1` |
 
-Push a semantic version tag when ready to publish a GitHub release. Prerelease tags create prereleases and never move the stable `latest` tag. The Actions workflow owns Docker publishing; `.goreleaser.yaml` remains available for native archive builds. For a local image publish, run `docker login` and `DOCKERHUB_USERNAME=your-namespace make docker-publish DOCKER_TAG=dev`.
+Push a semantic version tag when ready to publish a GitHub release. Docker tags contain only the complete version without the leading `v`; `latest`, branch names, SHAs and shortened versions are never published. Prerelease tags create GitHub prereleases. The Actions workflow owns Docker publishing; `.goreleaser.yaml` remains available for native archive builds. For a local image publish, run `docker login` and `DOCKERHUB_USERNAME=your-namespace make docker-publish DOCKER_TAG=1.0.0`.
 
 ## Upstream credentials and monitoring
 

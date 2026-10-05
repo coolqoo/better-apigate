@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/clock"
-	"github.com/artpar/apigate/app"
-	"github.com/artpar/apigate/domain/route"
+	"github.com/coolqoo/better-apigate/adapters/clock"
+	"github.com/coolqoo/better-apigate/app"
+	"github.com/coolqoo/better-apigate/domain/route"
 	"github.com/rs/zerolog"
 )
 

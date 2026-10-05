@@ -238,7 +238,7 @@ func Defaults() Settings {
 		KeyServerReadTimeout:  "30s",
 		KeyServerWriteTimeout: "60s",
 		KeyPortalEnabled:      "true",
-		KeyPortalAppName:      "APIGate",
+		KeyPortalAppName:      "better-apigate",
 		KeyWebUIEnabled:       "true", // Web UI enabled by default (backward compatible)
 		KeyWebUIBasePath:      "",     // Empty = root mount (backward compatible)
 		// Handler paths (backward compatible)

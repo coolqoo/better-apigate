@@ -1,6 +1,6 @@
 # Authentication specification
 
-**Status:** Authoritative for APIGate v2 fresh deployments
+**Status:** Authoritative for better-apigate fresh deployments
 
 Browser customers and administrators use the `/api/v1/auth/*` endpoints and opaque PostgreSQL-backed sessions. The `apigate_session` cookie is HttpOnly, SameSite=Lax, and Secure when the configured public origin is HTTPS. Only a SHA-256 digest is stored in PostgreSQL. Session role and account status are checked against the current user row on each request. Logout deletes the session; password changes/reset invalidate prior sessions.
 

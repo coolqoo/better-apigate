@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/artpar/apigate/core/capability"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/core/capability"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // CacheAdapter wraps a ports.CacheProvider to implement capability.CacheProvider.

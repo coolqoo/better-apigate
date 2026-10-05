@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	apihttp "github.com/artpar/apigate/adapters/http"
+	apihttp "github.com/coolqoo/better-apigate/adapters/http"
 	"github.com/rs/zerolog"
 )
 

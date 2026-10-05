@@ -8,25 +8,25 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Spec represents an OpenAPI 3.0 specification.
 type Spec struct {
-	OpenAPI    string                `json:"openapi"`
-	Info       Info                  `json:"info"`
-	Servers    []Server              `json:"servers,omitempty"`
-	Paths      map[string]PathItem   `json:"paths"`
-	Components Components            `json:"components"`
-	Tags       []Tag                 `json:"tags,omitempty"`
+	OpenAPI    string              `json:"openapi"`
+	Info       Info                `json:"info"`
+	Servers    []Server            `json:"servers,omitempty"`
+	Paths      map[string]PathItem `json:"paths"`
+	Components Components          `json:"components"`
+	Tags       []Tag               `json:"tags,omitempty"`
 }
 
 // Info provides API metadata.
 type Info struct {
-	Title       string  `json:"title"`
-	Description string  `json:"description,omitempty"`
-	Version     string  `json:"version"`
+	Title       string   `json:"title"`
+	Description string   `json:"description,omitempty"`
+	Version     string   `json:"version"`
 	Contact     *Contact `json:"contact,omitempty"`
 	License     *License `json:"license,omitempty"`
 }
@@ -61,23 +61,23 @@ type PathItem struct {
 
 // Operation represents an API operation.
 type Operation struct {
-	Tags        []string            `json:"tags,omitempty"`
-	Summary     string              `json:"summary,omitempty"`
-	Description string              `json:"description,omitempty"`
-	OperationID string              `json:"operationId,omitempty"`
-	Parameters  []Parameter         `json:"parameters,omitempty"`
-	RequestBody *RequestBody        `json:"requestBody,omitempty"`
-	Responses   map[string]Response `json:"responses"`
+	Tags        []string              `json:"tags,omitempty"`
+	Summary     string                `json:"summary,omitempty"`
+	Description string                `json:"description,omitempty"`
+	OperationID string                `json:"operationId,omitempty"`
+	Parameters  []Parameter           `json:"parameters,omitempty"`
+	RequestBody *RequestBody          `json:"requestBody,omitempty"`
+	Responses   map[string]Response   `json:"responses"`
 	Security    []SecurityRequirement `json:"security,omitempty"`
 }
 
 // Parameter represents an API parameter.
 type Parameter struct {
-	Name        string      `json:"name"`
-	In          string      `json:"in"` // path, query, header
-	Description string      `json:"description,omitempty"`
-	Required    bool        `json:"required,omitempty"`
-	Schema      *Schema     `json:"schema,omitempty"`
+	Name        string  `json:"name"`
+	In          string  `json:"in"` // path, query, header
+	Description string  `json:"description,omitempty"`
+	Required    bool    `json:"required,omitempty"`
+	Schema      *Schema `json:"schema,omitempty"`
 }
 
 // RequestBody represents a request body.
@@ -100,28 +100,28 @@ type MediaType struct {
 
 // Schema represents a JSON Schema.
 type Schema struct {
-	Type        string            `json:"type,omitempty"`
-	Format      string            `json:"format,omitempty"`
-	Description string            `json:"description,omitempty"`
+	Type        string             `json:"type,omitempty"`
+	Format      string             `json:"format,omitempty"`
+	Description string             `json:"description,omitempty"`
 	Properties  map[string]*Schema `json:"properties,omitempty"`
-	Required    []string          `json:"required,omitempty"`
-	Items       *Schema           `json:"items,omitempty"`
-	Enum        []string          `json:"enum,omitempty"`
-	Ref         string            `json:"$ref,omitempty"`
-	MinLength   *int              `json:"minLength,omitempty"`
-	MaxLength   *int              `json:"maxLength,omitempty"`
-	Minimum     *float64          `json:"minimum,omitempty"`
-	Maximum     *float64          `json:"maximum,omitempty"`
-	Pattern     string            `json:"pattern,omitempty"`
-	Default     any               `json:"default,omitempty"`
-	Example     any               `json:"example,omitempty"`
-	AllOf       []*Schema         `json:"allOf,omitempty"`
-	OneOf       []*Schema         `json:"oneOf,omitempty"`
+	Required    []string           `json:"required,omitempty"`
+	Items       *Schema            `json:"items,omitempty"`
+	Enum        []string           `json:"enum,omitempty"`
+	Ref         string             `json:"$ref,omitempty"`
+	MinLength   *int               `json:"minLength,omitempty"`
+	MaxLength   *int               `json:"maxLength,omitempty"`
+	Minimum     *float64           `json:"minimum,omitempty"`
+	Maximum     *float64           `json:"maximum,omitempty"`
+	Pattern     string             `json:"pattern,omitempty"`
+	Default     any                `json:"default,omitempty"`
+	Example     any                `json:"example,omitempty"`
+	AllOf       []*Schema          `json:"allOf,omitempty"`
+	OneOf       []*Schema          `json:"oneOf,omitempty"`
 }
 
 // Components contains reusable schemas.
 type Components struct {
-	Schemas         map[string]*Schema         `json:"schemas,omitempty"`
+	Schemas         map[string]*Schema        `json:"schemas,omitempty"`
 	SecuritySchemes map[string]SecurityScheme `json:"securitySchemes,omitempty"`
 }
 
@@ -156,8 +156,8 @@ func NewGenerator(modules map[string]convention.Derived) *Generator {
 	return &Generator{
 		modules: modules,
 		info: Info{
-			Title:   "APIGate API",
-			Version: "1.0.0",
+			Title:       "better-apigate API",
+			Version:     "1.0.0",
 			Description: "Auto-generated API documentation from module schemas",
 		},
 	}

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // QuotaStore implements ports.QuotaStore using PostgreSQL for persistence.

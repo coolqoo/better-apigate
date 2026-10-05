@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/core/analytics"
+	"github.com/coolqoo/better-apigate/core/analytics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

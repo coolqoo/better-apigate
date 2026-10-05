@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/artpar/apigate/domain/settings"
+	"github.com/coolqoo/better-apigate/domain/settings"
 )
 
 // SettingsStore implements ports.SettingsStore using PostgreSQL.

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/artpar/apigate/domain/tls"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/tls"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 // CertificateStore implements ports.CertificateStore using SQLite.

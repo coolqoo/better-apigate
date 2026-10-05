@@ -1,6 +1,6 @@
 # Webhooks
 
-**Webhooks** notify external systems when events occur in APIGate.
+**Webhooks** notify external systems when events occur in better-apigate.
 
 ---
 

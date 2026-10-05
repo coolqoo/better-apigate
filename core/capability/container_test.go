@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/artpar/apigate/core/capability"
-	captest "github.com/artpar/apigate/core/capability/testing"
+	"github.com/coolqoo/better-apigate/core/capability"
+	captest "github.com/coolqoo/better-apigate/core/capability/testing"
 )
 
 func TestContainer_RegisterAndResolve(t *testing.T) {

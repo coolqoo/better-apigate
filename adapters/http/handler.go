@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/adapters/auth"
-	"github.com/artpar/apigate/adapters/metrics"
-	"github.com/artpar/apigate/app"
-	_ "github.com/artpar/apigate/docs/swagger" // swagger docs
-	"github.com/artpar/apigate/domain/proxy"
-	"github.com/artpar/apigate/domain/streaming"
-	"github.com/artpar/apigate/domain/usage"
-	"github.com/artpar/apigate/pkg/jsonapi"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/adapters/auth"
+	"github.com/coolqoo/better-apigate/adapters/metrics"
+	"github.com/coolqoo/better-apigate/app"
+	_ "github.com/coolqoo/better-apigate/docs/swagger" // swagger docs
+	"github.com/coolqoo/better-apigate/domain/proxy"
+	"github.com/coolqoo/better-apigate/domain/streaming"
+	"github.com/coolqoo/better-apigate/domain/usage"
+	"github.com/coolqoo/better-apigate/pkg/jsonapi"
+	"github.com/coolqoo/better-apigate/ports"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -553,7 +553,7 @@ func (h *HealthHandler) Readiness(w http.ResponseWriter, r *http.Request) {
 // Version returns the service version.
 //
 //	@Summary		Get service version
-//	@Description	Returns the version information for the APIGate service
+//	@Description	Returns the version information for the better-apigate service
 //	@Tags			System
 //	@Produce		json
 //	@Success		200	{object}	VersionResponse	"Version information"

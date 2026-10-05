@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artpar/apigate/domain/oauth"
-	"github.com/artpar/apigate/ports"
+	"github.com/coolqoo/better-apigate/domain/oauth"
+	"github.com/coolqoo/better-apigate/ports"
 )
 
 const (

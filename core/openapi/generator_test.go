@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/artpar/apigate/core/convention"
-	"github.com/artpar/apigate/core/schema"
+	"github.com/coolqoo/better-apigate/core/convention"
+	"github.com/coolqoo/better-apigate/core/schema"
 )
 
 // Helper to create a test module
@@ -38,8 +38,8 @@ func TestNewGenerator(t *testing.T) {
 		t.Error("modules map should not be nil")
 	}
 
-	if gen.info.Title != "APIGate API" {
-		t.Errorf("expected default title 'APIGate API', got %q", gen.info.Title)
+	if gen.info.Title != "better-apigate API" {
+		t.Errorf("expected default title 'better-apigate API', got %q", gen.info.Title)
 	}
 
 	if gen.info.Version != "1.0.0" {
@@ -383,18 +383,18 @@ func TestGenerateExample(t *testing.T) {
 		fieldType    schema.FieldType
 		expectedType interface{}
 	}{
-		{"username", schema.FieldTypeString, "John Doe"},              // contains "name" and "user"
-		{"user_email", schema.FieldTypeString, "user@example.com"},    // contains "email"
+		{"username", schema.FieldTypeString, "John Doe"},               // contains "name" and "user"
+		{"user_email", schema.FieldTypeString, "user@example.com"},     // contains "email"
 		{"api_url", schema.FieldTypeString, "https://api.example.com"}, // contains "url"
-		{"base_path", schema.FieldTypeString, "/api/v1/resource"},     // contains "path"
-		{"http_method", schema.FieldTypeString, "GET"},                // contains "method"
-		{"server_port", schema.FieldTypeInt, 8080},                    // contains "port"
-		{"server_host", schema.FieldTypeString, "localhost"},          // contains "host"
-		{"request_timeout", schema.FieldTypeString, "30s"},            // contains "timeout"
-		{"max_limit", schema.FieldTypeInt, 100},                       // contains "limit"
-		{"total_count", schema.FieldTypeInt, 10},                      // contains "count"
-		{"request_rate", schema.FieldTypeInt, 60},                     // contains "rate"
-		{"unit_price", schema.FieldTypeFloat, 999},                    // contains "price"
+		{"base_path", schema.FieldTypeString, "/api/v1/resource"},      // contains "path"
+		{"http_method", schema.FieldTypeString, "GET"},                 // contains "method"
+		{"server_port", schema.FieldTypeInt, 8080},                     // contains "port"
+		{"server_host", schema.FieldTypeString, "localhost"},           // contains "host"
+		{"request_timeout", schema.FieldTypeString, "30s"},             // contains "timeout"
+		{"max_limit", schema.FieldTypeInt, 100},                        // contains "limit"
+		{"total_count", schema.FieldTypeInt, 10},                       // contains "count"
+		{"request_rate", schema.FieldTypeInt, 60},                      // contains "rate"
+		{"unit_price", schema.FieldTypeFloat, 999},                     // contains "price"
 		{"item_description", schema.FieldTypeString, "A brief description of this item"},
 		{"api_key", schema.FieldTypeString, "ak_example_key_prefix"}, // contains "key"
 		{"client_secret", schema.FieldTypeString, "********"},        // contains "secret"

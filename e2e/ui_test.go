@@ -11,12 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/artpar/apigate/adapters/sqlite"
-	"github.com/artpar/apigate/bootstrap"
-	"github.com/artpar/apigate/domain/key"
-	"github.com/artpar/apigate/domain/route"
-	"github.com/artpar/apigate/ports"
 	"github.com/chromedp/chromedp"
+	"github.com/coolqoo/better-apigate/adapters/sqlite"
+	"github.com/coolqoo/better-apigate/bootstrap"
+	"github.com/coolqoo/better-apigate/domain/key"
+	"github.com/coolqoo/better-apigate/domain/route"
+	"github.com/coolqoo/better-apigate/ports"
 	"golang.org/x/crypto/bcrypt"
 )
 
