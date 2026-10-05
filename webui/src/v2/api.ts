@@ -94,7 +94,9 @@ export async function apiPage<T>(
   };
 }
 export function operation() {
-  return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) =>
+    value.toString(16).padStart(2, "0"),
+  ).join("");
 }
 // Integer arithmetic retains all six stored decimal places until display.
 export function micros(value: Money) {

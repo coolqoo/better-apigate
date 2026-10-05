@@ -559,7 +559,7 @@ export function Payments() {
                   orders={orders.data}
                   onReverse={(o) => {
                     setError(null);
-                    setReversalOperation(crypto.randomUUID());
+                    setReversalOperation(operation());
                     setReversing(o);
                   }}
                   onReconcile={async (o) => {
