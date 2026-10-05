@@ -4,12 +4,16 @@ This is a fresh-deployment release. PostgreSQL owns users, configuration, sessio
 
 ## Clean installation
 
-Run these commands from the `main` branch of `coolqoo/better-apigate`. The first release is `v1.0.0`. Requires Docker Engine and the Compose plugin. The pinned builds use Go 1.27.1 and Node 22.23.2. No SQLite runtime or C compiler is needed.
+Use the published Docker Hub image from release `v1.0.0`. Requires Docker Engine/Desktop with the Compose plugin, Git and OpenSSL for generating secrets. Go and Node.js are needed only for source builds.
 
 ```sh
-scripts/init-env.sh
-# Set APIGATE_PUBLIC_URL in .env to the externally reachable HTTPS origin.
-docker compose up --build -d --wait
+git clone https://github.com/coolqoo/better-apigate.git
+cd better-apigate
+sh scripts/init-env.sh
+printf '\nAPIGATE_IMAGE=coolqoo/better-apigate:1.0.0\n' >> .env
+# For a server, set APIGATE_PUBLIC_URL in .env to your browser's public origin.
+docker compose pull
+docker compose up -d --no-build --wait
 curl --fail http://localhost:8080/ready
 ```
 
@@ -23,11 +27,11 @@ The Compose database uses 1 GiB of shared buffers, a 4 GiB WAL size target and a
 
 ## Published images and native binaries
 
-Set `APIGATE_IMAGE=your-dockerhub-username/better-apigate:1.0.0` in `.env`, replacing the namespace with the repository's `DOCKERHUB_USERNAME` value. Then run `docker compose pull && docker compose up -d --no-build --wait`. The source deployment above builds from your checkout and defaults to the local image `better-apigate:local`. Published images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed.
+The published image is [`coolqoo/better-apigate:1.0.0`](https://hub.docker.com/r/coolqoo/better-apigate/tags?name=1.0.0), with Linux amd64 and arm64 variants. Set `APIGATE_IMAGE=coolqoo/better-apigate:1.0.0` in `.env`, then run `docker compose pull && docker compose up -d --no-build --wait`. Published images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed. For a source image build, use `docker compose up --build -d --wait`.
 
 `scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs `better-apigate` (`better-apigate.exe` on Windows). `VERSION=v1.0.0` selects the first release; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `better-apigate serve`. Use database and Redis URLs reachable from the native process; Docker service names resolve only inside the Compose network.
 
-For a second gateway, run `docker compose --profile replica up --build -d --wait` and put ports 8080 and 8082 behind the same public HTTPS origin. Both instances share database state, secrets and account limits. Include both pools in the database connection budget. A provider callback may reach either instance.
+For a second gateway, run `docker compose --profile replica pull && docker compose --profile replica up -d --no-build --wait` and put ports 8080 and 8082 behind the same public HTTPS origin. Both instances share database state, secrets and account limits. Include both pools in the database connection budget. A provider callback may reach either instance.
 
 ## Accounting and recovery
 

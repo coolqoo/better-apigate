@@ -14,4 +14,4 @@ APIGATE_API_KEY_SECRET=$apigate_key_secret
 APIGATE_SETUP_TOKEN=$apigate_setup_token
 APIGATE_PUBLIC_URL=http://localhost:8080
 ENV
-printf '%s\n' 'Created .env with fresh deployment secrets. Start with docker compose up --build.'
+printf '%s\n' 'Created .env with fresh deployment secrets. See README.md for the published-image Docker quick start.'
