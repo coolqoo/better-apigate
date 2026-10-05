@@ -1,78 +1,41 @@
+x-gateway: &gateway
+  image: ${APIGATE_IMAGE:-coolqoo/better-apigate:1.0.0}
+  build: .
+  env_file: .env
+  environment:
+    APIGATE_DATABASE_DSN: ${APIGATE_DATABASE_DSN:?Set your PostgreSQL connection URL in .env}
+    APIGATE_REDIS_URL: ${APIGATE_REDIS_URL:?Set your Redis connection URL in .env}
+    APIGATE_API_KEY_SECRET: ${APIGATE_API_KEY_SECRET:?Run scripts/init-env.sh}
+    APIGATE_SETUP_TOKEN: ${APIGATE_SETUP_TOKEN:?Run scripts/init-env.sh}
+    APIGATE_METRICS_TOKEN: ${APIGATE_METRICS_TOKEN:-}
+    APIGATE_PUBLIC_URL: ${APIGATE_PUBLIC_URL:-http://localhost:8080}
+    APIGATE_SERVER_PORT: "8080"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  restart: unless-stopped
+  stop_grace_period: 40s
+  read_only: true
+  tmpfs: [/tmp]
+
 services:
   gateway:
-    image: ${APIGATE_IMAGE:-better-apigate:local}
-    build: .
-    env_file: .env
+    <<: *gateway
     ports: ["${APIGATE_PORT:-8080}:8080"]
-    environment:
-      APIGATE_DATABASE_DSN: postgres://apigate:${POSTGRES_PASSWORD:?Run scripts/init-env.sh}@postgres:5432/apigate?sslmode=disable
-      APIGATE_REDIS_URL: redis://:${REDIS_PASSWORD:?Run scripts/init-env.sh}@redis:6379/0
-      APIGATE_API_KEY_SECRET: ${APIGATE_API_KEY_SECRET:?Run scripts/init-env.sh}
-      APIGATE_SETUP_TOKEN: ${APIGATE_SETUP_TOKEN:?Run scripts/init-env.sh}
-      APIGATE_METRICS_TOKEN: ${APIGATE_METRICS_TOKEN:-}
-      APIGATE_PUBLIC_URL: ${APIGATE_PUBLIC_URL:-http://localhost:8080}
-      APIGATE_SERVER_PORT: "8080"
-    depends_on:
-      postgres: {condition: service_healthy}
-      redis: {condition: service_healthy}
-    restart: unless-stopped
-    stop_grace_period: 40s
-    read_only: true
-    tmpfs: [/tmp]
-  postgres:
-    image: postgres:17.10-alpine
-    environment:
-      POSTGRES_USER: apigate
-      POSTGRES_DB: apigate
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/init-env.sh}
-    command:
-      - postgres
-      - -c
-      - max_connections=200
-      - -c
-      - shared_buffers=${POSTGRES_SHARED_BUFFERS:-1GB}
-      - -c
-      - max_wal_size=4GB
-      - -c
-      - bgwriter_lru_maxpages=1000
-    volumes: ["postgres-data:/var/lib/postgresql/data"]
-    healthcheck:
-      test: [CMD-SHELL, "pg_isready -U apigate -d apigate"]
-      interval: 5s
-      timeout: 3s
-      retries: 15
-    restart: unless-stopped
-  redis:
-    image: redis:8.10.2-alpine
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?Run scripts/init-env.sh}
-    command: [/bin/sh, -c, 'exec redis-server --requirepass "$${REDIS_PASSWORD}" --appendonly yes --maxmemory-policy noeviction']
-    volumes: ["redis-data:/data"]
-    healthcheck:
-      test: [CMD-SHELL, 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep -q PONG']
-      interval: 5s
-      timeout: 3s
-      retries: 15
-    restart: unless-stopped
+
   gateway-two:
+    <<: *gateway
     profiles: [replica]
-    image: ${APIGATE_IMAGE:-better-apigate:local}
-    build: .
-    env_file: .env
-    ports: ["8082:8080"]
+    ports: ["${APIGATE_REPLICA_PORT:-8082}:8080"]
+
+  # An optional PostgreSQL client for backup/restore of the external database.
+  # It does not start a PostgreSQL server or run during ordinary compose up.
+  postgres-tools:
+    profiles: [maintenance]
+    image: ${APIGATE_POSTGRES_CLIENT_IMAGE:-postgres:17.10-alpine}
     environment:
-      APIGATE_DATABASE_DSN: postgres://apigate:${POSTGRES_PASSWORD}@postgres:5432/apigate?sslmode=disable
-      APIGATE_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      APIGATE_API_KEY_SECRET: ${APIGATE_API_KEY_SECRET}
-      APIGATE_SETUP_TOKEN: ${APIGATE_SETUP_TOKEN}
-      APIGATE_PUBLIC_URL: ${APIGATE_PUBLIC_URL:-http://localhost:8080}
-    depends_on:
-      postgres: {condition: service_healthy}
-      redis: {condition: service_healthy}
-    restart: unless-stopped
+      APIGATE_DATABASE_DSN: ${APIGATE_DATABASE_DSN:?Set your PostgreSQL connection URL in .env}
+    entrypoint: /bin/sh
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     read_only: true
     tmpfs: [/tmp]
-    stop_grace_period: 40s
-volumes:
-  postgres-data:
-  redis-data:

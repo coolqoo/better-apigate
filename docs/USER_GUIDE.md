@@ -4,7 +4,7 @@ better-apigate provides a prepaid API gateway with a customer workspace at `/por
 
 ## Set up the gateway
 
-1. Follow [deployment instructions](deployment-v2.md) to start PostgreSQL, Redis and the gateway with the deployment secrets.
+1. Follow [deployment instructions](deployment-v2.md) to supply your existing PostgreSQL and Redis connection URLs and start the gateway with its deployment secrets.
 2. Open `/setup`, enter the setup token, and create the initial administrator.
 3. In **Plans & Pricing**, configure the base pay-as-you-go unit price and rate limit, then add paid 30-day plans with their prices and included units.
 4. In **API Configuration**, add upstreams and routes. Give each paid route a fixed positive integer unit cost. Store upstream authentication as a deployment environment reference, for example `${UPSTREAM_API_TOKEN}`, and supply its value to the gateway environment. Mark a route public only when it is explicitly free.

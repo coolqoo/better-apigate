@@ -1,35 +1,44 @@
 # better-apigate deployment
 
-This is a fresh-deployment release. PostgreSQL owns users, configuration, sessions, terms, reservations, payment orders, the immutable wallet ledger and durable outboxes. Redis owns shared account limits and short-lived credential/configuration caches. All gateway instances must use the same PostgreSQL database, Redis deployment and API-key secret.
+This is a fresh-deployment release. Docker Compose runs the gateway against your existing PostgreSQL and Redis services using connection URLs. PostgreSQL owns users, configuration, sessions, terms, reservations, payment orders, the immutable wallet ledger and durable outboxes. Redis owns shared account limits and short-lived credential/configuration caches. All gateway instances must use the same PostgreSQL database, Redis deployment and API-key secret.
 
 ## Clean installation
 
-Use the published Docker Hub image from release `v1.0.0`. Requires Docker Engine/Desktop with the Compose plugin, Git and OpenSSL for generating secrets. Go and Node.js are needed only for source builds.
+Use the published Docker Hub image from release `v1.0.0`. Requires Docker Engine/Desktop with the Compose plugin, Git, OpenSSL for generating secrets, and reachable PostgreSQL and Redis services. Go and Node.js are needed only for source builds.
 
 ```sh
 git clone https://github.com/coolqoo/better-apigate.git
 cd better-apigate
 sh scripts/init-env.sh
-printf '\nAPIGATE_IMAGE=coolqoo/better-apigate:1.0.0\n' >> .env
+# Edit .env and supply your APIGATE_DATABASE_DSN and APIGATE_REDIS_URL.
 # For a server, set APIGATE_PUBLIC_URL in .env to your browser's public origin.
 docker compose pull
 docker compose up -d --no-build --wait
 curl --fail http://localhost:8080/ready
 ```
 
+`scripts/init-env.sh` creates gateway secrets and selects the published image, leaving the two service URLs for you to fill in. It preserves an existing `.env`. Set these variables before running Compose:
+
+```dotenv
+APIGATE_DATABASE_DSN='postgresql://USER:PASSWORD@POSTGRES_HOST:5432/DATABASE?sslmode=require'
+APIGATE_REDIS_URL='rediss://default:PASSWORD@REDIS_HOST:6379/0'
+```
+
+Use your providers' complete URLs, with their required ports and TLS parameters. PostgreSQL accepts `postgres://` or `postgresql://`; Redis accepts `redis://` or TLS-enabled `rediss://`. Credentials are part of the URLs; separate `POSTGRES_PASSWORD` and `REDIS_PASSWORD` fields are not used. Percent-encode reserved characters in credentials and single-quote the values in `.env` so Compose preserves literal dollar signs. Use a dedicated PostgreSQL database whose user can run schema migrations, and a Redis deployment configured to retain rate-limit keys without eviction.
+
+URLs must be reachable from inside the gateway container. For PostgreSQL or Redis running on the Docker host, use `host.docker.internal` instead of `localhost` and allow connections from Docker's network. For remote services, use their reachable hostnames. This Compose file does not start PostgreSQL or Redis servers or manage their persistence and credentials. When switching an existing checkout to this setup, set the two URLs and remove the old separate password fields from `.env`.
+
 Open `/setup`, enter the deployment setup token from `.env`, and create the initial administrator. Configure the base pay-as-you-go price, route unit costs, plans, enabled payment providers and email delivery under `/admin`. New customers sign up, fund their wallet, optionally purchase a plan and create an API key in `/portal`. Public API documentation lives at `/docs`.
 
 The setup token and API-key secret are deployment secrets. Keep `.env` private and backed up securely. API-key secret rotation invalidates existing keys; issue replacements deliberately. Browser sessions use HttpOnly cookies with CSRF protection. A TLS reverse proxy must retain the public origin; `APIGATE_PUBLIC_URL` controls secure cookies, callback URLs and origin validation. Do not put auth tokens in browser storage.
 
-PostgreSQL migrations run under an advisory lock at startup. Each process has one shared pool, defaulting to 32 open and 8 idle connections. Set `APIGATE_DB_MAX_CONNS` between 2 and 500; budget the sum across instances plus administrative/backup connections below PostgreSQL `max_connections`. The Compose database allows 200 connections. Readiness checks both PostgreSQL and Redis; a dependency outage prevents paid forwarding. Shutdown drains HTTP requests, stops workers and closes the pool.
-
-The Compose database uses 1 GiB of shared buffers, a 4 GiB WAL size target and a background-writer limit of 1,000 pages per cycle. Keep at least 4 GiB available for PostgreSQL plus memory for the gateway and Redis. Set `POSTGRES_SHARED_BUFFERS` for the database's memory budget; PostgreSQL recommends starting around 25% of RAM on a dedicated server and increasing WAL capacity alongside buffers. Checkpoints retain the default five-minute interval, and fsync and synchronous commit remain enabled. Smaller memory allocations require a fresh sustained-load measurement. See [PostgreSQL memory and background writer settings](https://www.postgresql.org/docs/17/runtime-config-resource.html) and [WAL settings](https://www.postgresql.org/docs/17/runtime-config-wal.html).
+PostgreSQL migrations run under an advisory lock at startup. Each process has one shared pool, defaulting to 32 open and 8 idle connections. Set `APIGATE_DB_MAX_CONNS` between 2 and 500; budget the sum across instances plus administrative/backup connections below your database service's connection limit. Readiness checks both PostgreSQL and Redis; a dependency outage prevents paid forwarding. Shutdown drains HTTP requests, stops workers and closes the pool. Configure database capacity, durable storage and Redis persistence through your service providers or your own database deployments.
 
 ## Published images and native binaries
 
 The published image is [`coolqoo/better-apigate:1.0.0`](https://hub.docker.com/r/coolqoo/better-apigate/tags?name=1.0.0), with Linux amd64 and arm64 variants. Set `APIGATE_IMAGE=coolqoo/better-apigate:1.0.0` in `.env`, then run `docker compose pull && docker compose up -d --no-build --wait`. Published images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed. For a source image build, use `docker compose up --build -d --wait`.
 
-`scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs `better-apigate` (`better-apigate.exe` on Windows). `VERSION=v1.0.0` selects the first release; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `better-apigate serve`. Use database and Redis URLs reachable from the native process; Docker service names resolve only inside the Compose network.
+`scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs `better-apigate` (`better-apigate.exe` on Windows). `VERSION=v1.0.0` selects the first release; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `better-apigate serve`. Use URLs reachable from the native process; `localhost` is appropriate when the native process and database are on the same host.
 
 For a second gateway, run `docker compose --profile replica pull && docker compose --profile replica up -d --no-build --wait` and put ports 8080 and 8082 behind the same public HTTPS origin. Both instances share database state, secrets and account limits. Include both pools in the database connection budget. A provider callback may reach either instance.
 
@@ -57,12 +66,14 @@ Enable multiple providers in Settings. Every checkout is a one-time top-up; recu
 ## Backup and restore
 
 ```sh
-scripts/backup.sh /secure/backups/apigate.dump
+scripts/backup.sh /secure/backups/better-apigate.dump
 # Restore into an isolated deployment first and verify the ledger.
-scripts/restore.sh /secure/backups/apigate.dump
+scripts/restore.sh /secure/backups/better-apigate.dump
 ```
 
-Backups use PostgreSQL custom format and restrictive permissions. Restore stops the gateway, restores transactionally and leaves gateway restart to the operator. Retain `.env` and the API-key secret separately. Redis AOF provides limiter/cache continuity; PostgreSQL backups are authoritative for funds. Do not restore an old database over a live payment processor without reconciling callbacks and orders that occurred after the backup.
+These scripts start an ephemeral PostgreSQL client container under the optional `maintenance` profile and connect using `APIGATE_DATABASE_DSN` from `.env`. They do not start a database server or require PostgreSQL tools on the Docker host. The default client image is `postgres:17.10-alpine`; set `APIGATE_POSTGRES_CLIENT_IMAGE` in `.env` to match your database server's major version. A `pg_dump` client cannot back up a newer server major version; see [PostgreSQL backup documentation](https://www.postgresql.org/docs/17/app-pgdump.html).
+
+Backups use PostgreSQL custom format and restrictive permissions. Restore stops both gateways in this Compose project, restores transactionally and leaves gateway restart to the operator. Stop any other gateway instances using the same database before restoring. Retain `.env` and the API-key secret separately. Configure Redis persistence through your Redis service for limiter/cache continuity; PostgreSQL backups are authoritative for funds. Do not restore an old database over a live payment processor without reconciling callbacks and orders that occurred after the backup.
 
 ## Build and release verification
 

@@ -6,27 +6,36 @@ A self-hosted API gateway with prepaid billing. Connect your upstream API, set r
 
 ## Start with Docker
 
-Use Docker Compose to start **better-apigate, PostgreSQL and Redis** together. PostgreSQL stores accounts, configuration and billing records; Redis handles shared rate limits and caches. The old single-container SQLite installation does not apply to this version.
+Use Docker Compose to run **better-apigate with your existing PostgreSQL and Redis services**. Supply their connection URLs in `.env`. PostgreSQL stores accounts, configuration and billing records; Redis handles shared rate limits and caches.
 
-Requires Docker Engine or Docker Desktop with the Compose plugin, Git and OpenSSL. Published images support Linux amd64 and arm64, including Apple Silicon through Docker Desktop. The default PostgreSQL configuration uses 1 GiB of shared buffers; allow at least 4 GiB for PostgreSQL plus memory for the gateway and Redis.
+Requires Docker Engine or Docker Desktop with the Compose plugin, Git, OpenSSL, and reachable PostgreSQL and Redis services. Published images support Linux amd64 and arm64, including Apple Silicon through Docker Desktop.
 
 ```sh
 git clone https://github.com/coolqoo/better-apigate.git
 cd better-apigate
 
-# Create .env with fresh database passwords and deployment secrets.
+# Create .env with fresh gateway secrets.
 sh scripts/init-env.sh
 
-# Use the published image. No Go, Node.js or image build is required.
-printf '\nAPIGATE_IMAGE=coolqoo/better-apigate:1.0.0\n' >> .env
+# Edit .env: set APIGATE_DATABASE_DSN and APIGATE_REDIS_URL to your service URLs.
+# The generated APIGATE_IMAGE already selects the published 1.0.0 image.
 
 docker compose pull
 docker compose up -d --no-build --wait
 ```
 
+Before starting, fill in both URLs in `.env`, for example:
+
+```dotenv
+APIGATE_DATABASE_DSN='postgresql://USER:PASSWORD@POSTGRES_HOST:5432/DATABASE?sslmode=require'
+APIGATE_REDIS_URL='rediss://default:PASSWORD@REDIS_HOST:6379/0'
+```
+
+Use the URLs supplied by your service providers, including their TLS settings and ports. Credentials belong inside the URLs; no separate PostgreSQL or Redis password variables are needed. Percent-encode reserved characters in URL credentials. Use `redis://` for Redis without TLS. For services on the Docker host, use `host.docker.internal` instead of `localhost`, which refers to the gateway container.
+
 These commands run the gateway at **http://localhost:8080**. If installing on a remote server, first edit `APIGATE_PUBLIC_URL` in `.env` to the origin you will open in your browser, such as `http://YOUR_SERVER_IP:8080`. For a public deployment, use your HTTPS domain and a TLS reverse proxy. The public URL must match the browser origin for session and CSRF checks.
 
-Configuration variables use the `APIGATE_` prefix. Keep `.env`: it contains your database passwords, initial setup token and API-key signing secret.
+Configuration variables use the `APIGATE_` prefix. Keep `.env` private and backed up: it contains your service URLs, initial setup token and API-key signing secret. Compose starts only the gateway by default; it does not create or manage your database or Redis server.
 
 ## First-time setup
 
@@ -79,14 +88,14 @@ docker compose ps
 # Follow gateway logs.
 docker compose logs -f gateway
 
-# Stop the stack; named database volumes are retained.
+# Stop the gateway. Your external PostgreSQL and Redis services keep running.
 docker compose down
 
 # Start it again using the published image.
 docker compose up -d --no-build --wait
 ```
 
-Do not use `docker compose down -v` unless you intend to delete the database volumes. Back up PostgreSQL and keep a secure copy of `.env`; see [backup and restore](docs/deployment-v2.md#backup-and-restore).
+Back up your PostgreSQL database and keep a secure copy of `.env`; see [backup and restore](docs/deployment-v2.md#backup-and-restore). The backup scripts use an optional PostgreSQL client container and the same database URL.
 
 To use a future release, change the version in `APIGATE_IMAGE` in `.env`, then run `docker compose pull && docker compose up -d --no-build --wait`. Docker Hub tags contain only full versions such as `1.0.0`; use an explicit version when deploying.
 
