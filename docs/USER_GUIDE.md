@@ -7,7 +7,7 @@ better-apigate provides a prepaid API gateway with a customer workspace at `/por
 1. Follow [Docker installation](../README.md#docker-installation) to supply your existing PostgreSQL and Redis connection URLs and start the gateway with its deployment secrets.
 2. Open `/setup`, enter the setup token, and create the initial administrator.
 3. In **Plans & Pricing**, configure the base pay-as-you-go unit price and rate limit, then add paid 30-day plans with their prices and included units.
-4. In **API Configuration**, add upstreams and routes. Give each paid route a fixed positive integer unit cost. Store upstream authentication as a deployment environment reference, for example `${UPSTREAM_API_TOKEN}`, and supply its value to the gateway environment. Mark a route public only when it is explicitly free.
+4. In **API Configuration**, add upstreams and routes. Enter each upstream's authentication credential directly in its form. Give each paid route a fixed positive integer unit cost. Mark a route public only when it is explicitly free.
 5. In **Settings**, configure available top-up amounts and enable the payment providers your merchant accounts support. Configure signed callback secrets and the gateway's public HTTPS origin before accepting payments. Add email delivery if verification or password reset is needed. SMTP requires TLS by default.
 
 Configuration fields are generated from the module YAML schemas. Wallets, ledger entries, purchased terms and usage reservations are changed through transactional billing actions rather than generic configuration forms.

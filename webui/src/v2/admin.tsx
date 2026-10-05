@@ -1084,7 +1084,7 @@ const primaryFields: Record<string, string[]> = {
     "description",
     "auth_type",
     "auth_header",
-    "auth_reference",
+    "auth_value",
     "enabled",
   ],
   route: [
@@ -1110,7 +1110,7 @@ const fieldLabels: Record<string, string> = {
   auth_required: "Require an API key",
   auth_type: "Upstream authentication",
   auth_header: "Authentication header",
-  auth_reference: "Credential environment variable",
+  auth_value: "Authentication credential",
   timeout_ms: "Request timeout (ms)",
   display_name: "Display name",
   plan_id: "Plan",
@@ -1157,7 +1157,7 @@ function ConfigurationSection({ module }: { module: string }) {
         const v = f.get(field.name);
         if (field.type === "bool") {
           body[field.name] = v === "on";
-        } else if (v !== null && v !== "") {
+        } else if (v !== null && (v !== "" || field.name === "auth_value")) {
           body[field.name] = ["int", "float"].includes(field.type)
             ? Number(v)
             : ["json", "strings"].includes(field.type)
@@ -1210,11 +1210,7 @@ function ConfigurationSection({ module }: { module: string }) {
         key={field.name}
         label={label(field.name)}
         id={id}
-        hint={
-          field.name === "auth_reference"
-            ? "Use a reference such as ${UPSTREAM_API_TOKEN}. Set its value on every gateway instance."
-            : field.description
-        }
+        hint={field.description}
       >
         {field.type === "enum" ? (
           <select
@@ -1270,7 +1266,7 @@ function ConfigurationSection({ module }: { module: string }) {
             type={
               ["int", "float"].includes(field.type)
                 ? "number"
-                : field.name === "secret"
+                : ["secret", "auth_value"].includes(field.name)
                   ? "password"
                   : "text"
             }
@@ -1388,8 +1384,7 @@ function ConfigurationSection({ module }: { module: string }) {
                   : module}
             </DialogTitle>
             <DialogDescription>
-              Changes apply to new requests. Keep costs predictable and
-              credentials in your deployment environment.
+              Changes apply to new requests.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-5">

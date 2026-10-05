@@ -135,7 +135,7 @@ type Upstream struct {
 	// Authentication injection (added to every request)
 	AuthType   AuthType // none, header, bearer, basic
 	AuthHeader string   // Header name for AuthType=header
-	AuthValue  string   // Deployment credential reference, expanded from ${ENV_VAR}
+	AuthValue  string   // Authentication credential; optional ${ENV_VAR} references are expanded
 
 	// Metadata
 	Enabled   bool

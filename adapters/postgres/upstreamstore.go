@@ -24,7 +24,7 @@ func NewUpstreamStore(db *DB) *UpstreamStore {
 func (s *UpstreamStore) Get(ctx context.Context, id string) (route.Upstream, error) {
 	row := s.db.QueryRowContext(ctx, `
 		SELECT id, name, description, base_url, timeout_ms, max_idle_conns, idle_conn_timeout_ms,
-		       auth_type, auth_header, auth_reference, enabled, created_at, updated_at
+		       auth_type, auth_header, auth_value, enabled, created_at, updated_at
 		FROM upstreams
 		WHERE id = ?
 	`, id)
@@ -35,7 +35,7 @@ func (s *UpstreamStore) Get(ctx context.Context, id string) (route.Upstream, err
 func (s *UpstreamStore) List(ctx context.Context) ([]route.Upstream, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, name, description, base_url, timeout_ms, max_idle_conns, idle_conn_timeout_ms,
-		       auth_type, auth_header, auth_reference, enabled, created_at, updated_at
+		       auth_type, auth_header, auth_value, enabled, created_at, updated_at
 		FROM upstreams
 		ORDER BY name ASC
 	`)
@@ -59,7 +59,7 @@ func (s *UpstreamStore) List(ctx context.Context) ([]route.Upstream, error) {
 func (s *UpstreamStore) ListEnabled(ctx context.Context) ([]route.Upstream, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, name, description, base_url, timeout_ms, max_idle_conns, idle_conn_timeout_ms,
-		       auth_type, auth_header, auth_reference, enabled, created_at, updated_at
+		       auth_type, auth_header, auth_value, enabled, created_at, updated_at
 		FROM upstreams
 		WHERE enabled = 1
 		ORDER BY name ASC
@@ -93,7 +93,7 @@ func (s *UpstreamStore) Create(ctx context.Context, u route.Upstream) error {
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO upstreams (
 			id, name, description, base_url, timeout_ms, max_idle_conns, idle_conn_timeout_ms,
-			auth_type, auth_header, auth_reference, enabled, created_at, updated_at
+			auth_type, auth_header, auth_value, enabled, created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		u.ID, u.Name, u.Description, u.BaseURL,
@@ -116,7 +116,7 @@ func (s *UpstreamStore) Update(ctx context.Context, u route.Upstream) error {
 		UPDATE upstreams
 		SET name = ?, description = ?, base_url = ?, timeout_ms = ?,
 		    max_idle_conns = ?, idle_conn_timeout_ms = ?,
-		    auth_type = ?, auth_header = ?, auth_reference = ?,
+		    auth_type = ?, auth_header = ?, auth_value = ?,
 		    enabled = ?, updated_at = ?
 		WHERE id = ?
 	`,
