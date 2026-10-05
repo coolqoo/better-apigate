@@ -44,7 +44,7 @@ docker:
 	docker build -t better-apigate:$(VERSION) .
 
 docker-run:
-	docker compose up --build
+	docker compose up -d --wait
 
 # Build and publish a multi-architecture image to Docker Hub.
 # Log in with docker login first; credentials are never passed as build arguments.
@@ -99,7 +99,7 @@ help:
 	@echo "  dev        - Run with go run"
 	@echo "  test       - Run tests"
 	@echo "  docker     - Build Docker image"
-	@echo "  docker-run - Run with docker-compose"
+	@echo "  docker-run - Run the published Docker image"
 	@echo "  docker-publish - Build and push multi-arch image to $(DOCKER_REPO)"
 	@echo "  docker-build-binaries - Build linux binaries for Docker"
 	@echo "  release    - Build for all platforms"

@@ -1,6 +1,6 @@
 {
   "index.html": {
-    "file": "assets/index-D5AOxBVd.js",
+    "file": "assets/index-CLPfAHM9.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -9,11 +9,11 @@
       "src/v2/admin.tsx"
     ],
     "css": [
-      "assets/index-ZaSRWIzC.css"
+      "assets/index-DxGbyY9J.css"
     ]
   },
   "src/v2/admin.tsx": {
-    "file": "assets/admin-C8U9KPG9.js",
+    "file": "assets/admin-DXOkZRF7.js",
     "name": "admin",
     "src": "src/v2/admin.tsx",
     "isDynamicEntry": true,
@@ -23,7 +23,7 @@
     ]
   },
   "src/v2/customer.tsx": {
-    "file": "assets/customer-Cbd2upwZ.js",
+    "file": "assets/customer-BLSgsfAG.js",
     "name": "customer",
     "src": "src/v2/customer.tsx",
     "isDynamicEntry": true,

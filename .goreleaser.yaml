@@ -103,10 +103,7 @@ archives:
       - LICENSE*
       - .env.example
       - docker-compose.yaml
-      - docs/deployment-v2.md
-      - scripts/init-env.sh
-      - scripts/backup.sh
-      - scripts/restore.sh
+      - docs/USER_GUIDE.md
       - scripts/install.sh
 
 checksum:

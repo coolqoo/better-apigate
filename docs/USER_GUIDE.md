@@ -4,7 +4,7 @@ better-apigate provides a prepaid API gateway with a customer workspace at `/por
 
 ## Set up the gateway
 
-1. Follow [deployment instructions](deployment-v2.md) to supply your existing PostgreSQL and Redis connection URLs and start the gateway with its deployment secrets.
+1. Follow [Docker installation](../README.md#docker-installation) to supply your existing PostgreSQL and Redis connection URLs and start the gateway with its deployment secrets.
 2. Open `/setup`, enter the setup token, and create the initial administrator.
 3. In **Plans & Pricing**, configure the base pay-as-you-go unit price and rate limit, then add paid 30-day plans with their prices and included units.
 4. In **API Configuration**, add upstreams and routes. Give each paid route a fixed positive integer unit cost. Store upstream authentication as a deployment environment reference, for example `${UPSTREAM_API_TOKEN}`, and supply its value to the gateway environment. Mark a route public only when it is explicitly free.
@@ -46,6 +46,23 @@ Overview shows available balance, included units, the next renewal or term end, 
 
 **Payments → Unresolved requests** preserves holds older than five minutes. Inspect upstream evidence before choosing charge or release. Holds left by a crash never expire into spendable funds automatically. **Payments → Audit trail** records who made financial/access decisions, the affected record and the reason. All three views support pagination.
 
-**Settings** groups payment, billing, email and account options. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. See [deployment and recovery](deployment-v2.md) for health checks, multiple instances, database backup/restore and release requirements.
+**Settings** groups payment, billing, email and account options. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
 
 The [generated OpenAPI contract](openapi-v2.json) documents the versioned browser APIs. The same Go models generate the frontend TypeScript types.
+
+## Payment configuration
+
+Enable providers in **Settings** and configure their webhook secrets. The callback address is `/api/v1/payment-webhooks/{provider}` on your public origin.
+
+- **Stripe:** use one-time Checkout and configure successful checkout, refund and dispute events.
+- **Paddle:** configure a top-up product, a non-recurring price, webhook secret, client token and merchant checkout origin. Use sandbox mode with sandbox credentials.
+- **Lemon Squeezy:** configure the store, webhook secret and a top-up variant with a `one_time` Price. Enable order-created and order-refunded events.
+- **EPUSDT:** configure the GMPay URL, merchant PID, API key and network. The adapter targets [GMPay revision 58141cd](https://github.com/GMWalletApp/epusdt/blob/58141cd148408bbe05b0cd45716d6110f3952007/wiki/API.md). Record externally verified reversals through the audited admin action.
+
+## Deployment notes
+
+PostgreSQL runs migrations at startup and stores authoritative billing records. Redis must retain rate-limit keys without eviction. Each gateway uses up to 32 database connections by default; set `APIGATE_DB_MAX_CONNS` to fit your database service's connection limit.
+
+Use your database service's backup and restore tools. Stop the gateway before restoring, verify the ledger, and reconcile payments received since the backup before resuming access. Keep the API-key secret backed up separately; changing it invalidates existing keys.
+
+Use a TLS reverse proxy for public access, and keep `APIGATE_PUBLIC_URL` equal to the browser origin for cookies, CSRF checks and payment callbacks.
