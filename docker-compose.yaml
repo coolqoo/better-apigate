@@ -1,6 +1,6 @@
 services:
   gateway:
-    image: ${APIGATE_IMAGE:-ghcr.io/coolqoo/better-apigate:latest}
+    image: ${APIGATE_IMAGE:-better-apigate:local}
     build: .
     env_file: .env
     ports: ["${APIGATE_PORT:-8080}:8080"]
@@ -56,7 +56,7 @@ services:
     restart: unless-stopped
   gateway-two:
     profiles: [replica]
-    image: ${APIGATE_IMAGE:-ghcr.io/coolqoo/better-apigate:latest}
+    image: ${APIGATE_IMAGE:-better-apigate:local}
     build: .
     env_file: .env
     ports: ["8082:8080"]

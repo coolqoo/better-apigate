@@ -46,21 +46,26 @@ docker:
 docker-run:
 	docker compose up --build
 
-# Build and publish a multi-architecture image to the configured registry
-DOCKER_REPO ?= ghcr.io/coolqoo/better-apigate
+# Build and publish a multi-architecture image to Docker Hub.
+# Log in with docker login first; credentials are never passed as build arguments.
+DOCKER_REPO ?= $(if $(DOCKERHUB_USERNAME),$(DOCKERHUB_USERNAME)/better-apigate)
+DOCKER_TAG ?= $(patsubst v%,%,$(VERSION))
 DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
 
-docker-publish: docker-build-binaries
+.PHONY: docker-publish-config
+docker-publish-config:
+	@test -n "$(DOCKER_REPO)" || (echo "Set DOCKERHUB_USERNAME or DOCKER_REPO=your-namespace/better-apigate"; exit 1)
+
+docker-publish: docker-publish-config docker-build-binaries
 	@echo "Building and publishing multi-arch image to $(DOCKER_REPO)..."
 	docker buildx create --name apigate-builder --use 2>/dev/null || docker buildx use apigate-builder
 	docker buildx build \
 		--platform $(DOCKER_PLATFORMS) \
-		--tag $(DOCKER_REPO):$(VERSION) \
-		--tag $(DOCKER_REPO):latest \
+		--tag $(DOCKER_REPO):$(DOCKER_TAG) \
 		--push \
 		-f Dockerfile.release \
 		.
-	@echo "Published $(DOCKER_REPO):$(VERSION) and $(DOCKER_REPO):latest"
+	@echo "Published $(DOCKER_REPO):$(DOCKER_TAG)"
 
 # Build binaries for Docker (pre-build to avoid memory issues in buildx)
 docker-build-binaries: webui

@@ -2,311 +2,59 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
-
-env:
-  GO_VERSION: '1.27.1'
+    tags: ['v*']
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
-  validation:
+  ci:
     uses: ./.github/workflows/ci.yml
-  webui:
-    name: Build WebUI
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.23.2'
-          cache: 'npm'
-          cache-dependency-path: webui/package-lock.json
-
-      - name: Install and build WebUI
-        run: cd webui && npm ci && npm run build
-
-      - name: Sync to embed location
-        run: |
-          rm -rf core/channel/http/webui/dist
-          cp -r webui/build core/channel/http/webui/dist
-
-      - name: Upload built WebUI
-        uses: actions/upload-artifact@v6
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-          include-hidden-files: true
-
-  acceptance:
-    name: Confirm release verification
-    needs: [validation, webui]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require separately completed release verification
-        env:
-          RELEASE_VERIFIED_SHA: ${{ vars.APIGATE_RELEASE_VERIFIED_SHA }}
-        run: |
-          if [ "$RELEASE_VERIFIED_SHA" != "$GITHUB_SHA" ]; then
-            echo "Complete the release checks documented in docs/deployment-v2.md and set APIGATE_RELEASE_VERIFIED_SHA to this release commit."
-            exit 1
-          fi
-
-  build-linux:
-    name: Build Linux
-    needs: [acceptance, webui]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - goarch: amd64
-            cc: gcc
-          - goarch: arm64
-            cc: aarch64-linux-gnu-gcc
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Build
-        env:
-          CGO_ENABLED: 0
-          GOOS: linux
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          go build -trimpath \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -tags 'netgo osusergo' \
-            -o apigate-linux-${{ matrix.goarch }} \
-            ./cmd/apigate
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: apigate-linux-${{ matrix.goarch }}
-          path: apigate-linux-${{ matrix.goarch }}
-
-  build-macos:
-    name: Build macOS
-    needs: [acceptance, webui]
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        goarch: [amd64, arm64]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Build
-        env:
-          CGO_ENABLED: 0
-          GOOS: darwin
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          go build -trimpath \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o apigate-darwin-${{ matrix.goarch }} \
-            ./cmd/apigate
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: apigate-darwin-${{ matrix.goarch }}
-          path: apigate-darwin-${{ matrix.goarch }}
-
-  build-windows:
-    name: Build Windows
-    needs: [acceptance, webui]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download WebUI build
-        uses: actions/download-artifact@v4
-        with:
-          name: webui-dist
-          path: core/channel/http/webui/dist/
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Build
-        env:
-          CGO_ENABLED: 0
-          GOOS: windows
-          GOARCH: amd64
-        run: |
-          go build -trimpath \
-            -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o apigate-windows-amd64.exe \
-            ./cmd/apigate
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: apigate-windows-amd64
-          path: apigate-windows-amd64.exe
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   release:
-    name: Create Release
-    needs: [build-linux, build-macos, build-windows]
+    name: Publish native archives
+    needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: apigate-*
           path: dist
-
-      - name: Prepare release files
+          merge-multiple: true
+      - name: Package verified build artifacts
         run: |
           mkdir -p release
-          # Move and set permissions
-          mv dist/apigate-linux-amd64/apigate-linux-amd64 release/
-          mv dist/apigate-linux-arm64/apigate-linux-arm64 release/
-          mv dist/apigate-darwin-amd64/apigate-darwin-amd64 release/
-          mv dist/apigate-darwin-arm64/apigate-darwin-arm64 release/
-          mv dist/apigate-windows-amd64/apigate-windows-amd64.exe release/
-          chmod +x release/apigate-*
-          # Create archives
-          cd release
-          tar -czf apigate-linux-amd64.tar.gz apigate-linux-amd64
-          tar -czf apigate-linux-arm64.tar.gz apigate-linux-arm64
-          tar -czf apigate-darwin-amd64.tar.gz apigate-darwin-amd64
-          tar -czf apigate-darwin-arm64.tar.gz apigate-darwin-arm64
-          zip apigate-windows-amd64.zip apigate-windows-amd64.exe
-          # Checksums
-          sha256sum *.tar.gz *.zip > checksums.txt
-
-      - name: Get version
+          for target in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64; do
+            chmod +x "dist/apigate-$target"
+            tar -C dist -czf "release/apigate-$target.tar.gz" "apigate-$target"
+          done
+          (cd dist && zip ../release/apigate-windows-amd64.zip apigate-windows-amd64.exe)
+          (cd release && sha256sum *.tar.gz *.zip > checksums.txt)
+      - name: Identify prerelease
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Generate changelog
-        id: changelog
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            echo "## Changes since $PREV_TAG" > CHANGELOG.md
-            git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> CHANGELOG.md
+          version="${GITHUB_REF_NAME%%+*}"
+          if [[ "$version" == *-* ]]; then
+            echo 'prerelease=true' >> "$GITHUB_OUTPUT"
           else
-            echo "## Initial Release" > CHANGELOG.md
-            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+            echo 'prerelease=false' >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          body_path: CHANGELOG.md
+          name: APIGate ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
-            release/apigate-linux-amd64.tar.gz
-            release/apigate-linux-arm64.tar.gz
-            release/apigate-darwin-amd64.tar.gz
-            release/apigate-darwin-arm64.tar.gz
-            release/apigate-windows-amd64.zip
+            release/*.tar.gz
+            release/*.zip
             release/checksums.txt
-          draft: false
-          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  docker:
-    name: Build Docker Image
-    needs: [build-linux]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download Linux binaries
-        uses: actions/download-artifact@v4
-        with:
-          pattern: apigate-linux-*
-          path: dist
-
-      - name: Prepare binaries
-        run: |
-          mkdir -p build/linux/amd64 build/linux/arm64
-          mv dist/apigate-linux-amd64/apigate-linux-amd64 build/linux/amd64/apigate
-          mv dist/apigate-linux-arm64/apigate-linux-arm64 build/linux/arm64/apigate
-          chmod +x build/linux/*/apigate
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.release
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
-            ghcr.io/${{ github.repository }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}

@@ -55,8 +55,7 @@ if [[ "$LATEST_TAG" == v0.0.0 ]]; then git log --oneline -20; else git log --one
 echo "----------------------------------------"
 echo ""
 
-# Verification applies to this exact commit, not to a previous release.
-echo "Set APIGATE_RELEASE_VERIFIED_SHA to $(git rev-parse HEAD) in repository variables only after completing release verification."
+echo "The tagged commit will publish native archives and a Docker Hub image using the repository's Docker Hub secrets."
 
 # Confirm
 read -p "Create and push tag $NEW_VERSION? [y/N] " -n 1 -r
@@ -77,8 +76,8 @@ echo ""
 echo "Release $NEW_VERSION created!"
 echo "GitHub Actions will now:"
 echo "  1. Build the frontend and verify generated contracts"
-echo "  2. Require release verification for the tagged commit"
-echo "  3. Build binaries and create the GitHub release"
-echo "  4. Build and push Docker image"
+echo "  2. Build binaries with the embedded frontend"
+echo "  3. Push the multi-architecture Docker Hub image"
+echo "  4. Create the GitHub release with archives and checksums"
 echo ""
 echo "Monitor progress: https://github.com/coolqoo/better-apigate/actions"

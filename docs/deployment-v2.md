@@ -23,7 +23,7 @@ The Compose database uses 1 GiB of shared buffers, a 4 GiB WAL size target and a
 
 ## Published images and native binaries
 
-Once a verified v2 release is published, set `APIGATE_IMAGE=ghcr.io/coolqoo/better-apigate:v2.0.0` to its actual version in `.env`, then run `docker compose up -d --no-build --wait`. The source deployment above builds from your checkout. Release images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed.
+Set `APIGATE_IMAGE=your-dockerhub-username/better-apigate:2.0.0` to a published version in `.env`, replacing the namespace with the repository's `DOCKERHUB_USERNAME` value. Then run `docker compose pull && docker compose up -d --no-build --wait`. For the v2 branch preview, use `branch-codex-apigate-v2` instead of `2.0.0`. The source deployment above builds from your checkout and defaults to the local image `better-apigate:local`. Published images embed the frontend and PostgreSQL migrations and run as an unprivileged user; no SQLite files or external migration directory are needed.
 
 `scripts/install.sh` downloads from `coolqoo/better-apigate`, verifies `checksums.txt` before extracting, and installs only the expected executable. `VERSION` selects a published tag; `INSTALL_DIR` selects the destination. Native deployments still require PostgreSQL and Redis and the same `APIGATE_DATABASE_DSN`, `APIGATE_REDIS_URL`, `APIGATE_API_KEY_SECRET`, `APIGATE_SETUP_TOKEN` and `APIGATE_PUBLIC_URL` environment values before `apigate serve`. Use database and Redis URLs reachable from the native process; Docker service names resolve only inside the Compose network.
 
@@ -70,7 +70,25 @@ npm run typecheck --prefix webui
 
 Added test code, load tooling and validation reports are local files excluded from Git. CI builds the frontend, checks generated contracts and builds the Go targets without running that local test tooling.
 
-Before publishing a release, separately complete accounting, payment signatures/reversals, renewal, recovery/security, browser flows, provider sandbox smoke checks, a clean Docker installation, Go race/coverage checks and sustained-load reconciliation. The performance gate requires at least 1,000 accepted requests/second for ten minutes with many accounts and one concurrent account across two instances, with exact wallet/ledger agreement and no unresolved settlement backlog. Record the gateway revision, hardware, p95/p99 overhead and database contention for both scenarios. Set `APIGATE_RELEASE_VERIFIED_SHA` to the full Git commit SHA only after those checks pass for that exact release revision. The release workflow refuses a mismatched or missing SHA. This implementation push does not publish a release.
+Before declaring a production release accepted, separately complete accounting, payment signatures/reversals, renewal, recovery/security, browser flows, provider sandbox smoke checks, a clean Docker installation, Go race/coverage checks and sustained-load reconciliation. The performance target requires at least 1,000 accepted requests/second for ten minutes with many accounts and one concurrent account across two instances, with exact wallet/ledger agreement and no unresolved settlement backlog. Record the gateway revision, hardware, p95/p99 overhead and database contention for both scenarios. Image publication does not establish completion of these checks.
+
+## CI/CD and Docker Hub
+
+Configure these GitHub repository secrets under **Settings → Secrets and variables → Actions**:
+
+- `DOCKERHUB_USERNAME`: the Docker Hub account that owns the `better-apigate` image repository.
+- `DOCKERHUB_TOKEN`: a Docker Hub access token with write access to that repository.
+
+No other release variable or registry credential is required. Pull requests only validate and build. Trusted branch pushes and the CI workflow's manual dispatch publish a single Linux amd64/arm64 manifest to `<DOCKERHUB_USERNAME>/better-apigate` after the build succeeds. The pipeline checks the published manifest by digest and reports it in the job summary. GitHub releases reuse the same binaries, with the same embedded frontend, and attach SHA256 checksums for installation.
+
+| Trigger | Docker Hub tags |
+| --- | --- |
+| Push to `codex/apigate-v2` | `branch-codex-apigate-v2`, `sha-<full-commit>` |
+| Push to `main` | `edge`, `branch-main`, `sha-<full-commit>` |
+| Push `v2.0.0` | `v2.0.0`, `2.0.0`, `2.0`, `latest`, `sha-<full-commit>` |
+| Push `v2.0.0-rc.1` | `v2.0.0-rc.1`, `2.0.0-rc.1`, `sha-<full-commit>` |
+
+Push a semantic version tag when ready to publish a GitHub release. Prerelease tags create prereleases and never move the stable `latest` tag. The Actions workflow owns Docker publishing; `.goreleaser.yaml` remains available for native archive builds. For a local image publish, run `docker login` and `DOCKERHUB_USERNAME=your-namespace make docker-publish DOCKER_TAG=dev`.
 
 ## Upstream credentials and monitoring
 

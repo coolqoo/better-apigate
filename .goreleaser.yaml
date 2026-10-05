@@ -46,7 +46,7 @@ builds:
       - netgo
       - osusergo
 
-  # macOS AMD64 (built on macOS runner)
+  # macOS AMD64 (cross-compiled without CGO)
   - id: darwin-amd64
     binary: apigate
     main: ./cmd/apigate
@@ -61,7 +61,7 @@ builds:
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.buildDate={{.Date}}
 
-  # macOS ARM64 (built on macOS runner)
+  # macOS ARM64 (cross-compiled without CGO)
   - id: darwin-arm64
     binary: apigate
     main: ./cmd/apigate
@@ -131,44 +131,4 @@ release:
   draft: false
   name_template: "{{.ProjectName}} v{{.Version}}"
 
-# Docker images
-dockers:
-  - image_templates:
-      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-amd64"
-      - "ghcr.io/coolqoo/better-apigate:latest-amd64"
-    dockerfile: Dockerfile.goreleaser
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/coolqoo/better-apigate"
-    goos: linux
-    goarch: amd64
-    ids:
-      - linux-amd64
-
-  - image_templates:
-      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-arm64"
-      - "ghcr.io/coolqoo/better-apigate:latest-arm64"
-    dockerfile: Dockerfile.goreleaser
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/coolqoo/better-apigate"
-    goos: linux
-    goarch: arm64
-    ids:
-      - linux-arm64
-
-docker_manifests:
-  - name_template: "ghcr.io/coolqoo/better-apigate:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-amd64"
-      - "ghcr.io/coolqoo/better-apigate:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/coolqoo/better-apigate:latest"
-    image_templates:
-      - "ghcr.io/coolqoo/better-apigate:latest-amd64"
-      - "ghcr.io/coolqoo/better-apigate:latest-arm64"
+# Docker Hub images are published by .github/workflows/docker.yml from the CI artifacts.
