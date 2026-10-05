@@ -1,38 +1,57 @@
 package storage
 
-import "github.com/coolqoo/better-apigate/core/convention"
+import (
+	"encoding/json"
+
+	"github.com/coolqoo/better-apigate/core/convention"
+)
 
 // convertValue converts a Go value to a database value.
-func convertValue(val any, f convention.DerivedField) any {
+func convertValue(val any, f convention.DerivedField) (any, error) {
 	if val == nil {
-		return nil
+		return nil, nil
 	}
 
 	switch f.Type {
+	case "json", "strings", "ints":
+		// JSON fields use TEXT columns. Preserve already-encoded input from
+		// CLI clients and serialize structured values received over HTTP.
+		switch v := val.(type) {
+		case string:
+			return v, nil
+		case []byte:
+			return string(v), nil
+		default:
+			encoded, err := json.Marshal(val)
+			if err != nil {
+				return nil, err
+			}
+			return string(encoded), nil
+		}
 	case "bool":
 		switch v := val.(type) {
 		case bool:
 			if v {
-				return 1
+				return 1, nil
 			}
-			return 0
+			return 0, nil
 		case string:
 			if v == "true" || v == "1" {
-				return 1
+				return 1, nil
 			}
-			return 0
+			return 0, nil
 		default:
-			return 0
+			return 0, nil
 		}
 	case "secret", "bytes":
 		// Keep binary data as []byte for BLOB storage
 		// If passed as string (legacy), convert to bytes
 		if s, ok := val.(string); ok {
-			return []byte(s)
+			return []byte(s), nil
 		}
-		return val
+		return val, nil
 	default:
-		return val
+		return val, nil
 	}
 }
 

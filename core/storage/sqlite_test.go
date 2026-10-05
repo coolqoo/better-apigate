@@ -725,7 +725,10 @@ func TestConvertValueBool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := convertValue(tt.input, field)
+		result, err := convertValue(tt.input, field)
+		if err != nil {
+			t.Fatalf("convertValue(%v) failed: %v", tt.input, err)
+		}
 		if result != tt.expected {
 			t.Errorf("convertValue(%v) = %v, want %v", tt.input, result, tt.expected)
 		}
@@ -738,20 +741,29 @@ func TestConvertValueSecret(t *testing.T) {
 	bytesField := convention.DerivedField{Type: "bytes"}
 
 	// Test string conversion to bytes
-	result := convertValue("password123", secretField)
+	result, err := convertValue("password123", secretField)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if bytes, ok := result.([]byte); !ok || string(bytes) != "password123" {
 		t.Errorf("convertValue(string) for secret type failed: %v", result)
 	}
 
 	// Test bytes passthrough
 	input := []byte("binary data")
-	result = convertValue(input, bytesField)
+	result, err = convertValue(input, bytesField)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if bytes, ok := result.([]byte); !ok || string(bytes) != "binary data" {
 		t.Errorf("convertValue([]byte) for bytes type failed: %v", result)
 	}
 
 	// Test nil
-	result = convertValue(nil, secretField)
+	result, err = convertValue(nil, secretField)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if result != nil {
 		t.Errorf("convertValue(nil) should return nil, got: %v", result)
 	}

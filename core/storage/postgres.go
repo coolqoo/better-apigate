@@ -99,9 +99,14 @@ func (s *PostgresStore) Create(ctx context.Context, module string, data map[stri
 			}
 		}
 
+		value, err := convertValue(val, f)
+		if err != nil {
+			return "", fmt.Errorf("encode field %q: %w", f.Name, err)
+		}
+
 		columns = append(columns, f.Name)
 		placeholders = append(placeholders, "?")
-		values = append(values, convertValue(val, f))
+		values = append(values, value)
 	}
 
 	insertSQL := fmt.Sprintf(
@@ -303,8 +308,13 @@ func (s *PostgresStore) Update(ctx context.Context, module string, id string, da
 			continue // Skip unknown fields
 		}
 
+		value, err := convertValue(v, *field)
+		if err != nil {
+			return fmt.Errorf("encode field %q: %w", k, err)
+		}
+
 		sets = append(sets, k+" = ?")
-		values = append(values, convertValue(v, *field))
+		values = append(values, value)
 	}
 
 	if len(sets) == 0 {
