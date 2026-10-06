@@ -1491,6 +1491,22 @@ export function Configuration() {
 }
 const settingsGroups = [
   {
+    id: "branding",
+    title: "Branding & customization",
+    description:
+      "Your name, logo and color across sign-in, the portal and API docs. Optional fields use the defaults when left blank.",
+    fields: [
+      ["portal.app_name", "Application name", "text"],
+      ["custom.logo_url", "Logo URL", "url"],
+      ["custom.primary_color", "Brand color", "color"],
+      ["custom.footer_text", "Footer text", "text"],
+      ["custom.support_email", "Support email", "email"],
+      ["custom.support_url", "Support URL", "url"],
+      ["custom.docs_hero_title", "Documentation title", "text"],
+      ["custom.docs_hero_subtitle", "Documentation description", "text"],
+    ],
+  },
+  {
     id: "billing",
     title: "Billing preferences",
     description: "Amounts available in the customer top-up flow.",
@@ -1500,7 +1516,6 @@ const settingsGroups = [
         "Top-up amounts (USD, comma separated)",
         "text",
       ],
-      ["portal.app_name", "Application name", "text"],
       [
         "auth.require_verification",
         "Require email verification before funding",
@@ -1578,6 +1593,61 @@ const settingsGroups = [
     ],
   },
 ];
+
+function BrandColorField({ initial }: { initial: string }) {
+  const [color, setColor] = useState(initial);
+  return (
+    <Field
+      label="Brand color"
+      id="custom.primary_color"
+      hint="Buttons, links and accents adapt to both themes. Blank uses the default indigo."
+    >
+      <div className="flex items-center gap-2">
+        <Input
+          type="color"
+          aria-label="Choose brand color"
+          className="w-11 shrink-0 cursor-pointer p-1"
+          value={/^#[0-9a-f]{6}$/i.test(color) ? color : "#4f46e5"}
+          onChange={(e) => setColor(e.target.value)}
+        />
+        <Input
+          id="custom.primary_color"
+          name="custom.primary_color"
+          value={color}
+          placeholder="#4F46E5"
+          pattern="#[0-9a-fA-F]{6}"
+          maxLength={7}
+          onChange={(e) => setColor(e.target.value)}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setColor("")}
+        >
+          Reset
+        </Button>
+      </div>
+    </Field>
+  );
+}
+
+const brandingHints: Record<string, string> = {
+  "custom.logo_url":
+    "A public image URL, including http:// or https://. Leave blank for the default icon.",
+  "custom.footer_text":
+    "Plain text shown at the bottom of the portal, sign-in pages and docs.",
+  "custom.support_email": "Optional contact address shown in the footer.",
+  "custom.support_url": "Optional help page, including http:// or https://.",
+};
+const brandingLimits: Record<string, number> = {
+  "portal.app_name": 120,
+  "custom.footer_text": 240,
+  "custom.support_email": 254,
+  "custom.docs_hero_title": 160,
+  "custom.docs_hero_subtitle": 500,
+};
+
 export function SettingsPage() {
   const q = useData<{ values: Record<string, string> }>("/admin/settings");
   const qc = useQueryClient();
@@ -1615,7 +1685,7 @@ export function SettingsPage() {
     <>
       <Heading
         title="Settings"
-        description="Configure payments, billing preferences, and customer communication."
+        description="Customize your branding, payments, billing preferences, and customer communication."
       />
       {error !== null && (
         <div className="mb-6">
@@ -1631,7 +1701,12 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="grid gap-5 sm:grid-cols-2">
               {group.fields.map(([key, text, type]) =>
-                type === "bool" ? (
+                type === "color" ? (
+                  <BrandColorField
+                    key={key}
+                    initial={q.data?.values[key] || ""}
+                  />
+                ) : type === "bool" ? (
                   <div
                     key={key}
                     className="flex items-center gap-3 sm:col-span-2"
@@ -1649,14 +1724,32 @@ export function SettingsPage() {
                     <Label htmlFor={key}>{text}</Label>
                   </div>
                 ) : (
-                  <Field key={key} label={text} id={key}>
+                  <Field
+                    key={key}
+                    label={text}
+                    id={key}
+                    hint={brandingHints[key]}
+                  >
                     <Input
                       id={key}
                       name={key}
                       type={type}
+                      required={key === "portal.app_name"}
+                      maxLength={brandingLimits[key]}
+                      placeholder={
+                        key === "custom.docs_hero_title"
+                          ? "API documentation"
+                          : key === "custom.docs_hero_subtitle"
+                            ? "Explore your endpoints, review examples and copy a request in your preferred language."
+                            : undefined
+                      }
                       defaultValue={
                         q.data?.values[key] ||
-                        (key === "billing.top_up_amounts" ? "10,25,50,100" : "")
+                        (key === "billing.top_up_amounts"
+                          ? "10,25,50,100"
+                          : key === "portal.app_name"
+                            ? "better-apigate"
+                            : "")
                       }
                       autoComplete="off"
                     />

@@ -392,14 +392,35 @@
           "currency": {
             "type": "string"
           },
+          "docs_subtitle": {
+            "type": "string"
+          },
+          "docs_title": {
+            "type": "string"
+          },
+          "footer_text": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": "string"
+          },
           "paddle_client_token": {
             "type": "string"
           },
           "paddle_sandbox": {
             "type": "boolean"
           },
+          "primary_color": {
+            "type": "string"
+          },
           "setup_required": {
             "type": "boolean"
+          },
+          "support_email": {
+            "type": "string"
+          },
+          "support_url": {
+            "type": "string"
           },
           "top_up_amounts": {
             "items": {
@@ -414,7 +435,14 @@
           "currency",
           "top_up_amounts",
           "paddle_client_token",
-          "paddle_sandbox"
+          "paddle_sandbox",
+          "logo_url",
+          "primary_color",
+          "support_email",
+          "support_url",
+          "footer_text",
+          "docs_title",
+          "docs_subtitle"
         ],
         "type": "object"
       },
@@ -7348,14 +7376,35 @@
                             "currency": {
                               "type": "string"
                             },
+                            "docs_subtitle": {
+                              "type": "string"
+                            },
+                            "docs_title": {
+                              "type": "string"
+                            },
+                            "footer_text": {
+                              "type": "string"
+                            },
+                            "logo_url": {
+                              "type": "string"
+                            },
                             "paddle_client_token": {
                               "type": "string"
                             },
                             "paddle_sandbox": {
                               "type": "boolean"
                             },
+                            "primary_color": {
+                              "type": "string"
+                            },
                             "setup_required": {
                               "type": "boolean"
+                            },
+                            "support_email": {
+                              "type": "string"
+                            },
+                            "support_url": {
+                              "type": "string"
                             },
                             "top_up_amounts": {
                               "items": {
@@ -7370,7 +7419,14 @@
                             "currency",
                             "top_up_amounts",
                             "paddle_client_token",
-                            "paddle_sandbox"
+                            "paddle_sandbox",
+                            "logo_url",
+                            "primary_color",
+                            "support_email",
+                            "support_url",
+                            "footer_text",
+                            "docs_title",
+                            "docs_subtitle"
                           ],
                           "type": "object"
                         },

@@ -106,6 +106,7 @@ const (
 	KeyCustomSupportEmail     = "custom.support_email"       // Support email shown in docs/portal
 	KeyCustomSupportURL       = "custom.support_url"         // Support URL/docs link
 	KeyCustomFooterHTML       = "custom.footer_html"         // Custom footer HTML
+	KeyCustomFooterText       = "custom.footer_text"         // Plain-text footer for the React UI
 	KeyCustomDocsHeroTitle    = "custom.docs_hero_title"     // Custom docs hero title
 	KeyCustomDocsHeroSubtitle = "custom.docs_hero_subtitle"  // Custom docs hero subtitle
 

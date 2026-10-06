@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { APIEndpoint } from "./contracts.generated";
 import { useData } from "./customer";
+import { useSession } from "./context";
 import {
   ActionLink,
   CopyCode,
@@ -177,6 +178,7 @@ function Endpoint({ route: r }: { route: APIEndpoint }) {
   );
 }
 export function Documentation() {
+  const { status } = useSession();
   const routes = useData<APIEndpoint[]>("/documentation");
   const [search, setSearch] = useState("");
   const filtered =
@@ -189,8 +191,11 @@ export function Documentation() {
     <>
       <Heading
         eyebrow="Developer resources"
-        title="API documentation"
-        description="Explore your endpoints, review examples and copy a request in your preferred language."
+        title={status?.docs_title || "API documentation"}
+        description={
+          status?.docs_subtitle ||
+          "Explore your endpoints, review examples and copy a request in your preferred language."
+        }
         action={
           <Button variant="outline" asChild>
             <a href="/api/v1/openapi.json" download>

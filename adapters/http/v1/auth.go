@@ -13,7 +13,9 @@ import (
 
 	emailadapter "github.com/coolqoo/better-apigate/adapters/email"
 	"github.com/coolqoo/better-apigate/adapters/postgres"
+	"github.com/coolqoo/better-apigate/domain/portal"
 	"github.com/coolqoo/better-apigate/domain/ratelimit"
+	"github.com/coolqoo/better-apigate/domain/settings"
 	"github.com/coolqoo/better-apigate/pkg/jsonapi"
 	"github.com/coolqoo/better-apigate/ports"
 	"github.com/google/uuid"
@@ -43,7 +45,22 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 		failure(w, e)
 		return
 	}
-	resource(w, 200, "installation", "apigate", map[string]any{"setup_required": count == 0, "app_name": s.Settings.GetValue("portal.app_name"), "currency": "USD", "top_up_amounts": s.topUpAmounts(), "paddle_client_token": s.Settings.GetValue("payment.paddle.client_token"), "paddle_sandbox": s.Settings.Get().GetBool("payment.paddle.sandbox")})
+	values := s.Settings.Get()
+	resource(w, 200, "installation", "apigate", portal.Installation{
+		SetupRequired:     count == 0,
+		AppName:           values.GetOrDefault(settings.KeyPortalAppName, "better-apigate"),
+		Currency:          "USD",
+		TopUpAmounts:      s.topUpAmounts(),
+		PaddleClientToken: values.Get("payment.paddle.client_token"),
+		PaddleSandbox:     values.GetBool("payment.paddle.sandbox"),
+		LogoURL:           values.Get(settings.KeyCustomLogoURL),
+		PrimaryColor:      values.Get(settings.KeyCustomPrimaryColor),
+		SupportEmail:      values.Get(settings.KeyCustomSupportEmail),
+		SupportURL:        values.Get(settings.KeyCustomSupportURL),
+		FooterText:        values.Get(settings.KeyCustomFooterText),
+		DocsTitle:         values.Get(settings.KeyCustomDocsHeroTitle),
+		DocsSubtitle:      values.Get(settings.KeyCustomDocsHeroSubtitle),
+	})
 }
 func (s *Server) authLimit(w http.ResponseWriter, r *http.Request) bool {
 	if s.Limiter == nil {

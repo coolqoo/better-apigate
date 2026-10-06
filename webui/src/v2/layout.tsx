@@ -72,21 +72,77 @@ export function ThemeToggle() {
   );
 }
 export function Logo() {
+  const { status } = useSession();
+  const [failedLogo, setFailedLogo] = useState("");
+  const name = status?.app_name || "better-apigate";
+  const logo = /^https?:\/\//i.test(status?.logo_url || "")
+    ? status?.logo_url
+    : "";
   return (
     <Link
       to="/portal"
-      className="flex items-center gap-2.5 font-semibold tracking-tight"
+      className="flex min-w-0 items-center gap-2.5 font-semibold tracking-tight"
     >
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Zap className="size-4" fill="currentColor" />
-      </span>
-      <span>
-        better-apigate
+      {logo && failedLogo !== logo ? (
+        <img
+          src={logo}
+          alt=""
+          className="size-8 shrink-0 rounded-lg object-contain"
+          onError={() => setFailedLogo(logo)}
+        />
+      ) : (
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Zap className="size-4" fill="currentColor" />
+        </span>
+      )}
+      <span className="min-w-0">
+        <span className="block truncate" title={name}>
+          {name}
+        </span>
         <span className="block text-[10px] font-medium tracking-normal text-muted-foreground">
           v{version}
         </span>
       </span>
     </Link>
+  );
+}
+export function BrandFooter({ className = "" }: { className?: string }) {
+  const { status } = useSession();
+  const support = /^https?:\/\//i.test(status?.support_url || "")
+    ? status?.support_url
+    : "";
+  return (
+    <footer
+      className={`flex flex-wrap items-center justify-between gap-3 py-7 text-xs text-muted-foreground ${className}`}
+    >
+      <span className="break-words">
+        {status?.footer_text ||
+          `${status?.app_name || "better-apigate"} · Your API, under control.`}
+      </span>
+      <div className="flex flex-wrap items-center gap-4">
+        {support && (
+          <a
+            href={support}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-foreground"
+          >
+            Support <ArrowUpRight className="inline size-3" />
+          </a>
+        )}
+        {status?.support_email && (
+          <a
+            href={`mailto:${encodeURIComponent(status.support_email)}`}
+            className="break-all hover:text-foreground"
+          >
+            {status.support_email}
+          </a>
+        )}
+        <Link to="/docs" className="hover:text-foreground">
+          Documentation <ArrowUpRight className="inline size-3" />
+        </Link>
+      </div>
+    </footer>
   );
 }
 function Navigation({
@@ -248,12 +304,7 @@ export function Layout() {
         >
           <Outlet />
         </main>
-        <footer className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-7 text-[11px] text-muted-foreground md:px-10">
-          <span>better-apigate · Your API, under control.</span>
-          <Link to="/docs" className="hover:text-foreground">
-            Documentation <ArrowUpRight className="inline size-3" />
-          </Link>
-        </footer>
+        <BrandFooter className="mx-auto max-w-[1440px] px-5 md:px-10" />
       </div>
     </div>
   );

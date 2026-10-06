@@ -63,7 +63,9 @@ Overview shows available balance, included units, the next renewal or term end, 
 
 **Payments → Unresolved requests** preserves holds older than five minutes. Inspect upstream evidence before choosing charge or release. Holds left by a crash never expire into spendable funds automatically. **Payments → Audit trail** records who made financial/access decisions, the affected record and the reason. All three views support pagination.
 
-**Settings** groups payment, billing, email and account options. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
+**Settings → Branding & customization** lets you set the application name, a public logo URL, brand color, support email/link, footer text and documentation title/description. The name, logo, color and footer apply to sign-in pages, the customer portal, administration and public docs. Choose a color with the picker or enter a six-digit hex value; **Reset** restores the default indigo. Optional blank fields use the default appearance. Footer and documentation copy are plain text. Save settings to apply changes immediately; no container restart is needed.
+
+**Settings** also groups payment, billing, email and account options. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
 
 The [generated OpenAPI contract](openapi-v2.json) documents the versioned browser APIs. The same Go models generate the frontend TypeScript types.
 

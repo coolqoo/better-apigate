@@ -56,6 +56,13 @@ type Installation struct {
 	TopUpAmounts      []string `json:"top_up_amounts"`
 	PaddleClientToken string   `json:"paddle_client_token"`
 	PaddleSandbox     bool     `json:"paddle_sandbox"`
+	LogoURL           string   `json:"logo_url"`
+	PrimaryColor      string   `json:"primary_color"`
+	SupportEmail      string   `json:"support_email"`
+	SupportURL        string   `json:"support_url"`
+	FooterText        string   `json:"footer_text"`
+	DocsTitle         string   `json:"docs_title"`
+	DocsSubtitle      string   `json:"docs_subtitle"`
 }
 type Customer struct {
 	ID            string       `json:"id"`

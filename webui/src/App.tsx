@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "sonner";
 import { SessionProvider, useSession } from "./v2/context";
-import { Logo, ThemeToggle, Layout } from "./v2/layout";
+import { BrandFooter, Logo, ThemeToggle, Layout } from "./v2/layout";
 import { AuthPage } from "./v2/auth";
 import { AppErrorBoundary } from "./v2/error-boundary";
 import { Failure, Loading } from "./v2/shared";
@@ -72,6 +72,7 @@ function PublicDocs() {
       <main className="mx-auto max-w-7xl px-6 py-10 md:px-12">
         <Docs />
       </main>
+      <BrandFooter className="mx-auto max-w-7xl px-6 md:px-12" />
     </div>
   );
 }

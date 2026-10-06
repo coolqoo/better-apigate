@@ -3,6 +3,9 @@ package v1
 import (
 	"database/sql"
 	"net/http"
+	"net/mail"
+	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/coolqoo/better-apigate/adapters/payment"
@@ -354,12 +357,60 @@ func (s *Server) savePlan(w http.ResponseWriter, r *http.Request) {
 	resource(w, 200, "plan", id, p)
 }
 func allowedSetting(k string) bool {
+	switch k {
+	case settings.KeyCustomLogoURL, settings.KeyCustomPrimaryColor, settings.KeyCustomSupportEmail,
+		settings.KeyCustomSupportURL, settings.KeyCustomFooterText, settings.KeyCustomDocsHeroTitle,
+		settings.KeyCustomDocsHeroSubtitle:
+		return true
+	}
 	for _, prefix := range []string{"payment.", "email.", "portal.app_name", "auth.require_verification", "billing.top_up_amounts", "upstream.", "tls.", "cors."} {
 		if strings.HasPrefix(k, prefix) {
 			return true
 		}
 	}
 	return false
+}
+
+var brandColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+func brandingError(key, value string) string {
+	switch key {
+	case settings.KeyPortalAppName:
+		if value == "" || len(value) > 120 {
+			return "Enter an application name of up to 120 characters."
+		}
+	case settings.KeyCustomPrimaryColor:
+		if value != "" && !brandColor.MatchString(value) {
+			return "Use a six-digit hex color such as #4F46E5, or leave it blank for the default."
+		}
+	case settings.KeyCustomLogoURL, settings.KeyCustomSupportURL:
+		if value != "" {
+			u, err := url.Parse(value)
+			if err != nil || u.Hostname() == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {
+				return "Use a complete http:// or https:// URL."
+			}
+		}
+	case settings.KeyCustomSupportEmail:
+		if value != "" {
+			a, err := mail.ParseAddress(value)
+			if err != nil || a.Address != value || len(value) > 254 {
+				return "Enter a valid support email address."
+			}
+		}
+	case settings.KeyCustomDocsHeroTitle:
+		if len(value) > 160 {
+			return "Keep the documentation title within 160 characters."
+		}
+	case settings.KeyCustomDocsHeroSubtitle:
+		if len(value) > 500 {
+			return "Keep the documentation description within 500 characters."
+		}
+	case settings.KeyCustomFooterText:
+		if len(value) > 240 {
+			return "Keep the footer text within 240 characters."
+		}
+	}
+	return ""
 }
 func secretSetting(k string) bool {
 	return settings.IsSensitive(k) || strings.HasSuffix(k, "secret_key") || strings.HasSuffix(k, "api_key") || strings.HasSuffix(k, "webhook_secret") || strings.HasSuffix(k, "password")
@@ -392,6 +443,13 @@ func (s *Server) saveSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		if secretSetting(k) && v == "••••••" {
 			continue
+		}
+		if k == settings.KeyPortalAppName || strings.HasPrefix(k, "custom.") {
+			v = strings.TrimSpace(v)
+			if message := brandingError(k, v); message != "" {
+				jsonapi.WriteValidationError(w, k, message)
+				return
+			}
 		}
 		if k == "billing.top_up_amounts" {
 			amounts := strings.Split(v, ",")

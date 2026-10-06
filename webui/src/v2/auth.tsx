@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "./api";
 import { useSession } from "./context";
 import { Failure, Field, Loading, Submit } from "./shared";
-import { Logo, ThemeToggle } from "./layout";
+import { BrandFooter, Logo, ThemeToggle } from "./layout";
 export function AuthPage() {
   const location = useLocation();
   return <AuthForm key={location.pathname + location.search} />;
@@ -261,6 +261,7 @@ function AuthForm() {
           </CardContent>
         </Card>
       </div>
+      <BrandFooter className="mx-auto max-w-6xl px-6" />
     </div>
   );
 }

@@ -53,6 +53,17 @@
   --input: var(--border);
   --destructive: oklch(0.7 0.19 25);
 }
+:root[data-brand-color] {
+  --primary: var(--brand-light-primary);
+  --primary-foreground: var(--brand-light-foreground);
+  --accent: color-mix(in srgb, var(--primary) 10%, var(--card));
+  --accent-foreground: var(--primary);
+}
+.dark[data-brand-color] {
+  --primary: var(--brand-dark-primary);
+  --primary-foreground: var(--brand-dark-foreground);
+  --accent: color-mix(in srgb, var(--primary) 12%, var(--card));
+}
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -98,6 +98,13 @@ export interface Installation {
   top_up_amounts: (string)[]
   paddle_client_token: string
   paddle_sandbox: boolean
+  logo_url: string
+  primary_color: string
+  support_email: string
+  support_url: string
+  footer_text: string
+  docs_title: string
+  docs_subtitle: string
 }
 export interface KeyRequest {
   name: string
