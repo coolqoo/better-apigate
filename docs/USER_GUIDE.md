@@ -10,7 +10,22 @@ better-apigate provides a prepaid API gateway with a customer workspace at `/por
 4. In **API Configuration**, add upstreams and routes. Enter each upstream's authentication credential directly in its form. Give each paid route a fixed positive integer unit cost. Mark a route public only when it is explicitly free.
 5. In **Settings**, configure available top-up amounts and enable the payment providers your merchant accounts support. Configure signed callback secrets and the gateway's public HTTPS origin before accepting payments. Add email delivery if verification or password reset is needed. SMTP requires TLS by default.
 
-Configuration fields are generated from the module YAML schemas. Wallets, ledger entries, purchased terms and usage reservations are changed through transactional billing actions rather than generic configuration forms.
+Configuration is defined by the module YAML schemas. Wallets, ledger entries, purchased terms and usage reservations are changed through transactional billing actions rather than generic configuration forms.
+
+## Configure routes and transforms
+
+In **API Configuration → Upstreams**, each service has its own URL and credential. Choose None, Custom header, Bearer token or Basic authentication. Timeout and connection pooling settings are available in the same form. **Check** reports whether the service responds; an HTTP error response still means it was reached.
+
+The route editor has six sections:
+
+- **Routing:** path, HTTP methods, hostname/header conditions, priority, upstream, protocol, method override and path rewrite. Rewrite examples can be inserted directly into the field.
+- **Documentation:** description and sample request/response bodies, published at `/docs` and included in OpenAPI. The docs provide editable cURL, JavaScript and Python request examples.
+- **Usage & pricing:** fixed prepaid units per request plus the original request, response-field, response-size and custom metering modes. Response measurements appear in **Usage → Metered response usage**. They do not change the fixed prepaid charge.
+- **Request transform:** set/remove headers and query parameters, and transform the JSON body.
+- **Response transform:** set/remove headers and transform buffered response bodies.
+- **Test:** use sample request/response data to evaluate matching, rewrites, transforms and metering without contacting the upstream or spending funds. **Test current draft** uses unsaved changes; **Match saved routes** checks the active routing table.
+
+Header and query values use one `name=expression` per line. Quote literals, for example `X-Version="v2"`; dynamic values can use `userID`, `keyID` or `env("API_KEY")`. Expression fields include validation and insertable examples. For SSE metering, supply raw SSE events as the test response; **Use route examples** loads the current documentation samples.
 
 ## Fund an account and make the first request
 

@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -204,9 +205,14 @@ func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) (result Ha
 	periodEnd := a.periodEnd
 	var err error
 	upstreamStatus := 0
+	meteredValue := 0.0
+	meteringUnit := "requests"
+	if matchedRoute != nil && matchedRoute.MeteringUnit != "" {
+		meteringUnit = matchedRoute.MeteringUnit
+	}
 	defer func() {
 		if a.reservation != nil {
-			event := usage.Event{Method: req.Method, Path: originalPath, StatusCode: upstreamStatus, LatencyMs: s.clock.Now().Sub(now).Milliseconds(), RequestBytes: int64(len(req.Body)), ResponseBytes: int64(len(result.Response.Body)), IPAddress: req.RemoteIP, UserAgent: req.UserAgent, Timestamp: now}
+			event := usage.Event{MeteredValue: meteredValue, MeteringUnit: meteringUnit, Method: req.Method, Path: originalPath, StatusCode: upstreamStatus, LatencyMs: s.clock.Now().Sub(now).Milliseconds(), RequestBytes: int64(len(req.Body)), ResponseBytes: int64(len(result.Response.Body)), IPAddress: req.RemoteIP, UserAgent: req.UserAgent, Timestamp: now}
 			if e := s.SettleReservation(a.reservation, upstreamStatus >= 200 && upstreamStatus < 500, event); e != nil {
 				result.Error = &errEnforcement
 			}
@@ -293,6 +299,12 @@ func (s *ProxyService) Handle(ctx context.Context, req proxy.Request) (result Ha
 	}
 
 	upstreamStatus = resp.Status
+	meteredValue = 1
+	if matchedRoute != nil && s.transformService != nil {
+		if value, e := s.transformService.MeasureResponse(ctx, matchedRoute.MeteringExpr, resp, route.ProtocolHTTP, &auth, proxy.Request{Method: req.Method, Path: originalPath, Body: req.Body}); e == nil {
+			meteredValue = value
+		}
+	}
 
 	// 14. Apply response transform (PURE + Expr eval)
 	if matchedRoute != nil && matchedRoute.ResponseTransform != nil && s.transformService != nil {
@@ -481,6 +493,9 @@ func (s *ProxyService) handlePublicRoute(
 		RequestBytes:   int64(len(req.Body)),
 		ResponseBytes:  int64(len(resp.Body)),
 		CostMultiplier: costMult,
+		RouteID:        matchedRoute.ID,
+		MeteredValue:   costMult,
+		MeteringUnit:   matchedRoute.MeteringUnit,
 		IPAddress:      req.RemoteIP,
 		UserAgent:      req.UserAgent,
 		Timestamp:      now,
@@ -788,6 +803,11 @@ func (s *ProxyService) RecordStreamingUsage(
 		UserAgent:      userAgent,
 		Timestamp:      now,
 	}
+	if streamCtx.MatchedRoute != nil {
+		event.RouteID = streamCtx.MatchedRoute.ID
+		event.MeteredValue = meteringValue
+		event.MeteringUnit = streamCtx.MatchedRoute.MeteringUnit
+	}
 	s.usage.Record(event)
 }
 
@@ -812,6 +832,7 @@ func (s *ProxyService) EvalStreamingMetering(
 	lastChunk []byte,
 	allData []byte,
 	auth *proxy.AuthContext,
+	requests ...proxy.Request,
 ) float64 {
 	if s.transformService == nil || meteringExpr == "" {
 		return 1.0
@@ -823,6 +844,9 @@ func (s *ProxyService) EvalStreamingMetering(
 		"responseBytes": responseBytes,
 		"lastChunk":     lastChunk,
 		"allData":       allData,
+		"requestBytes":  int64(0),
+		"respBody":      map[string]any{},
+		"respHeaders":   map[string]string{},
 		"userID":        "",
 		"email":         "",
 		"role":          "",
@@ -838,6 +862,14 @@ func (s *ProxyService) EvalStreamingMetering(
 		meteringCtx["keyID"] = auth.KeyID
 	}
 
+	meteringCtx["path"], meteringCtx["method"] = "", ""
+	if len(requests) > 0 {
+		meteringCtx["requestBytes"], meteringCtx["path"], meteringCtx["method"] = int64(len(requests[0].Body)), requests[0].Path, requests[0].Method
+	}
+	var body any
+	if json.Unmarshal(allData, &body) == nil {
+		meteringCtx["respBody"] = body
+	}
 	val, err := s.transformService.EvalFloat(ctx, meteringExpr, meteringCtx)
 	if err != nil {
 		// Log but don't fail - return default value
@@ -845,6 +877,9 @@ func (s *ProxyService) EvalStreamingMetering(
 	}
 
 	// Ensure non-negative
+	if math.IsNaN(val) || math.IsInf(val, 0) {
+		return 1
+	}
 	if val < 0 {
 		return 0
 	}

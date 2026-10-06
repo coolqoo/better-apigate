@@ -389,7 +389,7 @@ func (a *App) initHTTPServer() error {
 	if a.ModuleRuntime != nil {
 		modules = a.ModuleRuntime.Handler()
 	}
-	api, err := v1.New(v1.Deps{Actions: a.ModuleRuntime.Runtime, DB: a.DB, Wallet: a.wallet, Keys: deps.Keys, Users: deps.Users, Settings: a.Settings, Email: emailSender, Limiter: a.redis, KeySecret: proxyCfg.KeySecret, SetupToken: os.Getenv("APIGATE_SETUP_TOKEN"), MetricsToken: os.Getenv("APIGATE_METRICS_TOKEN"), PublicURL: publicURL, Modules: modules, Tokens: tokenService, Logger: a.Logger, OnConfigChange: func(ctx context.Context) error {
+	api, err := v1.New(v1.Deps{Actions: a.ModuleRuntime.Runtime, DB: a.DB, Wallet: a.wallet, Keys: deps.Keys, Users: deps.Users, Settings: a.Settings, Email: emailSender, Limiter: a.redis, KeySecret: proxyCfg.KeySecret, SetupToken: os.Getenv("APIGATE_SETUP_TOKEN"), MetricsToken: os.Getenv("APIGATE_METRICS_TOKEN"), PublicURL: publicURL, Modules: modules, Routes: a.routeService, Transforms: a.transformService, Upstreams: postgres.NewUpstreamStore(a.DB), Tokens: tokenService, Logger: a.Logger, OnConfigChange: func(ctx context.Context) error {
 		if err := a.ReloadPlans(ctx); err != nil {
 			return err
 		}

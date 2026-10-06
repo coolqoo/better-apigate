@@ -33,6 +33,14 @@ type UsageDay struct {
 	Units     int64   `json:"units"`
 	LatencyMS float64 `json:"latency_ms"`
 }
+type MeteredUsage struct {
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	Path     string  `json:"path"`
+	Unit     string  `json:"unit"`
+	Quantity float64 `json:"quantity"`
+	Requests int64   `json:"requests"`
+}
 type UsageSummary struct {
 	Requests      int64        `json:"requests"`
 	Errors        int64        `json:"errors"`
@@ -152,4 +160,26 @@ type Message struct {
 type ReversalRequest struct {
 	Amount wallet.Money `json:"amount"`
 	Reason string       `json:"reason"`
+}
+
+// APIEndpoint contains the route's customer-facing documentation.
+type APIEndpoint struct {
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	PathPattern     string   `json:"path_pattern"`
+	MatchType       string   `json:"match_type"`
+	Methods         []string `json:"methods"`
+	UnitCost        int64    `json:"unit_cost"`
+	AuthRequired    bool     `json:"auth_required"`
+	Protocol        string   `json:"protocol"`
+	MeteringUnit    string   `json:"metering_unit"`
+	ExampleRequest  string   `json:"example_request"`
+	ExampleResponse string   `json:"example_response"`
+}
+type UpstreamHealth struct {
+	Reachable  bool   `json:"reachable"`
+	StatusCode int    `json:"status_code"`
+	LatencyMS  int64  `json:"latency_ms"`
+	Error      string `json:"error,omitempty"`
 }

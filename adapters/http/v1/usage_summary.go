@@ -28,3 +28,33 @@ func (s *Server) usageSummary(w http.ResponseWriter, r *http.Request) {
 	}
 	resource(w, 200, "usage-summary", userID, summary)
 }
+
+func (s *Server) meteredUsage(w http.ResponseWriter, r *http.Request) {
+	rows, err := s.DB.QueryContext(r.Context(), `
+		SELECT e.route_id || ':' || e.metering_unit,
+		       COALESCE(r.name, 'Removed route'), COALESCE(r.path_pattern, MIN(e.path)),
+		       e.metering_unit, SUM(e.metered_value), COUNT(*)
+		FROM usage_events e LEFT JOIN routes r ON r.id=e.route_id
+		WHERE e.user_id=? AND e.timestamp>CURRENT_TIMESTAMP-INTERVAL '30 days'
+		      AND e.metering_unit<>''
+		GROUP BY e.route_id,e.metering_unit,r.name,r.path_pattern ORDER BY 2,4`, current(r).UserID)
+	if err != nil {
+		failure(w, err)
+		return
+	}
+	defer rows.Close()
+	out := []portal.MeteredUsage{}
+	for rows.Next() {
+		var item portal.MeteredUsage
+		if err = rows.Scan(&item.ID, &item.Name, &item.Path, &item.Unit, &item.Quantity, &item.Requests); err != nil {
+			failure(w, err)
+			return
+		}
+		out = append(out, item)
+	}
+	if err = rows.Err(); err != nil {
+		failure(w, err)
+		return
+	}
+	collection(w, "metered-usage", out)
+}

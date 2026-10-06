@@ -94,6 +94,7 @@ hooks:
   # Notify when upstreams change
   after_create:
     - emit: upstream.created
+    - call: reload_router
 
   after_update:
     - emit: upstream.updated
@@ -101,6 +102,12 @@ hooks:
 
   after_delete:
     - emit: upstream.deleted
+    - call: reload_router
+
+  after_enable:
+    - call: reload_router
+
+  after_disable:
     - call: reload_router
 
 meta:

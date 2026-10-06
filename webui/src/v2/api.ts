@@ -8,6 +8,7 @@ export type Order = Contract.Order;
 export type Ledger = Contract.LedgerEntry;
 export type APIKey = Contract.APIKey;
 export type UsageDay = Contract.UsageDay;
+export type MeteredUsage = Contract.MeteredUsage;
 export type UsageSummary = Contract.UsageSummary;
 export type Provider = Contract.ProviderInfo;
 export type Status = Contract.Installation;

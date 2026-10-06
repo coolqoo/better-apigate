@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { GatewayConfiguration } from "./gateway-config";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -1475,7 +1476,13 @@ export function Configuration() {
         </TabsList>
         {Object.keys(titles).map((module) => (
           <TabsContent key={module} value={module}>
-            <ConfigurationSection module={module} />
+            <>
+              {module === "route" || module === "upstream" ? (
+                <GatewayConfiguration kind={module} />
+              ) : (
+                <ConfigurationSection module={module} />
+              )}
+            </>
           </TabsContent>
         ))}
       </Tabs>

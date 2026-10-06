@@ -191,9 +191,14 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 	charge := false
 	status := 0
 	responseBytes := int64(0)
+	meteringValue := 0.0
+	meteringUnit := "requests"
+	if result.StreamingResponse != nil && result.StreamingResponse.MatchedRoute != nil && result.StreamingResponse.MatchedRoute.MeteringUnit != "" {
+		meteringUnit = result.StreamingResponse.MatchedRoute.MeteringUnit
+	}
 	defer func() {
 		if result.Reservation != nil {
-			err := h.service.SettleReservation(result.Reservation, charge, usage.Event{Method: req.Method, Path: req.Path, StatusCode: status, RequestBytes: int64(len(req.Body)), ResponseBytes: responseBytes, LatencyMs: time.Since(start).Milliseconds(), IPAddress: req.RemoteIP, UserAgent: req.UserAgent, Timestamp: start})
+			err := h.service.SettleReservation(result.Reservation, charge, usage.Event{MeteredValue: meteringValue, MeteringUnit: meteringUnit, Method: req.Method, Path: req.Path, StatusCode: status, RequestBytes: int64(len(req.Body)), ResponseBytes: responseBytes, LatencyMs: time.Since(start).Milliseconds(), IPAddress: req.RemoteIP, UserAgent: req.UserAgent, Timestamp: start})
 			if err != nil {
 				h.logger.Error().Err(err).Str("reservation", result.Reservation.ID).Msg("stream settlement pending reconciliation")
 			}
@@ -300,7 +305,7 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 	// Record usage with streaming metrics
 	streamMetrics := streamReader.GetMetrics()
 	responseBytes = streamMetrics.TotalBytes
-	meteringValue := 1.0 // Default metering
+	meteringValue = 1.0 // Default metering
 
 	// Evaluate metering expression if configured
 	if meteringExpr != "" {
@@ -312,6 +317,7 @@ func (h *ProxyHandler) handleStreamingRequest(w http.ResponseWriter, r *http.Req
 			streamMetrics.LastChunk,
 			streamMetrics.AllData,
 			result.Auth,
+			proxy.Request{Method: streamingReq.Method, Path: req.Path, Body: streamingReq.Body},
 		)
 	}
 

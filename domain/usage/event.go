@@ -24,7 +24,10 @@ type Event struct {
 	LatencyMs      int64
 	RequestBytes   int64
 	ResponseBytes  int64
-	Units          int64   // Authoritative prepaid usage units
+	Units          int64 // Authoritative prepaid usage units
+	RouteID        string
+	MeteredValue   float64 // Measured response usage; does not change prepaid charges
+	MeteringUnit   string
 	CostMultiplier float64 // For endpoint-specific pricing
 	IPAddress      string
 	UserAgent      string

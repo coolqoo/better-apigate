@@ -230,7 +230,22 @@ export function CopyCode({
         aria-label={label}
         onClick={async () => {
           try {
-            await navigator.clipboard.writeText(value);
+            if (navigator.clipboard) {
+              await navigator.clipboard.writeText(value);
+            } else {
+              // HTTP deployments do not expose the Clipboard API.
+              const field = document.createElement("textarea");
+              field.value = value;
+              field.style.position = "fixed";
+              field.style.opacity = "0";
+              const focused = document.activeElement as HTMLElement | null;
+              document.body.appendChild(field);
+              field.select();
+              const copied = document.execCommand("copy");
+              field.remove();
+              focused?.focus();
+              if (!copied) throw new Error("Copy unavailable");
+            }
             setCopied(true);
             toast.success("Copied to clipboard");
             setTimeout(() => setCopied(false), 2000);

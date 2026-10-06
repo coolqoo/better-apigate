@@ -392,6 +392,7 @@ func (s *WalletStore) settle(ctx context.Context, id string, charge bool, event 
 	event.UserID = userID
 	event.KeyID = r.KeyID
 	event.Units = r.Units
+	event.RouteID = r.RouteID
 	event.CostMultiplier = float64(r.Units)
 	event.Source = usage.SourceProxy
 	if event.Timestamp.IsZero() {
@@ -891,12 +892,13 @@ func (s *WalletStore) ProcessOutbox(ctx context.Context) error {
 		return err
 	}
 	if _, err = tx.ExecContext(ctx, `INSERT INTO usage_events
-        (id,key_id,user_id,method,path,status_code,latency_ms,request_bytes,response_bytes,cost_multiplier,ip_address,user_agent,timestamp,units)
-        SELECT "ID","KeyID","UserID","Method","Path","StatusCode","LatencyMs","RequestBytes","ResponseBytes","CostMultiplier","IPAddress","UserAgent","Timestamp","Units"
+        (id,key_id,user_id,method,path,status_code,latency_ms,request_bytes,response_bytes,cost_multiplier,ip_address,user_agent,timestamp,units,route_id,metered_value,metering_unit)
+        SELECT "ID","KeyID","UserID","Method","Path","StatusCode","LatencyMs","RequestBytes","ResponseBytes","CostMultiplier","IPAddress","UserAgent","Timestamp","Units","RouteID","MeteredValue","MeteringUnit"
         FROM jsonb_to_recordset(?::jsonb) AS e(
             "ID" TEXT,"KeyID" TEXT,"UserID" TEXT,"Method" TEXT,"Path" TEXT,"StatusCode" BIGINT,
             "LatencyMs" BIGINT,"RequestBytes" BIGINT,"ResponseBytes" BIGINT,"CostMultiplier" DOUBLE PRECISION,
-            "IPAddress" TEXT,"UserAgent" TEXT,"Timestamp" TIMESTAMPTZ,"Units" BIGINT)
+            "IPAddress" TEXT,"UserAgent" TEXT,"Timestamp" TIMESTAMPTZ,"Units" BIGINT,
+            "RouteID" TEXT,"MeteredValue" DOUBLE PRECISION,"MeteringUnit" TEXT)
         ORDER BY "ID"
         ON CONFLICT(id) DO NOTHING`, string(payload)); err != nil {
 		return fmt.Errorf("write durable usage: %w", err)

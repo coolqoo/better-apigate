@@ -1,6 +1,65 @@
 {
   "components": {
     "schemas": {
+      "APIEndpoint": {
+        "properties": {
+          "auth_required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "example_request": {
+            "type": "string"
+          },
+          "example_response": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "match_type": {
+            "type": "string"
+          },
+          "metering_unit": {
+            "type": "string"
+          },
+          "methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path_pattern": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "unit_cost": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "path_pattern",
+          "match_type",
+          "methods",
+          "unit_cost",
+          "auth_required",
+          "protocol",
+          "metering_unit",
+          "example_request",
+          "example_response"
+        ],
+        "type": "object"
+      },
       "APIKey": {
         "properties": {
           "created_at": {
@@ -270,6 +329,61 @@
         ],
         "type": "object"
       },
+      "ExprValidationResult": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "valid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid"
+        ],
+        "type": "object"
+      },
+      "ExpressionRequest": {
+        "properties": {
+          "context": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expression",
+          "context"
+        ],
+        "type": "object"
+      },
+      "HeaderMatch": {
+        "properties": {
+          "IsRegex": {
+            "type": "boolean"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Required": {
+            "type": "boolean"
+          },
+          "Value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Name",
+          "Value",
+          "IsRegex",
+          "Required"
+        ],
+        "type": "object"
+      },
       "Installation": {
         "properties": {
           "app_name": {
@@ -384,6 +498,38 @@
         },
         "required": [
           "message"
+        ],
+        "type": "object"
+      },
+      "MeteredUsage": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "requests": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "path",
+          "unit",
+          "quantity",
+          "requests"
         ],
         "type": "object"
       },
@@ -734,6 +880,540 @@
         ],
         "type": "object"
       },
+      "RouteDraft": {
+        "properties": {
+          "auth_required": {
+            "type": "boolean"
+          },
+          "headers": {
+            "items": {
+              "properties": {
+                "IsRegex": {
+                  "type": "boolean"
+                },
+                "Name": {
+                  "type": "string"
+                },
+                "Required": {
+                  "type": "boolean"
+                },
+                "Value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Name",
+                "Value",
+                "IsRegex",
+                "Required"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "host_match_type": {
+            "type": "string"
+          },
+          "host_pattern": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "match_type": {
+            "type": "string"
+          },
+          "metering_expr": {
+            "type": "string"
+          },
+          "metering_unit": {
+            "type": "string"
+          },
+          "method_override": {
+            "type": "string"
+          },
+          "methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path_pattern": {
+            "type": "string"
+          },
+          "path_rewrite": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "request_transform": {
+            "anyOf": [
+              {
+                "properties": {
+                  "body_expr": {
+                    "type": "string"
+                  },
+                  "delete_headers": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "delete_query": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "set_headers": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "set_query": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_transform": {
+            "anyOf": [
+              {
+                "properties": {
+                  "body_expr": {
+                    "type": "string"
+                  },
+                  "delete_headers": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "delete_query": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "set_headers": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "set_query": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit_cost": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "upstream_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "path_pattern",
+          "match_type",
+          "methods",
+          "headers",
+          "host_pattern",
+          "host_match_type",
+          "upstream_id",
+          "path_rewrite",
+          "method_override",
+          "request_transform",
+          "response_transform",
+          "metering_expr",
+          "metering_unit",
+          "protocol",
+          "unit_cost",
+          "auth_required"
+        ],
+        "type": "object"
+      },
+      "RouteTestRequest": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "draft": {
+            "anyOf": [
+              {
+                "properties": {
+                  "auth_required": {
+                    "type": "boolean"
+                  },
+                  "headers": {
+                    "items": {
+                      "properties": {
+                        "IsRegex": {
+                          "type": "boolean"
+                        },
+                        "Name": {
+                          "type": "string"
+                        },
+                        "Required": {
+                          "type": "boolean"
+                        },
+                        "Value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "Name",
+                        "Value",
+                        "IsRegex",
+                        "Required"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "host_match_type": {
+                    "type": "string"
+                  },
+                  "host_pattern": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "match_type": {
+                    "type": "string"
+                  },
+                  "metering_expr": {
+                    "type": "string"
+                  },
+                  "metering_unit": {
+                    "type": "string"
+                  },
+                  "method_override": {
+                    "type": "string"
+                  },
+                  "methods": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "path_pattern": {
+                    "type": "string"
+                  },
+                  "path_rewrite": {
+                    "type": "string"
+                  },
+                  "protocol": {
+                    "type": "string"
+                  },
+                  "request_transform": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "body_expr": {
+                            "type": "string"
+                          },
+                          "delete_headers": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "delete_query": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "set_headers": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          "set_query": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "required": [],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "response_transform": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "body_expr": {
+                            "type": "string"
+                          },
+                          "delete_headers": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "delete_query": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "set_headers": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          "set_query": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "required": [],
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "unit_cost": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "upstream_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "path_pattern",
+                  "match_type",
+                  "methods",
+                  "headers",
+                  "host_pattern",
+                  "host_match_type",
+                  "upstream_id",
+                  "path_rewrite",
+                  "method_override",
+                  "request_transform",
+                  "response_transform",
+                  "metering_expr",
+                  "metering_unit",
+                  "protocol",
+                  "unit_cost",
+                  "auth_required"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "method": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "properties": {
+                  "body": {
+                    "type": "string"
+                  },
+                  "headers": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "status": {
+                    "format": "int64",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "status",
+                  "headers",
+                  "body"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "route_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "path",
+          "headers",
+          "body"
+        ],
+        "type": "object"
+      },
+      "RouteTestResponse": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "status": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "headers",
+          "body"
+        ],
+        "type": "object"
+      },
+      "RouteTestResult": {
+        "properties": {
+          "auth_required": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "match_reason": {
+            "type": "string"
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "metering_expr": {
+            "type": "string"
+          },
+          "metering_sample": {
+            "type": "number"
+          },
+          "metering_unit": {
+            "type": "string"
+          },
+          "path_params": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "response_body": {
+            "type": "string"
+          },
+          "response_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "response_status": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "route_id": {
+            "type": "string"
+          },
+          "route_name": {
+            "type": "string"
+          },
+          "transformed_body": {
+            "type": "string"
+          },
+          "transformed_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "transformed_method": {
+            "type": "string"
+          },
+          "transformed_path": {
+            "type": "string"
+          },
+          "transformed_query": {
+            "type": "string"
+          },
+          "unit_cost": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "upstream_name": {
+            "type": "string"
+          },
+          "upstream_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "matched",
+          "unit_cost",
+          "auth_required",
+          "metering_unit"
+        ],
+        "type": "object"
+      },
       "Session": {
         "properties": {
           "csrf_token": {
@@ -858,6 +1538,63 @@
         "required": [
           "amount",
           "provider"
+        ],
+        "type": "object"
+      },
+      "Transform": {
+        "properties": {
+          "body_expr": {
+            "type": "string"
+          },
+          "delete_headers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "delete_query": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "set_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "set_query": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "UpstreamHealth": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "latency_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "reachable": {
+            "type": "boolean"
+          },
+          "status_code": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reachable",
+          "status_code",
+          "latency_ms"
         ],
         "type": "object"
       },
@@ -2112,6 +2849,130 @@
                             "frozen",
                             "currency",
                             "auto_renew"
+                          ],
+                          "type": "object"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-admin-required": true
+      }
+    },
+    "/api/v1/admin/expressions/validate": {
+      "post": {
+        "operationId": "post_admin_expressions_validate",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "properties": {
+                      "attributes": {
+                        "$ref": "#/components/schemas/ExpressionRequest"
+                      }
+                    },
+                    "required": [
+                      "attributes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "attributes": {
+                          "properties": {
+                            "error": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "valid": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "valid"
                           ],
                           "type": "object"
                         },
@@ -3570,6 +4431,198 @@
         "x-admin-required": true
       }
     },
+    "/api/v1/admin/routes/test": {
+      "post": {
+        "operationId": "post_admin_routes_test",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "properties": {
+                  "data": {
+                    "properties": {
+                      "attributes": {
+                        "$ref": "#/components/schemas/RouteTestRequest"
+                      }
+                    },
+                    "required": [
+                      "attributes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "attributes": {
+                          "properties": {
+                            "auth_required": {
+                              "type": "boolean"
+                            },
+                            "error": {
+                              "type": "string"
+                            },
+                            "match_reason": {
+                              "type": "string"
+                            },
+                            "matched": {
+                              "type": "boolean"
+                            },
+                            "metering_expr": {
+                              "type": "string"
+                            },
+                            "metering_sample": {
+                              "type": "number"
+                            },
+                            "metering_unit": {
+                              "type": "string"
+                            },
+                            "path_params": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "type": "object"
+                            },
+                            "response_body": {
+                              "type": "string"
+                            },
+                            "response_headers": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "type": "object"
+                            },
+                            "response_status": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
+                            "route_id": {
+                              "type": "string"
+                            },
+                            "route_name": {
+                              "type": "string"
+                            },
+                            "transformed_body": {
+                              "type": "string"
+                            },
+                            "transformed_headers": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "type": "object"
+                            },
+                            "transformed_method": {
+                              "type": "string"
+                            },
+                            "transformed_path": {
+                              "type": "string"
+                            },
+                            "transformed_query": {
+                              "type": "string"
+                            },
+                            "unit_cost": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
+                            "upstream_name": {
+                              "type": "string"
+                            },
+                            "upstream_url": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "matched",
+                            "unit_cost",
+                            "auth_required",
+                            "metering_unit"
+                          ],
+                          "type": "object"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-admin-required": true
+      }
+    },
     "/api/v1/admin/settings": {
       "get": {
         "operationId": "get_admin_settings",
@@ -3712,6 +4765,111 @@
                           },
                           "required": [
                             "values"
+                          ],
+                          "type": "object"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "attributes"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-admin-required": true
+      }
+    },
+    "/api/v1/admin/upstreams/{id}/health": {
+      "get": {
+        "operationId": "get_admin_upstreams_{id}_health",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "attributes": {
+                          "properties": {
+                            "error": {
+                              "type": "string"
+                            },
+                            "latency_ms": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
+                            "reachable": {
+                              "type": "boolean"
+                            },
+                            "status_code": {
+                              "format": "int64",
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "reachable",
+                            "status_code",
+                            "latency_ms"
                           ],
                           "type": "object"
                         },
@@ -4409,6 +5567,132 @@
         "responses": {
           "204": {
             "description": "Completed"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [],
+        "x-admin-required": false
+      }
+    },
+    "/api/v1/documentation": {
+      "get": {
+        "operationId": "get_documentation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "attributes": {
+                            "properties": {
+                              "auth_required": {
+                                "type": "boolean"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "example_request": {
+                                "type": "string"
+                              },
+                              "example_response": {
+                                "type": "string"
+                              },
+                              "match_type": {
+                                "type": "string"
+                              },
+                              "metering_unit": {
+                                "type": "string"
+                              },
+                              "methods": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "path_pattern": {
+                                "type": "string"
+                              },
+                              "protocol": {
+                                "type": "string"
+                              },
+                              "unit_cost": {
+                                "format": "int64",
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "description",
+                              "path_pattern",
+                              "match_type",
+                              "methods",
+                              "unit_cost",
+                              "auth_required",
+                              "protocol",
+                              "metering_unit",
+                              "example_request",
+                              "example_response"
+                            ],
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "id",
+                          "attributes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
           },
           "400": {
             "description": "JSON:API error; see errors[0].code and detail"
@@ -6542,6 +7826,109 @@
                               "errors",
                               "units",
                               "latency_ms"
+                            ],
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "id",
+                          "attributes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "400": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "401": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "402": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "403": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "404": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "409": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "422": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "429": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          },
+          "503": {
+            "description": "JSON:API error; see errors[0].code and detail"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-admin-required": false
+      }
+    },
+    "/api/v1/usage/metered": {
+      "get": {
+        "operationId": "get_usage_metered",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "attributes": {
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "requests": {
+                                "format": "int64",
+                                "type": "integer"
+                              },
+                              "unit": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "path",
+                              "unit",
+                              "quantity",
+                              "requests"
                             ],
                             "type": "object"
                           },

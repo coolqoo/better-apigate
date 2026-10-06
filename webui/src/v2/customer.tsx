@@ -57,6 +57,7 @@ import {
   type Plan,
   type Provider,
   type UsageDay,
+  type MeteredUsage,
   type UsageSummary,
   type Wallet,
 } from "./api";
@@ -643,6 +644,7 @@ export function Keys() {
 }
 export function Usage() {
   const q = useData<UsageDay[]>("/usage");
+  const metered = useData<MeteredUsage[]>("/usage/metered");
   if (q.isPending) return <Loading />;
   if (q.error)
     return <Failure error={q.error} retry={() => void q.refetch()} />;
@@ -663,7 +665,7 @@ export function Usage() {
           icon={<Activity className="size-4" />}
         />
         <Metric
-          label="Usage units"
+          label="Prepaid units"
           value={days.reduce((s, d) => s + d.units, 0).toLocaleString()}
           detail="Fixed route costs, recorded per request"
           icon={<Zap className="size-4" />}
@@ -713,6 +715,61 @@ export function Usage() {
           </CardContent>
         </Card>
       )}
+      <Card className="mt-6 shadow-none">
+        <CardHeader>
+          <CardTitle>Metered response usage</CardTitle>
+          <CardDescription>
+            Last 30 days. Response measurements are reported separately from
+            prepaid units.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {metered.isPending ? (
+            <Loading />
+          ) : metered.error ? (
+            <Failure
+              error={metered.error}
+              retry={() => void metered.refetch()}
+            />
+          ) : !metered.data?.length ? (
+            <Empty
+              title="No metered usage yet"
+              description="Measurements appear after requests to routes with usage metering."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Endpoint</TableHead>
+                  <TableHead>Measured usage</TableHead>
+                  <TableHead>Requests</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {metered.data.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <p className="font-medium">{item.name}</p>
+                      <code className="text-xs text-muted-foreground">
+                        {item.path}
+                      </code>
+                    </TableCell>
+                    <TableCell>
+                      {item.quantity.toLocaleString(undefined, {
+                        maximumFractionDigits: 3,
+                      })}{" "}
+                      {item.unit === "bytes"
+                        ? "KB"
+                        : item.unit.replaceAll("_", " ")}
+                    </TableCell>
+                    <TableCell>{item.requests.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
@@ -1521,170 +1578,4 @@ export function Account() {
     </>
   );
 }
-type DocRoute = {
-  id: string;
-  name: string;
-  description: string;
-  path_pattern: string;
-  methods: string[];
-  unit_cost: number;
-  auth_required: boolean;
-  example_request: string;
-};
-export function Docs() {
-  const routes = useData<DocRoute[]>("/documentation");
-  return (
-    <>
-      <Heading
-        eyebrow="Developer resources"
-        title="Build with the API"
-        description="From your first request to production. Clear pricing and familiar HTTP conventions."
-        action={
-          <Button variant="outline" asChild>
-            <a href="/api/v1/openapi.json" download>
-              Download OpenAPI
-              <ArrowUpRight className="size-4" />
-            </a>
-          </Button>
-        }
-      />
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Make your first request</CardTitle>
-            <CardDescription>
-              Fund your wallet, create a key, and send it in the X-API-Key
-              header.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <CopyCode
-              value={`curl ${location.origin}${routes.data?.[0]?.path_pattern || "/your-endpoint"} \\\n  -H 'X-API-Key: YOUR_API_KEY'`}
-            />
-            <p className="text-sm leading-6 text-muted-foreground">
-              Keep your API key on your server. All keys share your account rate
-              limits and prepaid balance.
-            </p>
-            <ActionLink to="/portal/keys">Manage API keys</ActionLink>
-          </CardContent>
-        </Card>
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>How billing works</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-6 text-muted-foreground">
-            <p>
-              Each route has a fixed unit cost. Included plan units are reserved
-              first, then available wallet funds cover any remainder.
-            </p>
-            <p>
-              Upstream responses from 2xx through 4xx are charged. Verified
-              upstream 5xx and transport failures release their reservation.
-            </p>
-            <p>
-              A customer disconnect alone does not prove an upstream failure.
-              Unresolved requests remain reserved until reconciled.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      <Card className="mt-6 shadow-none">
-        <CardHeader>
-          <CardTitle>Available endpoints</CardTitle>
-          <CardDescription>
-            Fixed costs are known before your request is forwarded.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {routes.isPending ? (
-            <Loading />
-          ) : routes.error ? (
-            <Failure error={routes.error} />
-          ) : !routes.data?.length ? (
-            <Empty
-              title="Endpoints are being configured"
-              description="Your gateway administrator can add API routes. Check back when the configuration is ready."
-            />
-          ) : (
-            <div className="divide-y">
-              {routes.data.map((r) => (
-                <div key={r.id} className="py-5">
-                  <div className="mb-2 flex flex-wrap items-center gap-3">
-                    <Badge variant="outline">
-                      {r.methods?.join(", ") || "ALL"}
-                    </Badge>
-                    <code className="text-sm font-medium">
-                      {r.path_pattern}
-                    </code>
-                    <Badge variant="secondary" className="ml-auto">
-                      {r.auth_required
-                        ? `${r.unit_cost} units`
-                        : "Free public route"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm font-medium">{r.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {r.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      <Card className="mt-6 shadow-none">
-        <CardHeader>
-          <CardTitle>Recovering from errors</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>HTTP status</TableHead>
-                <TableHead>What it means</TableHead>
-                <TableHead>Next step</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[
-                [
-                  "401",
-                  "Credential missing, expired, or revoked",
-                  "Use an active API key.",
-                ],
-                [
-                  "402",
-                  "Not enough available units or funds",
-                  "Add funds to your wallet.",
-                ],
-                [
-                  "403",
-                  "Access denied or account frozen",
-                  "Check scope or contact the administrator.",
-                ],
-                [
-                  "429",
-                  "Account rate limit reached",
-                  "Wait until the limit resets.",
-                ],
-                [
-                  "503",
-                  "Enforcement temporarily unavailable",
-                  "Retry after dependencies recover.",
-                ],
-              ].map(([code, meaning, next]) => (
-                <TableRow key={code}>
-                  <TableCell className="font-mono">{code}</TableCell>
-                  <TableCell>{meaning}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {next}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </>
-  );
-}
+export { Documentation as Docs } from "./documentation";

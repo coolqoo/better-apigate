@@ -3,7 +3,9 @@ package contracts
 
 import (
 	"fmt"
+	"github.com/coolqoo/better-apigate/app"
 	"github.com/coolqoo/better-apigate/domain/portal"
+	"github.com/coolqoo/better-apigate/domain/route"
 	"github.com/coolqoo/better-apigate/domain/wallet"
 	"reflect"
 	"sort"
@@ -17,6 +19,11 @@ type Endpoint struct {
 }
 
 var Endpoints = []Endpoint{
+	{"get", "/documentation", "APIEndpoint", "", true, true},
+	{"get", "/usage/metered", "MeteredUsage", "", false, true},
+	{"post", "/admin/routes/test", "RouteTestResult", "RouteTestRequest", false, false},
+	{"post", "/admin/expressions/validate", "ExprValidationResult", "ExpressionRequest", false, false},
+	{"get", "/admin/upstreams/{id}/health", "UpstreamHealth", "", false, false},
 	{"get", "/usage/summary", "UsageSummary", "", false, false},
 	{"get", "/admin/audit", "AuditEntry", "", false, true},
 	{"post", "/admin/orders/{id}/reversals", "Order", "ReversalRequest", false, false},
@@ -37,7 +44,7 @@ var Endpoints = []Endpoint{
 	{"get", "/admin/plans", "Plan", "", false, true}, {"post", "/admin/plans", "Plan", "Plan", false, false}, {"patch", "/admin/plans/{id}", "Plan", "Plan", false, false},
 	{"get", "/admin/settings", "Settings", "", false, false}, {"patch", "/admin/settings", "Settings", "Settings", false, false},
 }
-var Models = map[string]any{"UsageSummary": portal.UsageSummary{}, "AuditEntry": portal.AuditEntry{}, "Pagination": portal.Pagination{}, "ReversalRequest": portal.ReversalRequest{}, "AccountCreated": portal.AccountCreated{}, "Message": portal.Message{}, "Wallet": wallet.Account{}, "Term": wallet.Term{}, "Plan": wallet.Plan{}, "Order": wallet.Order{}, "Reservation": wallet.Reservation{}, "LedgerEntry": wallet.LedgerEntry{}, "ProviderInfo": wallet.ProviderInfo{}, "Session": portal.Session{}, "APIKey": portal.APIKey{}, "UsageDay": portal.UsageDay{}, "Installation": portal.Installation{}, "Customer": portal.Customer{}, "Overview": portal.Overview{}, "Settings": portal.Settings{}, "Credentials": portal.Credentials{}, "TopUpRequest": portal.TopUpRequest{}, "PurchaseRequest": portal.PurchaseRequest{}, "RenewalRequest": portal.RenewalRequest{}, "KeyRequest": portal.KeyRequest{}, "AdjustmentRequest": portal.AdjustmentRequest{}, "ResolveRequest": portal.ResolveRequest{}, "CustomerStateRequest": portal.CustomerStateRequest{}, "ReasonRequest": portal.ReasonRequest{}, "AccountRequest": portal.AccountRequest{}, "PasswordRequest": portal.PasswordRequest{}, "EmailRequest": portal.EmailRequest{}, "ChallengeRequest": portal.ChallengeRequest{}}
+var Models = map[string]any{"APIEndpoint": portal.APIEndpoint{}, "MeteredUsage": portal.MeteredUsage{}, "UpstreamHealth": portal.UpstreamHealth{}, "RouteTestRequest": app.RouteTestRequest{}, "RouteTestResult": app.RouteTestResult{}, "RouteDraft": app.RouteDraft{}, "RouteTestResponse": app.RouteTestResponse{}, "ExpressionRequest": app.ExpressionRequest{}, "ExprValidationResult": app.ExprValidationResult{}, "Transform": route.Transform{}, "HeaderMatch": route.HeaderMatch{}, "UsageSummary": portal.UsageSummary{}, "AuditEntry": portal.AuditEntry{}, "Pagination": portal.Pagination{}, "ReversalRequest": portal.ReversalRequest{}, "AccountCreated": portal.AccountCreated{}, "Message": portal.Message{}, "Wallet": wallet.Account{}, "Term": wallet.Term{}, "Plan": wallet.Plan{}, "Order": wallet.Order{}, "Reservation": wallet.Reservation{}, "LedgerEntry": wallet.LedgerEntry{}, "ProviderInfo": wallet.ProviderInfo{}, "Session": portal.Session{}, "APIKey": portal.APIKey{}, "UsageDay": portal.UsageDay{}, "Installation": portal.Installation{}, "Customer": portal.Customer{}, "Overview": portal.Overview{}, "Settings": portal.Settings{}, "Credentials": portal.Credentials{}, "TopUpRequest": portal.TopUpRequest{}, "PurchaseRequest": portal.PurchaseRequest{}, "RenewalRequest": portal.RenewalRequest{}, "KeyRequest": portal.KeyRequest{}, "AdjustmentRequest": portal.AdjustmentRequest{}, "ResolveRequest": portal.ResolveRequest{}, "CustomerStateRequest": portal.CustomerStateRequest{}, "ReasonRequest": portal.ReasonRequest{}, "AccountRequest": portal.AccountRequest{}, "PasswordRequest": portal.PasswordRequest{}, "EmailRequest": portal.EmailRequest{}, "ChallengeRequest": portal.ChallengeRequest{}}
 
 func schema(t reflect.Type) map[string]any {
 	if t == reflect.TypeOf(wallet.Money(0)) {

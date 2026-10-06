@@ -36,8 +36,8 @@ func (s *UsageStore) RecordBatch(ctx context.Context, events []usage.Event) erro
 		INSERT INTO usage_events (
 			id, key_id, user_id, method, path, status_code, latency_ms,
 			request_bytes, response_bytes, cost_multiplier, ip_address, user_agent, timestamp,
-			event_type, resource_id, resource_type, quantity, source, source_name, metadata
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			event_type, resource_id, resource_type, quantity, source, source_name, metadata, route_id, metered_value, metering_unit
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (s *UsageStore) RecordBatch(ctx context.Context, events []usage.Event) erro
 		_, err := stmt.ExecContext(ctx,
 			e.ID, e.KeyID, e.UserID, e.Method, e.Path, e.StatusCode, e.LatencyMs,
 			e.RequestBytes, e.ResponseBytes, e.CostMultiplier, e.IPAddress, e.UserAgent, e.Timestamp.UTC(),
-			e.EventType, e.ResourceID, e.ResourceType, e.Quantity, string(e.Source), e.SourceName, metadataJSON,
+			e.EventType, e.ResourceID, e.ResourceType, e.Quantity, string(e.Source), e.SourceName, metadataJSON, e.RouteID, e.MeteredValue, e.MeteringUnit,
 		)
 		if err != nil {
 			return err

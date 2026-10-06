@@ -5,6 +5,8 @@ schema:
   # Identity
   name:           { type: string, required: true, lookup: true, description: "Unique name identifying this route" }
   description:    { type: string, default: "", description: "Human-readable description of this route's purpose" }
+  example_request: { type: string, default: "", description: "Sample request body shown in customer API documentation" }
+  example_response: { type: string, default: "", description: "Sample response body shown in customer API documentation" }
 
   # Matching criteria
   path_pattern:   { type: string, required: true, description: "URL path pattern to match incoming requests" }
@@ -27,6 +29,11 @@ schema:
 
   # Fixed prepaid pricing known before dispatch
   unit_cost: { type: int, default: 1, constraints: [{type: min, value: 1}], description: "Fixed units charged per request. Upstream 5xx and transport failures are released." }
+
+  # Response usage reporting (independent of the fixed prepaid charge)
+  metering_mode: { type: enum, values: [request, response_field, bytes, custom], default: request, description: "How response usage is measured" }
+  metering_expr: { type: string, default: "1", description: "Expr expression that extracts a numeric usage value from the response" }
+  metering_unit: { type: enum, values: [requests, tokens, data_points, bytes], default: requests, description: "Unit displayed in usage reports" }
 
   # Protocol behavior
   protocol:       { type: enum, values: [http, http_stream, sse, websocket], default: http, description: "Protocol handling mode for this route" }
@@ -122,6 +129,12 @@ hooks:
 
   after_delete:
     - emit: route.deleted
+    - call: reload_router
+
+  after_enable:
+    - call: reload_router
+
+  after_disable:
     - call: reload_router
 
 meta:

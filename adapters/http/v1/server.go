@@ -45,6 +45,9 @@ type Deps struct {
 	MetricsToken   string
 	PublicURL      string
 	Modules        http.Handler
+	Routes         *app.RouteService
+	Transforms     *app.TransformService
+	Upstreams      ports.UpstreamStore
 	Tokens         *auth.TokenService
 	OnConfigChange func(context.Context) error
 	Logger         zerolog.Logger
@@ -103,6 +106,7 @@ func (s *Server) Router() http.Handler {
 		r.Delete("/keys/{id}", s.revokeKey)
 		r.Get("/usage", s.usage)
 		r.Get("/usage/summary", s.usageSummary)
+		r.Get("/usage/metered", s.meteredUsage)
 		r.Patch("/account", s.updateAccount)
 		r.Post("/account/password", s.password)
 		r.Route("/admin", func(r chi.Router) {
@@ -124,6 +128,9 @@ func (s *Server) Router() http.Handler {
 			r.Patch("/plans/{id}", s.savePlan)
 			r.Get("/settings", s.getSettings)
 			r.Patch("/settings", s.saveSettings)
+			r.Post("/routes/test", s.testRoute)
+			r.Post("/expressions/validate", s.validateExpression)
+			r.Get("/upstreams/{id}/health", s.upstreamHealth)
 			if s.Modules != nil {
 				r.Mount("/config", http.StripPrefix("/api/v1/admin/config", s.moduleHandler()))
 			}

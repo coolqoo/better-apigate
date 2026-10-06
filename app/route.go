@@ -287,7 +287,9 @@ type RouteTestRequest struct {
 	Headers map[string]string `json:"headers"`
 	Body    string            `json:"body"`
 	// Optional: test a specific route by ID (bypasses matching)
-	RouteID string `json:"route_id,omitempty"`
+	RouteID  string             `json:"route_id,omitempty"`
+	Draft    *RouteDraft        `json:"draft,omitempty"`
+	Response *RouteTestResponse `json:"response,omitempty"`
 }
 
 // RouteTestResult contains the result of testing a route.
@@ -308,6 +310,13 @@ type RouteTestResult struct {
 	TransformedPath    string            `json:"transformed_path,omitempty"`
 	TransformedHeaders map[string]string `json:"transformed_headers,omitempty"`
 	TransformedBody    string            `json:"transformed_body,omitempty"`
+	TransformedQuery   string            `json:"transformed_query,omitempty"`
+	ResponseStatus     int               `json:"response_status,omitempty"`
+	ResponseHeaders    map[string]string `json:"response_headers,omitempty"`
+	ResponseBody       string            `json:"response_body,omitempty"`
+	UnitCost           int64             `json:"unit_cost"`
+	AuthRequired       bool              `json:"auth_required"`
+	MeteringUnit       string            `json:"metering_unit"`
 
 	// Metering preview
 	MeteringExpr   string  `json:"metering_expr,omitempty"`
@@ -319,104 +328,5 @@ type RouteTestResult struct {
 
 // TestRoute tests route matching and transformation without making actual requests.
 func (s *RouteService) TestRoute(req RouteTestRequest) RouteTestResult {
-	result := RouteTestResult{
-		Matched: false,
-	}
-
-	// Get current cache
-	cache := s.cache.Load()
-	if cache == nil || cache.Matcher == nil {
-		result.Error = "Route service not initialized"
-		return result
-	}
-
-	var matchedRoute *route.Route
-	var pathParams map[string]string
-
-	// If a specific route ID is provided, use that instead of matching
-	if req.RouteID != "" {
-		for i := range cache.Routes {
-			if cache.Routes[i].ID == req.RouteID {
-				matchedRoute = &cache.Routes[i]
-				break
-			}
-		}
-		if matchedRoute == nil {
-			result.Error = "Route not found: " + req.RouteID
-			return result
-		}
-		result.MatchReason = "Tested directly by route ID"
-	} else {
-		// Match against all routes
-		matchResult := cache.Matcher.Match(req.Method, req.Path, req.Headers)
-		if matchResult == nil {
-			result.MatchReason = "No route matched the request"
-			return result
-		}
-		matchedRoute = matchResult.Route
-		pathParams = matchResult.PathParams
-		result.MatchReason = "Matched by pattern: " + string(matchedRoute.MatchType) + " " + matchedRoute.PathPattern
-	}
-
-	result.Matched = true
-	result.RouteName = matchedRoute.Name
-	result.RouteID = matchedRoute.ID
-	result.PathParams = pathParams
-
-	// Get upstream
-	upstream, ok := cache.Upstreams[matchedRoute.UpstreamID]
-	if ok {
-		result.UpstreamName = upstream.Name
-		upstreamURL, err := s.ResolveUpstreamURL(&upstream, req.Path, "")
-		if err == nil {
-			result.UpstreamURL = upstreamURL.String()
-		}
-	}
-
-	// Build transformed request
-	result.TransformedMethod = req.Method
-	if matchedRoute.MethodOverride != "" {
-		result.TransformedMethod = matchedRoute.MethodOverride
-	}
-
-	result.TransformedPath = req.Path
-	// Note: Path rewrite would need TransformService evaluation
-	// For now, just show the raw path_rewrite expression if set
-	if matchedRoute.PathRewrite != "" {
-		result.TransformedPath = "[expr: " + matchedRoute.PathRewrite + "]"
-	}
-
-	// Apply upstream auth to show what headers would be added
-	result.TransformedHeaders = make(map[string]string)
-	for k, v := range req.Headers {
-		result.TransformedHeaders[k] = v
-	}
-	if ok {
-		result.TransformedHeaders = s.ApplyUpstreamAuth(&upstream, result.TransformedHeaders)
-	}
-
-	// Show request transform headers if any
-	if matchedRoute.RequestTransform != nil {
-		for k := range matchedRoute.RequestTransform.SetHeaders {
-			result.TransformedHeaders[k] = "[expr: " + matchedRoute.RequestTransform.SetHeaders[k] + "]"
-		}
-		for _, k := range matchedRoute.RequestTransform.DeleteHeaders {
-			delete(result.TransformedHeaders, k)
-		}
-	}
-
-	// Body transformation
-	result.TransformedBody = req.Body
-	if matchedRoute.RequestTransform != nil && matchedRoute.RequestTransform.BodyExpr != "" {
-		result.TransformedBody = "[expr: " + matchedRoute.RequestTransform.BodyExpr + "]"
-	}
-
-	// Metering info
-	result.MeteringExpr = matchedRoute.MeteringExpr
-	if result.MeteringExpr == "" {
-		result.MeteringExpr = "1"
-	}
-	result.MeteringSample = 1.0 // Default sample value
-
-	return result
+	return s.PreviewRoute(context.Background(), req, NewTransformService())
 }

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"strings"
@@ -285,7 +286,14 @@ func NewTransformService() *TransformService {
 				return nil, fmt.Errorf("sseLastData requires 1 argument")
 			}
 			data := toBytes(params[0])
-			return streaming.ExtractSSELastData(data), nil
+			events := streaming.ParseSSEEvents(data)
+			for i := len(events) - 1; i >= 0; i-- {
+				value := strings.TrimSpace(events[i].Data)
+				if value != "" && value != "[DONE]" {
+					return events[i].Data, nil
+				}
+			}
+			return "", nil
 		}),
 
 		// sseAllData(data) - Get all SSE data fields concatenated
@@ -668,6 +676,29 @@ func (s *TransformService) EvalFloat(ctx context.Context, expression string, dat
 	return toFloat(result), nil
 }
 
+// MeasureResponse evaluates reporting usage separately from prepaid accounting.
+func (s *TransformService) MeasureResponse(ctx context.Context, expression string, resp proxy.Response, protocol route.Protocol, auth *proxy.AuthContext, requests ...proxy.Request) (float64, error) {
+	if expression == "" {
+		return 1, nil
+	}
+	env := s.buildResponseContext(resp, auth)
+	env["requestBytes"], env["path"], env["method"] = int64(0), "", ""
+	if len(requests) > 0 {
+		env["requestBytes"], env["path"], env["method"] = int64(len(requests[0].Body)), requests[0].Path, requests[0].Method
+	}
+	if protocol == route.ProtocolSSE || protocol == route.ProtocolHTTPStream {
+		env["allData"], env["lastChunk"] = resp.Body, resp.Body
+	}
+	value, err := s.EvalFloat(ctx, expression, env)
+	if err != nil {
+		return 0, err
+	}
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0, fmt.Errorf("metering expression must return a finite number")
+	}
+	return math.Max(value, 0), nil
+}
+
 // Eval evaluates an Expr expression with the given data context.
 func (s *TransformService) Eval(ctx context.Context, expression string, data any) (any, error) {
 	program, err := s.getOrCompile(expression, data)
@@ -895,6 +926,11 @@ func (s *TransformService) ClearCache() {
 	s.cacheMu.Unlock()
 }
 
+type ExpressionRequest struct {
+	Expression string `json:"expression"`
+	Context    string `json:"context"`
+}
+
 // ExprValidationResult contains the result of validating an Expr expression.
 type ExprValidationResult struct {
 	Valid   bool   `json:"valid"`
@@ -942,9 +978,14 @@ func (s *TransformService) buildValidationEnv(context string) map[string]any {
 	}
 
 	switch context {
+	case "rewrite":
+		env["path"] = ""
+		env["method"] = ""
+		env["pathParams"] = map[string]string{}
 	case "request":
 		env["method"] = ""
 		env["path"] = ""
+		env["pathParams"] = map[string]string{}
 		env["query"] = map[string]string{}
 		env["headers"] = map[string]string{}
 		env["body"] = map[string]any{}
@@ -957,12 +998,16 @@ func (s *TransformService) buildValidationEnv(context string) map[string]any {
 		env["respBody"] = map[string]any{}
 		env["respHeaders"] = map[string]string{}
 		env["responseBytes"] = int64(0)
+		env["requestBytes"], env["path"], env["method"] = int64(0), "", ""
 	case "streaming":
 		env["allData"] = []byte{}
 		env["lastChunk"] = []byte{}
 		env["status"] = 0
 		env["responseBytes"] = int64(0)
 		env["requestBytes"] = int64(0)
+		env["path"], env["method"] = "", ""
+		env["respBody"] = map[string]any{}
+		env["respHeaders"] = map[string]string{}
 	default:
 		// Default to request context
 		env["method"] = ""
