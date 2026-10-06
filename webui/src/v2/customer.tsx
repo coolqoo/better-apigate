@@ -1037,6 +1037,16 @@ export function WalletPage() {
   });
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [custom, setCustom] = useState(false);
+  const selectedAmount = custom ? customAmount : amount;
+  const validAmount =
+    (custom ? /^\d+(?:\.\d{1,2})?$/ : /^\d+(?:\.\d{1,6})?$/).test(
+      selectedAmount,
+    ) &&
+    micros(selectedAmount) > 0n &&
+    micros(selectedAmount) <= 9_223_372_036_854_775_807n &&
+    micros(selectedAmount) % 10_000n === 0n;
   const [provider, setProvider] = useState("");
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -1044,6 +1054,8 @@ export function WalletPage() {
   const [op, setOp] = useState(operation);
   const begin = () => {
     setAmount(status?.top_up_amounts[0] || "10.000000");
+    setCustomAmount("");
+    setCustom(false);
     setProvider(providers.data?.[0]?.id || "");
     setStep(1);
     setError(null);
@@ -1054,7 +1066,12 @@ export function WalletPage() {
     setBusy(true);
     setError(null);
     try {
-      const o = await api<Order>("/top-ups", "POST", { amount, provider }, op);
+      const o = await api<Order>(
+        "/top-ups",
+        "POST",
+        { amount: selectedAmount, provider },
+        op,
+      );
       await qc.invalidateQueries({ queryKey: ["/orders"] });
       if (o.checkout_url) {
         if (o.provider === "paddle" && status?.paddle_client_token) {
@@ -1284,7 +1301,11 @@ export function WalletPage() {
                     <TableCell>
                       {o.crypto_amount
                         ? `${o.crypto_amount} ${o.crypto_token}`
-                        : `${dollars(o.amount)} USD`}
+                        : o.provider === "epusdt"
+                          ? o.state === "paid"
+                            ? "See payment receipt"
+                            : "Set at checkout"
+                          : `${dollars(o.amount)} USD`}
                     </TableCell>
                     <TableCell>
                       <StatusBadge state={o.state} />
@@ -1327,23 +1348,71 @@ export function WalletPage() {
           </div>
           {error !== null && <Failure error={error} />}{" "}
           {step === 1 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {status?.top_up_amounts.map((v) => (
-                <Button
-                  key={v}
-                  variant="outline"
-                  className={`h-20 text-xl ${amount === v ? "border-primary bg-accent text-accent-foreground" : ""}`}
-                  onClick={() => setAmount(v)}
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                {status?.top_up_amounts.map((v) => (
+                  <Button
+                    key={v}
+                    variant="outline"
+                    className={`h-20 text-xl ${!custom && amount === v ? "border-primary bg-accent text-accent-foreground" : ""}`}
+                    aria-pressed={!custom && amount === v}
+                    onClick={() => {
+                      setAmount(v);
+                      setCustom(false);
+                    }}
+                  >
+                    {dollars(v)}
+                  </Button>
+                ))}
+              </div>
+              <Field
+                label="Or enter a custom amount"
+                id="custom-top-up"
+                hint="USD, with up to two decimal places."
+              >
+                <div className="relative">
+                  <span
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  >
+                    $
+                  </span>
+                  <Input
+                    id="custom-top-up"
+                    type="text"
+                    inputMode="decimal"
+                    className={`pl-7 ${custom ? "border-primary" : ""}`}
+                    placeholder="25.00"
+                    value={customAmount}
+                    aria-invalid={custom && customAmount !== "" && !validAmount}
+                    aria-describedby={
+                      custom && customAmount !== "" && !validAmount
+                        ? "custom-top-up-error"
+                        : undefined
+                    }
+                    onFocus={() => setCustom(true)}
+                    onChange={(e) => {
+                      setCustom(true);
+                      setCustomAmount(e.target.value);
+                    }}
+                  />
+                </div>
+              </Field>
+              {custom && customAmount !== "" && !validAmount && (
+                <p
+                  id="custom-top-up-error"
+                  role="alert"
+                  className="text-sm text-destructive"
                 >
-                  {dollars(v)}
-                </Button>
-              ))}
+                  Enter a positive USD amount with up to two decimal places.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
               <div className="mb-5 flex justify-between rounded-lg bg-muted p-4 text-sm">
                 <span>USD wallet credit</span>
-                <strong>{dollars(amount)} USD</strong>
+                <strong>{dollars(selectedAmount)} USD</strong>
               </div>
               {providers.data?.map((p) => (
                 <button
@@ -1361,7 +1430,8 @@ export function WalletPage() {
                     {p.name}
                     {p.crypto && (
                       <span className="mt-1 block text-xs text-muted-foreground">
-                        The provider quotes USDT separately at checkout.
+                        Choose your network and view the crypto payment quote at
+                        checkout. Your wallet is credited in USD.
                       </span>
                     )}
                   </span>
@@ -1396,7 +1466,7 @@ export function WalletPage() {
               </Button>
             )}
             <Button
-              disabled={busy || !amount || (step === 2 && !provider)}
+              disabled={busy || !validAmount || (step === 2 && !provider)}
               onClick={() => (step === 1 ? setStep(2) : void checkout())}
             >
               {busy

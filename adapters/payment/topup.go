@@ -24,7 +24,7 @@ import (
 )
 
 // EPUSDTRevision pins the upstream GMPay API contract used by this adapter.
-const EPUSDTRevision = "58141cd148408bbe05b0cd45716d6110f3952007"
+const EPUSDTRevision = "aed4a970a28d734c8a35499496604b868a24ef7f"
 
 var ErrIgnoredPayment = errors.New("payment event does not affect wallet funds")
 
@@ -40,7 +40,7 @@ func NewRegistry(s settings.Settings) (*Registry, error) {
 		{id: "stripe", name: "Credit card · Stripe", base: "https://api.stripe.com", key: s.Get(settings.KeyPaymentStripeSecretKey), webhook: s.Get(settings.KeyPaymentStripeWebhookSecret)},
 		{id: "paddle", name: "Credit card · Paddle", base: "https://api.paddle.com", key: s.Get(settings.KeyPaymentPaddleAPIKey), webhook: s.Get(settings.KeyPaymentPaddleWebhookSecret), product: s.Get("payment.paddle.topup_product_id")},
 		{id: "lemonsqueezy", name: "Credit card · Lemon Squeezy", base: "https://api.lemonsqueezy.com", key: s.Get(settings.KeyPaymentLemonAPIKey), webhook: s.Get(settings.KeyPaymentLemonWebhookSecret), store: s.Get(settings.KeyPaymentLemonStoreID), product: s.Get("payment.lemonsqueezy.topup_variant_id")},
-		{id: "epusdt", name: "USDT · EPUSDT", base: s.Get("payment.epusdt.base_url"), key: s.Get("payment.epusdt.secret_key"), merchant: s.Get("payment.epusdt.pid"), network: s.GetOrDefault("payment.epusdt.network", "tron")},
+		{id: "epusdt", name: "Crypto · EPUSDT", base: s.Get("payment.epusdt.base_url"), key: s.Get("payment.epusdt.secret_key"), merchant: s.Get("payment.epusdt.pid"), network: strings.TrimSpace(s.Get("payment.epusdt.network"))},
 	}
 	for _, c := range configs {
 		enabled := s.GetBool("payment." + c.id + ".enabled")
@@ -181,7 +181,11 @@ type epusdtResponse struct {
 }
 
 func (p *TopUp) createEPUSDT(ctx context.Context, r wallet.CheckoutRequest) (wallet.Checkout, error) {
-	params := map[string]string{"pid": p.cfg.merchant, "order_id": r.OrderID, "currency": "usd", "token": "usdt", "network": p.cfg.network, "amount": strconv.FormatInt(int64(r.Amount)/10_000, 10), "notify_url": r.NotifyURL, "redirect_url": r.SuccessURL, "name": "API wallet top-up"}
+	params := map[string]string{"pid": p.cfg.merchant, "order_id": r.OrderID, "currency": "usd", "notify_url": r.NotifyURL, "redirect_url": r.SuccessURL, "name": "API wallet top-up"}
+	if p.cfg.network != "" {
+		params["token"] = "usdt"
+		params["network"] = p.cfg.network
+	}
 	// Amount is sent as a normalized dollar decimal, never as binary float.
 	params["amount"] = strings.TrimRight(strings.TrimRight(r.Amount.String(), "0"), ".")
 	params["signature"] = gmpaySign(params, p.cfg.key)
@@ -195,7 +199,24 @@ func (p *TopUp) createEPUSDT(ctx context.Context, r wallet.CheckoutRequest) (wal
 	}
 	d := response.Data
 	amount, err := wallet.ParseMoney(d.Amount.String())
-	if response.StatusCode != 200 || err != nil || amount != r.Amount || d.OrderID != r.OrderID || d.TradeID == "" || !strings.EqualFold(d.Currency, "USD") || !strings.EqualFold(d.Token, "USDT") {
+	if response.StatusCode != 200 || err != nil || amount != r.Amount || d.OrderID != r.OrderID || d.TradeID == "" || !strings.EqualFold(d.Currency, "USD") {
+		return wallet.Checkout{}, wallet.ErrInvalid
+	}
+	checkout := wallet.Checkout{ProviderID: d.TradeID, URL: d.PaymentURL}
+	switch d.Status {
+	case 4:
+		// A placeholder has no crypto quote until the customer chooses on the cashier.
+		quote, err := d.ActualAmount.Float64()
+		if p.cfg.network != "" || d.Token != "" || err != nil || quote != 0 {
+			return wallet.Checkout{}, wallet.ErrInvalid
+		}
+	case 1:
+		quote, err := strconv.ParseFloat(d.ActualAmount.String(), 64)
+		if p.cfg.network == "" || !strings.EqualFold(d.Token, "USDT") || err != nil || quote <= 0 || math.IsInf(quote, 0) || math.IsNaN(quote) {
+			return wallet.Checkout{}, wallet.ErrInvalid
+		}
+		checkout.CryptoAmount, checkout.CryptoToken = d.ActualAmount.String(), "USDT"
+	default:
 		return wallet.Checkout{}, wallet.ErrInvalid
 	}
 	u, err := url.Parse(d.PaymentURL)
@@ -207,7 +228,8 @@ func (p *TopUp) createEPUSDT(ctx context.Context, r wallet.CheckoutRequest) (wal
 	if !expiry.After(time.Now()) {
 		return wallet.Checkout{}, wallet.ErrInvalid
 	}
-	return wallet.Checkout{ProviderID: d.TradeID, URL: d.PaymentURL, CryptoAmount: d.ActualAmount.String(), CryptoToken: "USDT", ExpiresAt: &expiry}, nil
+	checkout.ExpiresAt = &expiry
+	return checkout, nil
 }
 func (p *TopUp) verifyEPUSDT(body []byte) (wallet.PaymentEvent, error) {
 	var raw map[string]json.RawMessage
@@ -245,10 +267,13 @@ func (p *TopUp) verifyEPUSDT(body []byte) (wallet.PaymentEvent, error) {
 	if params["trade_id"] == "" || params["order_id"] == "" || params["block_transaction_id"] == "" {
 		return wallet.PaymentEvent{}, wallet.ErrInvalid
 	}
-	if params["status"] != "2" || !strings.EqualFold(params["token"], "USDT") {
+	if params["status"] != "2" {
 		return wallet.PaymentEvent{}, ErrIgnoredPayment
 	}
-	return wallet.PaymentEvent{EventID: "paid:" + params["trade_id"], OrderID: params["order_id"], ProviderID: params["trade_id"], TransactionID: params["block_transaction_id"], MerchantID: params["pid"], Amount: amount, Kind: "paid", Paid: true}, nil
+	if strings.TrimSpace(params["token"]) == "" {
+		return wallet.PaymentEvent{}, wallet.ErrInvalid
+	}
+	return wallet.PaymentEvent{EventID: "paid:" + params["trade_id"], OrderID: params["order_id"], ProviderID: params["trade_id"], TransactionID: params["block_transaction_id"], MerchantID: params["pid"], Amount: amount, Currency: strings.ToUpper(params["currency"]), Kind: "paid", Paid: true}, nil
 }
 
 type stripeCheckout struct {

@@ -106,10 +106,7 @@ func (s *Server) topUpAmounts() []string {
 	return out
 }
 func (s *Server) topup(w http.ResponseWriter, r *http.Request) {
-	var in struct {
-		Amount   wallet.Money `json:"amount"`
-		Provider string       `json:"provider"`
-	}
+	var in portal.TopUpRequest
 	if !decode(w, r, &in) {
 		return
 	}
@@ -118,14 +115,12 @@ func (s *Server) topup(w http.ResponseWriter, r *http.Request) {
 		jsonapi.WriteForbidden(w, "Verify your email before adding funds.")
 		return
 	}
-	allowed := false
-	for _, a := range s.topUpAmounts() {
-		if a == in.Amount.String() {
-			allowed = true
-		}
+	if in.Amount <= 0 || int64(in.Amount)%10_000 != 0 {
+		jsonapi.WriteValidationError(w, "amount", "Enter a positive USD amount with at most two decimal places.")
+		return
 	}
-	if !allowed {
-		jsonapi.WriteValidationError(w, "amount", "Choose one of the configured top-up amounts.")
+	if in.Provider == "epusdt" && in.Amount <= 10_000 {
+		jsonapi.WriteValidationError(w, "amount", "EPUSDT requires an amount greater than $0.01.")
 		return
 	}
 	registry, e := s.registry()

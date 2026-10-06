@@ -1509,11 +1509,12 @@ const settingsGroups = [
   {
     id: "billing",
     title: "Billing preferences",
-    description: "Amounts available in the customer top-up flow.",
+    description:
+      "Suggested amounts in the customer top-up flow. Customers can also enter their own amount.",
     fields: [
       [
         "billing.top_up_amounts",
-        "Top-up amounts (USD, comma separated)",
+        "Suggested top-up amounts (USD, comma separated)",
         "text",
       ],
       [
@@ -1565,15 +1566,19 @@ const settingsGroups = [
   },
   {
     id: "epusdt",
-    title: "EPUSDT · USDT",
+    title: "EPUSDT · Crypto",
     description:
-      "Current GMPay HMAC-SHA256 API. The USDT quote is separate from the USD wallet credit.",
+      "GMPay HMAC-SHA256 API. Crypto payments fund the USD wallet. Leave Network blank to let customers choose on the hosted checkout.",
     fields: [
       ["payment.epusdt.enabled", "Enable EPUSDT", "bool"],
       ["payment.epusdt.base_url", "Merchant server URL", "url"],
       ["payment.epusdt.pid", "Merchant PID", "text"],
       ["payment.epusdt.secret_key", "Signing secret", "password"],
-      ["payment.epusdt.network", "Network (for example tron)", "text"],
+      [
+        "payment.epusdt.network",
+        "Network (optional, for example tron)",
+        "text",
+      ],
     ],
   },
   {

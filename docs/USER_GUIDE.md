@@ -32,7 +32,7 @@ Header and query values use one `name=expression` per line. Quote literals, for 
 ## Fund an account and make the first request
 
 1. Sign up and verify your email when required. The Overview page shows the next onboarding action.
-2. Open **Wallet & Payments → Add funds**, choose the USD wallet credit and an enabled provider, then complete its checkout. EPUSDT displays its USDT quote separately from the USD credit.
+2. Open **Wallet & Payments → Add funds**, choose a suggested USD amount or enter your own positive amount with up to two decimal places, then select an enabled provider and complete its checkout. Provider minimums still apply; EPUSDT requires more than $0.01. With EPUSDT's Network setting blank, customers choose an available network and cryptocurrency on its hosted checkout, which displays the crypto quote separately from the USD wallet credit.
 3. Return to the order result. Pending means the gateway is waiting for verified provider confirmation; a browser redirect never credits money. The wallet updates when payment is verified. Expired orders can be replaced with a new checkout. A reversal can freeze paid access until the outstanding shortfall is resolved.
 4. Optionally buy a plan in **Plans**. Its entire price is debited from available wallet funds. The purchase includes a clearly disclosed, initially enabled auto-renew preference.
 5. Create a key in **API Keys**. Copy it immediately; the full secret is shown once. Select endpoint scopes and an expiry if needed.
@@ -76,7 +76,7 @@ Enable providers in **Settings** and configure their webhook secrets. The callba
 - **Stripe:** use one-time Checkout and configure successful checkout, refund and dispute events.
 - **Paddle:** configure a top-up product, a non-recurring price, webhook secret, client token and merchant checkout origin. Use sandbox mode with sandbox credentials.
 - **Lemon Squeezy:** configure the store, webhook secret and a top-up variant with a `one_time` Price. Enable order-created and order-refunded events.
-- **EPUSDT:** configure the GMPay URL, merchant PID, API key and network. The adapter targets [GMPay revision 58141cd](https://github.com/GMWalletApp/epusdt/blob/58141cd148408bbe05b0cd45716d6110f3952007/wiki/API.md). Record externally verified reversals through the audited admin action.
+- **EPUSDT:** configure the GMPay URL, merchant PID and API key. **Network is optional:** leave it blank to let customers choose an enabled network and cryptocurrency on EPUSDT's checkout. Enter a network such as `tron` to start the checkout with USDT on that network. The adapter targets [GMPay revision aed4a97](https://github.com/GMWalletApp/epusdt/blob/aed4a970a28d734c8a35499496604b868a24ef7f/wiki/API.md). Wallet credit remains the order's USD amount and requires a verified successful callback. Record externally verified reversals through the audited admin action.
 
 ## Deployment notes
 
