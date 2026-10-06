@@ -16,6 +16,8 @@ Configuration is defined by the module YAML schemas. Wallets, ledger entries, pu
 
 In **API Configuration → Upstreams**, each service has its own URL and credential. Choose None, Custom header, Bearer token or Basic authentication. Timeout and connection pooling settings are available in the same form. **Check** reports whether the service responds; an HTTP error response still means it was reached.
 
+Enable or disable a saved route directly with its **Status** switch in the routes table. The change is saved immediately.
+
 The route editor has six sections:
 
 - **Routing:** path, HTTP methods, hostname/header conditions, priority, upstream, protocol, method override and path rewrite. Rewrite examples can be inserted directly into the field.

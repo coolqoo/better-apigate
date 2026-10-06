@@ -62,6 +62,21 @@ func convertFromDB(val any, f convention.DerivedField) any {
 	}
 
 	switch f.Type {
+	case "json", "strings", "ints":
+		var encoded []byte
+		switch v := val.(type) {
+		case string:
+			encoded = []byte(v)
+		case []byte:
+			encoded = v
+		default:
+			return val
+		}
+		var decoded any
+		if json.Unmarshal(encoded, &decoded) == nil {
+			return decoded
+		}
+		return string(encoded)
 	case "bool":
 		switch v := val.(type) {
 		case int64:

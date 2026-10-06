@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -871,7 +872,7 @@ function RouteEditor({
         setTab("metering");
         throw new Error("Units per request must be a positive whole number.");
       }
-      const { id, ...values } = draft;
+      const { id, enabled: _enabled, ...values } = draft;
       const checks: [string, string][] = [
         [draft.path_rewrite, "rewrite"],
         [
@@ -1289,22 +1290,13 @@ function RouteEditor({
                   variables={["path", "method", "pathParams"]}
                 />
               </Section>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Toggle
-                  id="route-enabled"
-                  title="Enabled"
-                  description="Accept matching requests through this route."
-                  checked={draft.enabled}
-                  onChange={(v) => set("enabled", v)}
-                />
-                <Toggle
-                  id="route-auth"
-                  title="Require an API key"
-                  description="Authenticated requests use prepaid funding. Public routes are free."
-                  checked={draft.auth_required}
-                  onChange={(v) => set("auth_required", v)}
-                />
-              </div>
+              <Toggle
+                id="route-auth"
+                title="Require an API key"
+                description="Authenticated requests use prepaid funding. Public routes are free."
+                checked={draft.auth_required}
+                onChange={(v) => set("auth_required", v)}
+              />
             </TabsContent>
             <TabsContent value="docs" forceMount hidden={tab !== "docs"}>
               <Section
@@ -1712,6 +1704,7 @@ export function GatewayConfiguration({ kind }: { kind: "route" | "upstream" }) {
   const [removing, setRemoving] = useState<RouteConfig & UpstreamConfig>();
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState<string>();
+  const [toggling, setToggling] = useState<string>();
   const [health, setHealth] = useState<Record<string, UpstreamHealth>>({});
   const [testing, setTesting] = useState(false);
   const saved = async () => {
@@ -1833,9 +1826,43 @@ export function GatewayConfiguration({ kind }: { kind: "route" | "upstream" }) {
                       </TableCell>
                     )}
                     <TableCell>
-                      <StatusBadge
-                        state={row.enabled ? "active" : "disabled"}
-                      />
+                      {isRoute ? (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            aria-label={`Enable ${row.name}`}
+                            aria-busy={toggling === row.id}
+                            checked={row.enabled}
+                            disabled={!!toggling}
+                            onCheckedChange={async (enabled) => {
+                              setToggling(row.id);
+                              try {
+                                await api(
+                                  path +
+                                    row.id +
+                                    (enabled ? "/enable" : "/disable"),
+                                  "POST",
+                                );
+                                await saved();
+                              } catch (e) {
+                                toast.error((e as Error).message);
+                              } finally {
+                                setToggling(undefined);
+                              }
+                            }}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {toggling === row.id
+                              ? "Saving…"
+                              : row.enabled
+                                ? "Enabled"
+                                : "Disabled"}
+                          </span>
+                        </div>
+                      ) : (
+                        <StatusBadge
+                          state={row.enabled ? "active" : "disabled"}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-1">
@@ -1888,25 +1915,27 @@ export function GatewayConfiguration({ kind }: { kind: "route" | "upstream" }) {
                             Check
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              await api(
-                                path +
-                                  row.id +
-                                  (row.enabled ? "/disable" : "/enable"),
-                                "POST",
-                              );
-                              await saved();
-                            } catch (e) {
-                              toast.error((e as Error).message);
-                            }
-                          }}
-                        >
-                          {row.enabled ? "Disable" : "Enable"}
-                        </Button>
+                        {!isRoute && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await api(
+                                  path +
+                                    row.id +
+                                    (row.enabled ? "/disable" : "/enable"),
+                                  "POST",
+                                );
+                                await saved();
+                              } catch (e) {
+                                toast.error((e as Error).message);
+                              }
+                            }}
+                          >
+                            {row.enabled ? "Disable" : "Enable"}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

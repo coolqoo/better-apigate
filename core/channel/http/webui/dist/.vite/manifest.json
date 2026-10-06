@@ -1,6 +1,6 @@
 {
   "index.html": {
-    "file": "assets/index-BjClylFe.js",
+    "file": "assets/index-CfD5NKJp.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -13,7 +13,7 @@
     ]
   },
   "src/v2/admin.tsx": {
-    "file": "assets/admin-_S8l19kz.js",
+    "file": "assets/admin-DWRUaDX0.js",
     "name": "admin",
     "src": "src/v2/admin.tsx",
     "isDynamicEntry": true,
@@ -23,7 +23,7 @@
     ]
   },
   "src/v2/customer.tsx": {
-    "file": "assets/customer-DwQSCdI_.js",
+    "file": "assets/customer-Y0Y8hn2D.js",
     "name": "customer",
     "src": "src/v2/customer.tsx",
     "isDynamicEntry": true,
