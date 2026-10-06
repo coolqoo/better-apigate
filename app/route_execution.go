@@ -1,16 +1,20 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/coolqoo/better-apigate/domain/proxy"
 	"github.com/coolqoo/better-apigate/domain/route"
 )
 
-// RouteDraft lets the editor preview unsaved changes through the gateway's
+// RouteDraft lets the editor execute unsaved changes through the gateway's
 // existing matcher and transformation engine.
 type RouteDraft struct {
 	ID                string              `json:"id"`
@@ -33,12 +37,6 @@ type RouteDraft struct {
 	AuthRequired      bool                `json:"auth_required"`
 }
 
-type RouteTestResponse struct {
-	Status  int               `json:"status"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
-}
-
 func (d RouteDraft) route() route.Route {
 	return route.Route{ID: d.ID, Name: d.Name, PathPattern: d.PathPattern,
 		MatchType: d.MatchType, Methods: d.Methods, Headers: d.Headers,
@@ -50,7 +48,9 @@ func (d RouteDraft) route() route.Route {
 		Enabled: true, AuthRequired: d.AuthRequired}
 }
 
-func (s *RouteService) PreviewRoute(ctx context.Context, in RouteTestRequest, transforms *TransformService) RouteTestResult {
+// ExecuteRoute sends an administrator's request to the configured upstream,
+// then measures and transforms the actual response. It does not debit a customer wallet.
+func (s *RouteService) ExecuteRoute(ctx context.Context, in RouteTestRequest, transforms *TransformService, auth *proxy.AuthContext) RouteTestResult {
 	result := RouteTestResult{}
 	if in.Method == "" {
 		in.Method = "GET"
@@ -113,7 +113,7 @@ func (s *RouteService) PreviewRoute(ctx context.Context, in RouteTestRequest, tr
 		result.Error = "Transformation service unavailable"
 		return result
 	}
-	req, err = transforms.TransformRequest(ctx, req, rt.RequestTransform, nil)
+	req, err = transforms.TransformRequest(ctx, req, rt.RequestTransform, auth)
 	if err == nil && rt.PathRewrite != "" {
 		req.Path, err = transforms.EvalString(ctx, rt.PathRewrite, map[string]any{"path": req.Path, "method": req.Method, "pathParams": params})
 	}
@@ -124,7 +124,8 @@ func (s *RouteService) PreviewRoute(ctx context.Context, in RouteTestRequest, tr
 	if rt.MethodOverride != "" {
 		req.Method = rt.MethodOverride
 	}
-	if upstream, ok := cache.Upstreams[rt.UpstreamID]; ok {
+	upstream, ok := cache.Upstreams[rt.UpstreamID]
+	if ok {
 		result.UpstreamName = upstream.Name
 		req.Headers = s.ApplyUpstreamAuth(&upstream, req.Headers)
 		if target, e := s.ResolveUpstreamURL(&upstream, req.Path, req.Query); e == nil {
@@ -145,24 +146,67 @@ func (s *RouteService) PreviewRoute(ctx context.Context, in RouteTestRequest, tr
 	if result.MeteringUnit == "" {
 		result.MeteringUnit = "requests"
 	}
-	if in.Response != nil {
-		resp := proxy.Response{Status: in.Response.Status, Headers: in.Response.Headers, Body: []byte(in.Response.Body)}
-		if resp.Status == 0 {
-			resp.Status = 200
-		}
-		result.MeteringSample, err = transforms.MeasureResponse(ctx, result.MeteringExpr, resp, rt.Protocol, nil, proxy.Request{Method: req.Method, Path: u.Path, Body: req.Body})
-		if err != nil {
-			result.Error = "Metering expression: " + err.Error()
-			return result
-		}
-		resp, err = transforms.TransformResponse(ctx, resp, rt.ResponseTransform, nil)
-		if err != nil {
-			result.Error = fmt.Sprintf("Response transformation: %v", err)
-			return result
-		}
-		result.ResponseStatus, result.ResponseHeaders, result.ResponseBody = resp.Status, resp.Headers, string(resp.Body)
-	} else {
-		result.MeteringSample = 1
+	if result.Error != "" {
+		return result
 	}
+	httpReq, err := http.NewRequestWithContext(ctx, req.Method, result.UpstreamURL, bytes.NewReader(req.Body))
+	if err != nil {
+		result.Error = "Request: " + err.Error()
+		return result
+	}
+	for name, value := range req.Headers {
+		if strings.EqualFold(name, "Host") {
+			httpReq.Host = value
+		} else {
+			httpReq.Header.Set(name, value)
+		}
+	}
+	client := s.BuildUpstreamClient(&upstream)
+	if client.Timeout <= 0 {
+		client.Timeout = 30 * time.Second
+	}
+	defer client.CloseIdleConnections()
+	start := time.Now()
+	httpResp, err := client.Do(httpReq)
+	if err != nil {
+		result.LatencyMS = time.Since(start).Milliseconds()
+		result.Error = "Upstream request: " + err.Error()
+		return result
+	}
+	defer httpResp.Body.Close()
+	responseHeaders := make(map[string]string, len(httpResp.Header))
+	for name, values := range httpResp.Header {
+		responseHeaders[name] = strings.Join(values, ", ")
+	}
+	const maxResponseBytes = 50 << 20
+	responseBody, readErr := io.ReadAll(io.LimitReader(httpResp.Body, maxResponseBytes+1))
+	result.LatencyMS = time.Since(start).Milliseconds()
+	result.ResponseStatus = httpResp.StatusCode
+	result.UpstreamResponseHeaders, result.UpstreamResponseBody = responseHeaders, string(responseBody)
+	if len(responseBody) > maxResponseBytes {
+		result.UpstreamResponseBody = string(responseBody[:maxResponseBytes])
+		result.Error = "Upstream response exceeds the 50 MB gateway limit"
+		return result
+	}
+	if readErr != nil {
+		result.Error = "Read upstream response: " + readErr.Error()
+		return result
+	}
+	resp := proxy.Response{Status: httpResp.StatusCode, Headers: make(map[string]string, len(responseHeaders)), Body: responseBody}
+	for name, value := range responseHeaders {
+		resp.Headers[name] = value
+	}
+	measured, meteringErr := transforms.MeasureResponse(ctx, result.MeteringExpr, resp, rt.Protocol, auth, proxy.Request{Method: req.Method, Path: u.Path, Body: req.Body})
+	if meteringErr != nil {
+		result.Error = "Metering expression: " + meteringErr.Error()
+	} else {
+		result.MeteredValue = &measured
+	}
+	resp, err = transforms.TransformResponse(ctx, resp, rt.ResponseTransform, auth)
+	if err != nil {
+		result.Error = strings.TrimSpace(result.Error + " " + fmt.Sprintf("Response transformation: %v", err))
+		return result
+	}
+	result.ResponseHeaders, result.ResponseBody = resp.Headers, string(resp.Body)
 	return result
 }

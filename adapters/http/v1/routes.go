@@ -6,6 +6,7 @@ import (
 
 	"github.com/coolqoo/better-apigate/app"
 	"github.com/coolqoo/better-apigate/domain/portal"
+	"github.com/coolqoo/better-apigate/domain/proxy"
 	"github.com/coolqoo/better-apigate/pkg/jsonapi"
 	"github.com/go-chi/chi/v5"
 )
@@ -31,7 +32,9 @@ func (s *Server) testRoute(w http.ResponseWriter, r *http.Request) {
 		jsonapi.WriteError(w, jsonapi.NewError(503, "unavailable", "Route testing unavailable").Build())
 		return
 	}
-	resource(w, 200, "route-test", "preview", s.Routes.PreviewRoute(r.Context(), in, s.Transforms))
+	sess := current(r)
+	auth := &proxy.AuthContext{UserID: sess.UserID, Email: sess.Email, Role: sess.Role, PlanID: sess.PlanID}
+	resource(w, 200, "route-test", "execution", s.Routes.ExecuteRoute(r.Context(), in, s.Transforms, auth))
 }
 
 func (s *Server) upstreamHealth(w http.ResponseWriter, r *http.Request) {

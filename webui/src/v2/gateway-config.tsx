@@ -590,22 +590,15 @@ function RouteTest({ draft }: { draft?: RouteConfig }) {
       : "Content-Type=application/json",
   );
   const [body, setBody] = useState(draft?.example_request || "");
-  const [responseBody, setResponseBody] = useState(
-    draft?.example_response || '{"usage":{"total_tokens":42}}',
-  );
-  const [responseHeaders, setResponseHeaders] = useState(
-    "Content-Type=application/json",
-  );
-  const [status, setStatus] = useState(200);
   const [result, setResult] = useState<RouteTestResult>();
   const [error, setError] = useState<unknown>();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"draft" | "saved">();
   async function run(useDraft: boolean) {
-    setBusy(true);
+    setBusy(useDraft ? "draft" : "saved");
     setError(undefined);
     setResult(undefined);
     try {
-      const previewDraft = draft
+      const routeDraft = draft
         ? Object.fromEntries(
             [
               "id",
@@ -635,53 +628,62 @@ function RouteTest({ draft }: { draft?: RouteConfig }) {
           path,
           headers: pairs(headers),
           body,
-          ...(useDraft && previewDraft ? { draft: previewDraft } : {}),
-          response: {
-            status,
-            headers: pairs(responseHeaders),
-            body: responseBody,
-          },
+          ...(useDraft && routeDraft ? { draft: routeDraft } : {}),
         }),
       );
     } catch (e) {
       setError(e);
     } finally {
-      setBusy(false);
+      setBusy(undefined);
     }
   }
+  function responseText(
+    responseHeaders: Record<string, string> | undefined,
+    responseBody: string | undefined,
+  ) {
+    return `HTTP ${result?.response_status}\n${Object.entries(
+      responseHeaders || {},
+    )
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n")}\n\n${responseBody || ""}`;
+  }
+  const transformed =
+    result?.response_headers &&
+    (result.response_body !== result.upstream_response_body ||
+      JSON.stringify(result.response_headers) !==
+        JSON.stringify(result.upstream_response_headers));
   return (
     <Section
-      title="Test matching & transforms"
-      description="Preview locally using sample data. No upstream request is sent and no wallet funds are used."
+      title="Send a live request"
+      description="Calls the configured upstream with its credentials. Runs as an admin test; customer wallets are not charged. Your upstream may charge for the request."
     >
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium">Sample request</h4>
-          <div className="grid grid-cols-[110px_1fr] gap-3">
-            <Field label="Method" id="test-method">
-              <Select
-                id="test-method"
-                value={method}
-                onChange={setMethod}
-                options={methodOptions.map((v) => [v, v])}
-              />
-            </Field>
-            <Field label="Path & query" id="test-path">
-              <Input
-                id="test-path"
-                value={path}
-                onChange={(e) => setPath(e.target.value)}
-              />
-            </Field>
-          </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-[110px_1fr] gap-3">
+          <Field label="Method" id="test-method">
+            <Select
+              id="test-method"
+              value={method}
+              onChange={setMethod}
+              options={methodOptions.map((v) => [v, v])}
+            />
+          </Field>
+          <Field label="Path & query" id="test-path">
+            <Input
+              id="test-path"
+              value={path}
+              onChange={(e) => setPath(e.target.value)}
+            />
+          </Field>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-2">
           <Field
             label="Request headers"
             id="test-headers"
-            hint="One name=value per line. Include Host to test hostname matching."
+            hint="One name=value per line. Include Host for hostname matching. Upstream credentials are added automatically."
           >
             <Textarea
               id="test-headers"
-              className="font-mono text-xs"
+              className="min-h-32 font-mono text-xs"
               value={headers}
               onChange={(e) => setHeaders(e.target.value)}
             />
@@ -695,81 +697,41 @@ function RouteTest({ draft }: { draft?: RouteConfig }) {
             />
           </Field>
         </div>
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium">Sample upstream response</h4>
-          <Field label="HTTP status" id="test-status">
-            <Input
-              id="test-status"
-              type="number"
-              min={100}
-              max={599}
-              value={status}
-              onChange={(e) => setStatus(Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Response headers" id="test-response-headers">
-            <Textarea
-              id="test-response-headers"
-              className="font-mono text-xs"
-              value={responseHeaders}
-              onChange={(e) => setResponseHeaders(e.target.value)}
-            />
-          </Field>
-          <Field label="Response body / SSE data" id="test-response-body">
-            <Textarea
-              id="test-response-body"
-              className="min-h-32 font-mono text-xs"
-              value={responseBody}
-              onChange={(e) => setResponseBody(e.target.value)}
-            />
-          </Field>
-        </div>
       </div>
       <div className="flex flex-wrap gap-3">
         {draft && (
           <Button
             type="button"
-            variant="outline"
-            onClick={() => {
-              setMethod(draft.methods[0] || "GET");
-              setPath(
-                draft.path_pattern
-                  .replace(/\*$/, "example")
-                  .replace(/\{[^}]+\}/g, "example"),
-              );
-              setBody(draft.example_request);
-              const sample =
-                draft.example_response || '{"usage":{"total_tokens":42}}';
-              setResponseBody(
-                draft.protocol === "sse" && !/(^|\n)(data|event):/.test(sample)
-                  ? `data: ${sample.replaceAll("\n", "")}\n\ndata: [DONE]\n\n`
-                  : sample,
-              );
-            }}
+            disabled={!!busy}
+            onClick={() => void run(true)}
           >
-            Use route examples
-          </Button>
-        )}
-        {draft && (
-          <Button type="button" disabled={busy} onClick={() => void run(true)}>
-            <Play className="size-4" />
-            Test current draft
+            {busy === "draft" ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Play className="size-4" />
+            )}
+            {busy === "draft" ? "Sending…" : "Send using current draft"}
           </Button>
         )}
         <Button
           type="button"
           variant={draft ? "outline" : "default"}
-          disabled={busy}
+          disabled={!!busy}
           onClick={() => void run(false)}
         >
-          {busy ? (
+          {busy === "saved" ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <Play className="size-4" />
           )}
-          Match saved routes
+          {busy === "saved" ? "Sending…" : "Send using saved routes"}
         </Button>
       </div>
+      {busy && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Waiting for the upstream response…
+        </p>
+      )}
       {error != null && <Failure error={error} />}
       {result && (
         <div
@@ -777,14 +739,27 @@ function RouteTest({ draft }: { draft?: RouteConfig }) {
           className="space-y-4 rounded-xl border bg-muted/20 p-5"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={result.matched ? "default" : "secondary"}>
-              {result.matched ? "Matched" : "No match"}
-            </Badge>
+            {result.response_status ? (
+              <Badge
+                variant={
+                  result.response_status >= 400 ? "destructive" : "default"
+                }
+              >
+                HTTP {result.response_status}
+              </Badge>
+            ) : (
+              <Badge variant="secondary">
+                {result.matched ? "No response" : "No match"}
+              </Badge>
+            )}
             <span className="text-sm font-medium">{result.route_name}</span>
-            <p className="text-xs text-muted-foreground">
-              {result.match_reason}
-            </p>
+            {!!result.response_status && (
+              <span className="text-xs text-muted-foreground">
+                {result.latency_ms} ms
+              </span>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground">{result.match_reason}</p>
           {result.error && <Failure error={new Error(result.error)} />}
           {result.matched && (
             <>
@@ -795,10 +770,8 @@ function RouteTest({ draft }: { draft?: RouteConfig }) {
                 <code className="break-all text-xs">{result.upstream_url}</code>
               </div>
               <div className="grid gap-5 lg:grid-cols-2">
-                <div>
-                  <p className="mb-2 text-sm font-medium">
-                    Transformed request
-                  </p>
+                <div className="min-w-0">
+                  <p className="mb-2 text-sm font-medium">Outgoing request</p>
                   <CopyCode
                     value={`${result.transformed_method} ${result.transformed_path}${result.transformed_query ? "?" + result.transformed_query : ""}\n${Object.entries(
                       result.transformed_headers || {},
@@ -807,31 +780,43 @@ function RouteTest({ draft }: { draft?: RouteConfig }) {
                       .join("\n")}\n\n${result.transformed_body || ""}`}
                   />
                 </div>
-                <div>
-                  <p className="mb-2 text-sm font-medium">
-                    Transformed response
-                  </p>
-                  <CopyCode
-                    value={`HTTP ${result.response_status || status}\n${Object.entries(
-                      result.response_headers || {},
-                    )
-                      .map(([k, v]) => `${k}: ${v}`)
-                      .join("\n")}\n\n${result.response_body || ""}`}
-                  />
-                </div>
+                {!!result.response_status && (
+                  <div className="min-w-0">
+                    <p className="mb-2 text-sm font-medium">
+                      Actual upstream response
+                    </p>
+                    <CopyCode
+                      value={responseText(
+                        result.upstream_response_headers,
+                        result.upstream_response_body,
+                      )}
+                    />
+                  </div>
+                )}
               </div>
-              <div className="flex flex-wrap gap-3 text-xs">
+              {transformed && (
+                <details className="rounded-lg border bg-background p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    After response transform
+                  </summary>
+                  <div className="mt-3">
+                    <CopyCode
+                      value={responseText(
+                        result.response_headers,
+                        result.response_body,
+                      )}
+                    />
+                  </div>
+                </details>
+              )}
+              {result.metered_value != null && (
                 <Badge variant="outline">
-                  Measured: {result.metering_sample ?? 0}{" "}
+                  Measured from response: {result.metered_value}{" "}
                   {result.metering_unit === "bytes"
                     ? "KB"
                     : result.metering_unit}
                 </Badge>
-                <Badge variant="outline">
-                  Fixed prepaid cost:{" "}
-                  {result.auth_required ? `${result.unit_cost} units` : "Free"}
-                </Badge>
-              </div>
+              )}
             </>
           )}
         </div>

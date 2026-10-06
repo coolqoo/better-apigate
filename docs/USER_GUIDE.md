@@ -23,9 +23,9 @@ The route editor has six sections:
 - **Usage & pricing:** fixed prepaid units per request plus the original request, response-field, response-size and custom metering modes. Response measurements appear in **Usage → Metered response usage**. They do not change the fixed prepaid charge.
 - **Request transform:** set/remove headers and query parameters, and transform the JSON body.
 - **Response transform:** set/remove headers and transform buffered response bodies.
-- **Test:** use sample request/response data to evaluate matching, rewrites, transforms and metering without contacting the upstream or spending funds. **Test current draft** uses unsaved changes; **Match saved routes** checks the active routing table.
+- **Test:** send a real request to the configured upstream using its credentials. **Send using current draft** uses unsaved changes; **Send using saved routes** selects a route from the active routing table. The result shows the actual HTTP status, latency, response headers/body, response transforms and measured usage. Admin tests do not debit customer wallets; the upstream may charge for the call. Streaming responses are collected until completion or the upstream timeout.
 
-Header and query values use one `name=expression` per line. Quote literals, for example `X-Version="v2"`; dynamic values can use `userID`, `keyID` or `env("API_KEY")`. Expression fields include validation and insertable examples. For SSE metering, supply raw SSE events as the test response; **Use route examples** loads the current documentation samples.
+Header and query values use one `name=expression` per line. Quote literals, for example `X-Version="v2"`; dynamic values can use `userID`, `keyID` or `env("API_KEY")`. Expression fields include validation and insertable examples. The Test tab requires only the request method, path, headers and body; its response and metering values come from the upstream.
 
 ## Fund an account and make the first request
 

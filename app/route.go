@@ -287,9 +287,8 @@ type RouteTestRequest struct {
 	Headers map[string]string `json:"headers"`
 	Body    string            `json:"body"`
 	// Optional: test a specific route by ID (bypasses matching)
-	RouteID  string             `json:"route_id,omitempty"`
-	Draft    *RouteDraft        `json:"draft,omitempty"`
-	Response *RouteTestResponse `json:"response,omitempty"`
+	RouteID string      `json:"route_id,omitempty"`
+	Draft   *RouteDraft `json:"draft,omitempty"`
 }
 
 // RouteTestResult contains the result of testing a route.
@@ -306,27 +305,30 @@ type RouteTestResult struct {
 	UpstreamURL  string `json:"upstream_url,omitempty"`
 
 	// Transformed request
-	TransformedMethod  string            `json:"transformed_method,omitempty"`
-	TransformedPath    string            `json:"transformed_path,omitempty"`
-	TransformedHeaders map[string]string `json:"transformed_headers,omitempty"`
-	TransformedBody    string            `json:"transformed_body,omitempty"`
-	TransformedQuery   string            `json:"transformed_query,omitempty"`
-	ResponseStatus     int               `json:"response_status,omitempty"`
-	ResponseHeaders    map[string]string `json:"response_headers,omitempty"`
-	ResponseBody       string            `json:"response_body,omitempty"`
-	UnitCost           int64             `json:"unit_cost"`
-	AuthRequired       bool              `json:"auth_required"`
-	MeteringUnit       string            `json:"metering_unit"`
+	TransformedMethod       string            `json:"transformed_method,omitempty"`
+	TransformedPath         string            `json:"transformed_path,omitempty"`
+	TransformedHeaders      map[string]string `json:"transformed_headers,omitempty"`
+	TransformedBody         string            `json:"transformed_body,omitempty"`
+	TransformedQuery        string            `json:"transformed_query,omitempty"`
+	ResponseStatus          int               `json:"response_status,omitempty"`
+	ResponseHeaders         map[string]string `json:"response_headers,omitempty"`
+	ResponseBody            string            `json:"response_body,omitempty"`
+	UpstreamResponseHeaders map[string]string `json:"upstream_response_headers,omitempty"`
+	UpstreamResponseBody    string            `json:"upstream_response_body,omitempty"`
+	LatencyMS               int64             `json:"latency_ms"`
+	UnitCost                int64             `json:"unit_cost"`
+	AuthRequired            bool              `json:"auth_required"`
+	MeteringUnit            string            `json:"metering_unit"`
 
-	// Metering preview
-	MeteringExpr   string  `json:"metering_expr,omitempty"`
-	MeteringSample float64 `json:"metering_sample,omitempty"`
+	// Metering from the actual upstream response.
+	MeteringExpr string   `json:"metering_expr,omitempty"`
+	MeteredValue *float64 `json:"metered_value,omitempty"`
 
 	// Errors
 	Error string `json:"error,omitempty"`
 }
 
-// TestRoute tests route matching and transformation without making actual requests.
+// TestRoute sends a real upstream request using the selected route configuration.
 func (s *RouteService) TestRoute(req RouteTestRequest) RouteTestResult {
-	return s.PreviewRoute(context.Background(), req, NewTransformService())
+	return s.ExecuteRoute(context.Background(), req, NewTransformService(), nil)
 }

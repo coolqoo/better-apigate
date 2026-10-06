@@ -1,6 +1,6 @@
 services:
   gateway:
-    image: coolqoo/better-apigate:1.0.4
+    image: coolqoo/better-apigate:1.0.5
     env_file: .env
     ports:
       - "8080:8080"

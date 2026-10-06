@@ -1264,36 +1264,6 @@
           "path": {
             "type": "string"
           },
-          "response": {
-            "anyOf": [
-              {
-                "properties": {
-                  "body": {
-                    "type": "string"
-                  },
-                  "headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "status": {
-                    "format": "int64",
-                    "type": "integer"
-                  }
-                },
-                "required": [
-                  "status",
-                  "headers",
-                  "body"
-                ],
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "route_id": {
             "type": "string"
           }
@@ -1301,29 +1271,6 @@
         "required": [
           "method",
           "path",
-          "headers",
-          "body"
-        ],
-        "type": "object"
-      },
-      "RouteTestResponse": {
-        "properties": {
-          "body": {
-            "type": "string"
-          },
-          "headers": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "status": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "status",
           "headers",
           "body"
         ],
@@ -1337,17 +1284,28 @@
           "error": {
             "type": "string"
           },
+          "latency_ms": {
+            "format": "int64",
+            "type": "integer"
+          },
           "match_reason": {
             "type": "string"
           },
           "matched": {
             "type": "boolean"
           },
+          "metered_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "metering_expr": {
             "type": "string"
-          },
-          "metering_sample": {
-            "type": "number"
           },
           "metering_unit": {
             "type": "string"
@@ -1402,12 +1360,22 @@
           "upstream_name": {
             "type": "string"
           },
+          "upstream_response_body": {
+            "type": "string"
+          },
+          "upstream_response_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "upstream_url": {
             "type": "string"
           }
         },
         "required": [
           "matched",
+          "latency_ms",
           "unit_cost",
           "auth_required",
           "metering_unit"
@@ -4486,17 +4454,28 @@
                             "error": {
                               "type": "string"
                             },
+                            "latency_ms": {
+                              "format": "int64",
+                              "type": "integer"
+                            },
                             "match_reason": {
                               "type": "string"
                             },
                             "matched": {
                               "type": "boolean"
                             },
+                            "metered_value": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
                             "metering_expr": {
                               "type": "string"
-                            },
-                            "metering_sample": {
-                              "type": "number"
                             },
                             "metering_unit": {
                               "type": "string"
@@ -4551,12 +4530,22 @@
                             "upstream_name": {
                               "type": "string"
                             },
+                            "upstream_response_body": {
+                              "type": "string"
+                            },
+                            "upstream_response_headers": {
+                              "additionalProperties": {
+                                "type": "string"
+                              },
+                              "type": "object"
+                            },
                             "upstream_url": {
                               "type": "string"
                             }
                           },
                           "required": [
                             "matched",
+                            "latency_ms",
                             "unit_cost",
                             "auth_required",
                             "metering_unit"

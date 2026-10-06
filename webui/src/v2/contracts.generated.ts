@@ -234,12 +234,6 @@ export interface RouteTestRequest {
   body: string
   route_id?: string
   draft?: RouteDraft | null
-  response?: RouteTestResponse | null
-}
-export interface RouteTestResponse {
-  status: number
-  headers: Record<string, string>
-  body: string
 }
 export interface RouteTestResult {
   matched: boolean
@@ -257,11 +251,14 @@ export interface RouteTestResult {
   response_status?: number
   response_headers?: Record<string, string>
   response_body?: string
+  upstream_response_headers?: Record<string, string>
+  upstream_response_body?: string
+  latency_ms: number
   unit_cost: number
   auth_required: boolean
   metering_unit: string
   metering_expr?: string
-  metering_sample?: number
+  metered_value?: number | null
   error?: string
 }
 export interface Session {
