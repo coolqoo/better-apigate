@@ -1546,7 +1546,7 @@ const settingsGroups = [
     id: "payment-logos",
     title: "Pay with",
     description:
-      "Choose the payment logos shown on your homepage. Configure checkout providers under Payment Providers. Clear all logos to hide this section.",
+      "Choose the payment logos shown on login and signup. Configure checkout providers under Payment Providers. Clear all logos to hide this section.",
     fields: [["custom.payment_methods", "Payment logos", "payment-logos"]],
   },
   {
@@ -1761,7 +1761,7 @@ export function SettingsPage({
         }
         description={
           section === "branding"
-            ? "Customize your name, appearance, documentation and homepage payment logos."
+            ? "Customize your name, appearance, documentation and login/signup payment logos."
             : section === "payments"
               ? "Connect payment providers and choose suggested top-up amounts."
               : "Manage account preferences and email delivery."

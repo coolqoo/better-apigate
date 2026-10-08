@@ -10,7 +10,6 @@ import { Toaster } from "sonner";
 import { SessionProvider, useSession } from "./v2/context";
 import { BrandFooter, Logo, ThemeToggle, Layout } from "./v2/layout";
 import { AuthPage } from "./v2/auth";
-import { Home } from "./v2/home";
 import { AppErrorBoundary } from "./v2/error-boundary";
 import { Failure, Loading } from "./v2/shared";
 import { lazy, Suspense } from "react";
@@ -116,7 +115,7 @@ export function App() {
             }
           >
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
               {[
                 "login",
                 "signup",

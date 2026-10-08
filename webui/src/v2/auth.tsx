@@ -14,6 +14,7 @@ import { api } from "./api";
 import { useSession } from "./context";
 import { Failure, Field, Loading, Submit } from "./shared";
 import { BrandFooter, Logo, ThemeToggle } from "./layout";
+import { PayWith } from "./payment-methods";
 export function AuthPage() {
   const location = useLocation();
   return <AuthForm key={location.pathname + location.search} />;
@@ -60,7 +61,7 @@ function AuthForm() {
   if (status?.setup_required && mode !== "setup")
     return <Navigate to="/setup" replace />;
   if (mode === "setup" && !status?.setup_required)
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   if (session && ["login", "signup", "setup"].includes(mode))
     return (
       <Navigate to={session.role === "admin" ? "/admin" : "/portal"} replace />
@@ -263,6 +264,11 @@ function AuthForm() {
           </CardContent>
         </Card>
       </div>
+      {["login", "signup"].includes(mode) && (
+        <div className="mx-auto max-w-6xl px-6">
+          <PayWith selected={status?.payment_methods || []} />
+        </div>
+      )}
       <BrandFooter className="mx-auto max-w-6xl px-6" />
     </div>
   );

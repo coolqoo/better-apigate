@@ -65,9 +65,9 @@ Overview shows available balance, included units, the next renewal or term end, 
 
 **Branding → Branding & customization** lets you set the application name, a public logo URL, brand color, support email/link, footer text and documentation title/description. The name, logo, color and footer apply to sign-in pages, the customer portal, administration and public docs. Choose a color with the picker or enter a six-digit hex value; **Reset** restores the default indigo. Optional blank fields use the default appearance. Footer and documentation copy are plain text. Save settings to apply changes immediately; no container restart is needed.
 
-**Branding → Pay with** selects the card and cryptocurrency logos shown on the homepage at `/`. Clear every checkbox to hide the section. These display choices do not enable checkout providers.
+**Branding → Pay with** selects the card and cryptocurrency logos shown on `/login` and `/signup`. Clear every checkbox to hide the section. These display choices do not enable checkout providers.
 
-**Payment Providers** contains merchant credentials and suggested top-up amounts. **Settings** contains email delivery and verification preferences. Each page saves only its own fields. After the first administrator is created, `/setup` redirects to the homepage. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
+**Payment Providers** contains merchant credentials and suggested top-up amounts. **Settings** contains email delivery and verification preferences. Each page saves only its own fields. After the first administrator is created, `/setup` redirects to login. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
 
 The [generated OpenAPI contract](openapi-v2.json) documents the versioned browser APIs. The same Go models generate the frontend TypeScript types.
 

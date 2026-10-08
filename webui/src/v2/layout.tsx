@@ -78,7 +78,7 @@ export function ThemeToggle() {
     </Button>
   );
 }
-export function Logo({ to = "/portal" }: { to?: string }) {
+export function Logo() {
   const { status } = useSession();
   const [failedLogo, setFailedLogo] = useState("");
   const name = status?.app_name || "better-apigate";
@@ -87,7 +87,7 @@ export function Logo({ to = "/portal" }: { to?: string }) {
     : "";
   return (
     <Link
-      to={to}
+      to="/portal"
       className="flex min-w-0 items-center gap-2.5 font-semibold tracking-tight"
     >
       {logo && failedLogo !== logo ? (

@@ -107,7 +107,7 @@ const (
 	KeyCustomSupportURL       = "custom.support_url"         // Support URL/docs link
 	KeyCustomFooterHTML       = "custom.footer_html"         // Custom footer HTML
 	KeyCustomFooterText       = "custom.footer_text"         // Plain-text footer for the React UI
-	KeyCustomPaymentMethods   = "custom.payment_methods"     // Payment logos shown on the homepage
+	KeyCustomPaymentMethods   = "custom.payment_methods"     // Payment logos shown on login and signup
 	KeyCustomDocsHeroTitle    = "custom.docs_hero_title"     // Custom docs hero title
 	KeyCustomDocsHeroSubtitle = "custom.docs_hero_subtitle"  // Custom docs hero subtitle
 

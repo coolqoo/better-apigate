@@ -103,7 +103,7 @@ export function PaymentMethodPicker({ initial }: { initial: string }) {
                 >
                   <input
                     type="checkbox"
-                    aria-label={`Show ${method.name} on homepage`}
+                    aria-label={`Show ${method.name} on login and signup`}
                     checked={selected.includes(method.id)}
                     className="size-4 accent-primary"
                     onChange={(event) =>

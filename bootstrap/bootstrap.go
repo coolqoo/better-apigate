@@ -419,7 +419,9 @@ func (a *App) initHTTPServer() error {
 		router.Handle(path, ui)
 		router.Handle(path+"/*", ui)
 	}
-	router.Get("/", ui.ServeHTTP)
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	})
 	router.NotFound(proxyHandler.ServeHTTP)
 	a.startBillingWorkers()
 
