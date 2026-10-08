@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { PaymentMethodPicker } from "./payment-methods";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -138,9 +140,9 @@ export function AdminOverview() {
             ) : (
               <Empty
                 title="Ready for your first payment"
-                description="Enable a payment provider in Settings so customers can fund their wallets."
+                description="Enable a provider under Payment Providers so customers can fund their wallets."
                 action={
-                  <ActionLink to="/admin/settings">
+                  <ActionLink to="/admin/payment-providers">
                     Configure providers
                   </ActionLink>
                 }
@@ -176,7 +178,10 @@ export function AdminOverview() {
               {[
                 { title: "Connect an upstream", to: "/admin/configuration" },
                 { title: "Set your pricing", to: "/admin/plans" },
-                { title: "Enable payment providers", to: "/admin/settings" },
+                {
+                  title: "Enable payment providers",
+                  to: "/admin/payment-providers",
+                },
               ].map((a) => (
                 <div
                   key={a.to}
@@ -839,6 +844,7 @@ export function Payments() {
 export function AdminPlans() {
   const q = useData<Plan[]>("/admin/plans");
   const qc = useQueryClient();
+  const [toggling, setToggling] = useState<string>();
   const [selected, setSelected] = useState<Partial<Plan>>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -856,7 +862,7 @@ export function AdminPlans() {
       rate_limit_per_minute: Number(f.get("rate_limit_per_minute")),
       term_days: 30,
       is_base: f.get("is_base") === "on",
-      enabled: f.get("enabled") === "on",
+      enabled: f.get("is_base") === "on" || f.get("enabled") === "on",
     };
     try {
       await api(
@@ -940,7 +946,37 @@ export function AdminPlans() {
                       {p.rate_limit_per_minute.toLocaleString()} / min
                     </TableCell>
                     <TableCell>
-                      <StatusBadge state={p.enabled ? "active" : "disabled"} />
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          aria-label={`Enable ${p.name}`}
+                          aria-busy={toggling === p.id}
+                          checked={p.enabled}
+                          disabled={!!toggling || p.is_base}
+                          onCheckedChange={async (enabled) => {
+                            setToggling(p.id);
+                            try {
+                              await api(`/admin/plans/${p.id}`, "PATCH", {
+                                ...p,
+                                enabled,
+                              });
+                              await qc.invalidateQueries();
+                            } catch (e) {
+                              toast.error((e as Error).message);
+                            } finally {
+                              setToggling(undefined);
+                            }
+                          }}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {toggling === p.id
+                            ? "Saving…"
+                            : p.is_base
+                              ? "Always enabled"
+                              : p.enabled
+                                ? "Enabled"
+                                : "Disabled"}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -1025,11 +1061,11 @@ export function AdminPlans() {
               </Label>
             </div>
             <div className="flex items-center gap-3">
-              <input
+              <Switch
                 id="enabled"
                 name="enabled"
-                type="checkbox"
                 defaultChecked={selected?.enabled}
+                disabled={selected?.is_base}
               />
               <Label htmlFor="enabled">Available for purchase</Label>
             </div>
@@ -1507,6 +1543,13 @@ const settingsGroups = [
     ],
   },
   {
+    id: "payment-logos",
+    title: "Pay with",
+    description:
+      "Choose the payment logos shown on your homepage. Configure checkout providers under Payment Providers. Clear all logos to hide this section.",
+    fields: [["custom.payment_methods", "Payment logos", "payment-logos"]],
+  },
+  {
     id: "billing",
     title: "Billing preferences",
     description:
@@ -1516,11 +1559,6 @@ const settingsGroups = [
         "billing.top_up_amounts",
         "Suggested top-up amounts (USD, comma separated)",
         "text",
-      ],
-      [
-        "auth.require_verification",
-        "Require email verification before funding",
-        "bool",
       ],
     ],
   },
@@ -1578,6 +1616,18 @@ const settingsGroups = [
         "payment.epusdt.network",
         "Network (optional, for example tron)",
         "text",
+      ],
+    ],
+  },
+  {
+    id: "account",
+    title: "Account preferences",
+    description: "Choose when customers need to verify their email.",
+    fields: [
+      [
+        "auth.require_verification",
+        "Require email verification before funding",
+        "bool",
       ],
     ],
   },
@@ -1653,7 +1703,20 @@ const brandingLimits: Record<string, number> = {
   "custom.docs_hero_subtitle": 500,
 };
 
-export function SettingsPage() {
+export function SettingsPage({
+  section = "general",
+}: {
+  section?: "general" | "branding" | "payments";
+}) {
+  const groups = settingsGroups.filter((group) =>
+    section === "branding"
+      ? ["branding", "payment-logos"].includes(group.id)
+      : section === "payments"
+        ? ["billing", "stripe", "paddle", "lemonsqueezy", "epusdt"].includes(
+            group.id,
+          )
+        : ["account", "email"].includes(group.id),
+  );
   const q = useData<{ values: Record<string, string> }>("/admin/settings");
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -1664,7 +1727,7 @@ export function SettingsPage() {
     setError(null);
     const f = new FormData(e.currentTarget);
     const values: Record<string, string> = {};
-    for (const group of settingsGroups)
+    for (const group of groups)
       for (const [key, , type] of group.fields) {
         values[key] =
           type === "bool"
@@ -1689,8 +1752,20 @@ export function SettingsPage() {
   return (
     <>
       <Heading
-        title="Settings"
-        description="Customize your branding, payments, billing preferences, and customer communication."
+        title={
+          section === "branding"
+            ? "Branding"
+            : section === "payments"
+              ? "Payment Providers"
+              : "Settings"
+        }
+        description={
+          section === "branding"
+            ? "Customize your name, appearance, documentation and homepage payment logos."
+            : section === "payments"
+              ? "Connect payment providers and choose suggested top-up amounts."
+              : "Manage account preferences and email delivery."
+        }
       />
       {error !== null && (
         <div className="mb-6">
@@ -1698,7 +1773,7 @@ export function SettingsPage() {
         </div>
       )}
       <form onSubmit={submit} className="space-y-6">
-        {settingsGroups.map((group) => (
+        {groups.map((group) => (
           <Card key={group.id} className="shadow-none">
             <CardHeader>
               <CardTitle>{group.title}</CardTitle>
@@ -1706,7 +1781,12 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent className="grid gap-5 sm:grid-cols-2">
               {group.fields.map(([key, text, type]) =>
-                type === "color" ? (
+                type === "payment-logos" ? (
+                  <PaymentMethodPicker
+                    key={key}
+                    initial={q.data?.values[key] || ""}
+                  />
+                ) : type === "color" ? (
                   <BrandColorField
                     key={key}
                     initial={q.data?.values[key] || ""}

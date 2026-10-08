@@ -107,6 +107,7 @@ const (
 	KeyCustomSupportURL       = "custom.support_url"         // Support URL/docs link
 	KeyCustomFooterHTML       = "custom.footer_html"         // Custom footer HTML
 	KeyCustomFooterText       = "custom.footer_text"         // Plain-text footer for the React UI
+	KeyCustomPaymentMethods   = "custom.payment_methods"     // Payment logos shown on the homepage
 	KeyCustomDocsHeroTitle    = "custom.docs_hero_title"     // Custom docs hero title
 	KeyCustomDocsHeroSubtitle = "custom.docs_hero_subtitle"  // Custom docs hero subtitle
 
@@ -234,14 +235,15 @@ func IsSensitive(key string) bool {
 // Defaults returns default values for settings.
 func Defaults() Settings {
 	return Settings{
-		KeyServerHost:         "0.0.0.0",
-		KeyServerPort:         "8080",
-		KeyServerReadTimeout:  "30s",
-		KeyServerWriteTimeout: "60s",
-		KeyPortalEnabled:      "true",
-		KeyPortalAppName:      "better-apigate",
-		KeyWebUIEnabled:       "true", // Web UI enabled by default (backward compatible)
-		KeyWebUIBasePath:      "",     // Empty = root mount (backward compatible)
+		KeyServerHost:           "0.0.0.0",
+		KeyServerPort:           "8080",
+		KeyServerReadTimeout:    "30s",
+		KeyServerWriteTimeout:   "60s",
+		KeyPortalEnabled:        "true",
+		KeyPortalAppName:        "better-apigate",
+		KeyCustomPaymentMethods: "stripe,visa,mastercard,amex,discover,jcb,usdt,usdc,btc,eth,sol,trx,bnb,ltc",
+		KeyWebUIEnabled:         "true", // Web UI enabled by default (backward compatible)
+		KeyWebUIBasePath:        "",     // Empty = root mount (backward compatible)
 		// Handler paths (backward compatible)
 		KeyAdminBasePath:          "/admin",
 		KeyAuthBasePath:           "/auth",

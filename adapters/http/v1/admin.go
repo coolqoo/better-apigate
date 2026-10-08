@@ -360,7 +360,7 @@ func allowedSetting(k string) bool {
 	switch k {
 	case settings.KeyCustomLogoURL, settings.KeyCustomPrimaryColor, settings.KeyCustomSupportEmail,
 		settings.KeyCustomSupportURL, settings.KeyCustomFooterText, settings.KeyCustomDocsHeroTitle,
-		settings.KeyCustomDocsHeroSubtitle:
+		settings.KeyCustomDocsHeroSubtitle, settings.KeyCustomPaymentMethods:
 		return true
 	}
 	for _, prefix := range []string{"payment.", "email.", "portal.app_name", "auth.require_verification", "billing.top_up_amounts", "upstream.", "tls.", "cors."} {
@@ -373,8 +373,31 @@ func allowedSetting(k string) bool {
 
 var brandColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
+func paymentMethods(value string) []string {
+	methods := []string{}
+	for _, method := range strings.Split(value, ",") {
+		if method = strings.TrimSpace(method); method != "" {
+			methods = append(methods, method)
+		}
+	}
+	return methods
+}
+
 func brandingError(key, value string) string {
 	switch key {
+	case settings.KeyCustomPaymentMethods:
+		seen := map[string]bool{}
+		for _, method := range paymentMethods(value) {
+			switch method {
+			case "stripe", "visa", "mastercard", "amex", "discover", "jcb", "usdt", "usdc", "btc", "eth", "sol", "trx", "bnb", "ltc":
+			default:
+				return "Choose payment logos from the available options."
+			}
+			if seen[method] {
+				return "Select each payment logo only once."
+			}
+			seen[method] = true
+		}
 	case settings.KeyPortalAppName:
 		if value == "" || len(value) > 120 {
 			return "Enter an application name of up to 120 characters."

@@ -10,6 +10,7 @@ import { Toaster } from "sonner";
 import { SessionProvider, useSession } from "./v2/context";
 import { BrandFooter, Logo, ThemeToggle, Layout } from "./v2/layout";
 import { AuthPage } from "./v2/auth";
+import { Home } from "./v2/home";
 import { AppErrorBoundary } from "./v2/error-boundary";
 import { Failure, Loading } from "./v2/shared";
 import { lazy, Suspense } from "react";
@@ -55,6 +56,12 @@ const SettingsPage = lazy(() =>
 
 function PublicDocs() {
   const { session } = useSession();
+  if (session)
+    return (
+      <Layout>
+        <Docs />
+      </Layout>
+    );
   return (
     <div className="min-h-screen">
       <header className="flex items-center justify-between border-b bg-card px-6 py-5 md:px-12">
@@ -109,6 +116,7 @@ export function App() {
             }
           >
             <Routes>
+              <Route path="/" element={<Home />} />
               {[
                 "login",
                 "signup",
@@ -138,7 +146,22 @@ export function App() {
                     />
                     <Route path="/admin/plans" element={<AdminPlans />} />
                     <Route path="/admin/payments" element={<Payments />} />
-                    <Route path="/admin/settings" element={<SettingsPage />} />
+                    <Route
+                      path="/admin/payment-providers"
+                      element={
+                        <SettingsPage key="payments" section="payments" />
+                      }
+                    />
+                    <Route
+                      path="/admin/branding"
+                      element={
+                        <SettingsPage key="branding" section="branding" />
+                      }
+                    />
+                    <Route
+                      path="/admin/settings"
+                      element={<SettingsPage key="general" section="general" />}
+                    />
                   </Route>
                 </Route>
               </Route>

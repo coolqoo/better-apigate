@@ -31,12 +31,13 @@ Open **http://localhost:8080/setup**, enter `APIGATE_SETUP_TOKEN` from `.env`, a
 
 | Address | Purpose |
 | --- | --- |
+| `/` | Homepage and accepted payment logos |
 | `/admin` | APIs, pricing, customers, payments and settings |
 | `/portal` | Customer wallets, plans, keys and usage |
 | `/docs` | Documentation for your configured API routes |
 | `/ready` | Gateway, PostgreSQL and Redis readiness |
 
-In administration, configure **Plans & Pricing**, add upstreams and routes under **API Configuration**, and enable payment providers in **Settings**. Customers then sign up, fund their wallets, optionally purchase a plan, and create an API key. See the [user guide](docs/USER_GUIDE.md) for payment configuration and accounting behavior.
+In administration, configure **Plans & Pricing**, add upstreams and routes under **API Configuration**, and enable payment providers in **Payment Providers**. Customers then sign up, fund their wallets, optionally purchase a plan, and create an API key. See the [user guide](docs/USER_GUIDE.md) for payment configuration and accounting behavior.
 
 ## Docker commands
 

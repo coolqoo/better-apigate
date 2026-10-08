@@ -55,7 +55,6 @@ import {
   Failure,
   Field,
   Loading,
-  StatusBadge,
   Submit,
 } from "./shared";
 
@@ -1506,7 +1505,7 @@ function UpstreamEditor({
           setBusy(true);
           setError(undefined);
           try {
-            const { id, ...values } = draft;
+            const { id, enabled: _enabled, ...values } = draft;
             await api(
               `/admin/config/api/upstreams/${id || ""}`,
               id ? "PATCH" : "POST",
@@ -1675,13 +1674,6 @@ function UpstreamEditor({
             ))}
           </div>
         </details>
-        <Toggle
-          id="upstream-enabled"
-          title="Enabled"
-          description="Make this upstream available for routing."
-          checked={draft.enabled}
-          onChange={(v) => set("enabled", v)}
-        />
         <DialogFooter>
           <Button type="button" variant="outline" onClick={close}>
             Cancel
@@ -1826,43 +1818,37 @@ export function GatewayConfiguration({ kind }: { kind: "route" | "upstream" }) {
                       </TableCell>
                     )}
                     <TableCell>
-                      {isRoute ? (
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            aria-label={`Enable ${row.name}`}
-                            aria-busy={toggling === row.id}
-                            checked={row.enabled}
-                            disabled={!!toggling}
-                            onCheckedChange={async (enabled) => {
-                              setToggling(row.id);
-                              try {
-                                await api(
-                                  path +
-                                    row.id +
-                                    (enabled ? "/enable" : "/disable"),
-                                  "POST",
-                                );
-                                await saved();
-                              } catch (e) {
-                                toast.error((e as Error).message);
-                              } finally {
-                                setToggling(undefined);
-                              }
-                            }}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {toggling === row.id
-                              ? "Saving…"
-                              : row.enabled
-                                ? "Enabled"
-                                : "Disabled"}
-                          </span>
-                        </div>
-                      ) : (
-                        <StatusBadge
-                          state={row.enabled ? "active" : "disabled"}
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          aria-label={`Enable ${row.name}`}
+                          aria-busy={toggling === row.id}
+                          checked={row.enabled}
+                          disabled={!!toggling}
+                          onCheckedChange={async (enabled) => {
+                            setToggling(row.id);
+                            try {
+                              await api(
+                                path +
+                                  row.id +
+                                  (enabled ? "/enable" : "/disable"),
+                                "POST",
+                              );
+                              await saved();
+                            } catch (e) {
+                              toast.error((e as Error).message);
+                            } finally {
+                              setToggling(undefined);
+                            }
+                          }}
                         />
-                      )}
+                        <span className="text-xs text-muted-foreground">
+                          {toggling === row.id
+                            ? "Saving…"
+                            : row.enabled
+                              ? "Enabled"
+                              : "Disabled"}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-1">
@@ -1913,27 +1899,6 @@ export function GatewayConfiguration({ kind }: { kind: "route" | "upstream" }) {
                               <Server className="size-3" />
                             )}
                             Check
-                          </Button>
-                        )}
-                        {!isRoute && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              try {
-                                await api(
-                                  path +
-                                    row.id +
-                                    (row.enabled ? "/disable" : "/enable"),
-                                  "POST",
-                                );
-                                await saved();
-                              } catch (e) {
-                                toast.error((e as Error).message);
-                              }
-                            }}
-                          >
-                            {row.enabled ? "Disable" : "Enable"}
                           </Button>
                         )}
                         <Button

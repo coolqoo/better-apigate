@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  Palette,
   Settings,
   Shield,
   SlidersHorizontal,
@@ -50,6 +51,12 @@ const admin = [
   },
   { path: "/admin/plans", label: "Plans & Pricing", icon: Zap },
   { path: "/admin/payments", label: "Payments", icon: CreditCard },
+  {
+    path: "/admin/payment-providers",
+    label: "Payment Providers",
+    icon: Wallet,
+  },
+  { path: "/admin/branding", label: "Branding", icon: Palette },
   { path: "/admin/settings", label: "Settings", icon: Settings },
 ];
 export function ThemeToggle() {
@@ -71,7 +78,7 @@ export function ThemeToggle() {
     </Button>
   );
 }
-export function Logo() {
+export function Logo({ to = "/portal" }: { to?: string }) {
   const { status } = useSession();
   const [failedLogo, setFailedLogo] = useState("");
   const name = status?.app_name || "better-apigate";
@@ -80,7 +87,7 @@ export function Logo() {
     : "";
   return (
     <Link
-      to="/portal"
+      to={to}
       className="flex min-w-0 items-center gap-2.5 font-semibold tracking-tight"
     >
       {logo && failedLogo !== logo ? (
@@ -242,7 +249,7 @@ function Navigation({
     </div>
   );
 }
-export function Layout() {
+export function Layout({ children }: { children?: ReactNode }) {
   const location = useLocation();
   const adminArea = location.pathname.startsWith("/admin");
   const [open, setOpen] = useState(false);
@@ -302,7 +309,7 @@ export function Layout() {
           id="main-content"
           className="mx-auto max-w-[1440px] px-5 py-8 md:px-10 md:py-10"
         >
-          <Outlet />
+          {children ?? <Outlet />}
         </main>
         <BrandFooter className="mx-auto max-w-[1440px] px-5 md:px-10" />
       </div>

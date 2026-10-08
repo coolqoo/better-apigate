@@ -105,6 +105,7 @@ export interface Installation {
   footer_text: string
   docs_title: string
   docs_subtitle: string
+  payment_methods: (string)[]
 }
 export interface KeyRequest {
   name: string

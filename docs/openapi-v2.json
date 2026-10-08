@@ -410,6 +410,12 @@
           "paddle_sandbox": {
             "type": "boolean"
           },
+          "payment_methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "primary_color": {
             "type": "string"
           },
@@ -442,7 +448,8 @@
           "support_url",
           "footer_text",
           "docs_title",
-          "docs_subtitle"
+          "docs_subtitle",
+          "payment_methods"
         ],
         "type": "object"
       },
@@ -7394,6 +7401,12 @@
                             "paddle_sandbox": {
                               "type": "boolean"
                             },
+                            "payment_methods": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
                             "primary_color": {
                               "type": "string"
                             },
@@ -7426,7 +7439,8 @@
                             "support_url",
                             "footer_text",
                             "docs_title",
-                            "docs_subtitle"
+                            "docs_subtitle",
+                            "payment_methods"
                           ],
                           "type": "object"
                         },

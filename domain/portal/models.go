@@ -63,6 +63,7 @@ type Installation struct {
 	FooterText        string   `json:"footer_text"`
 	DocsTitle         string   `json:"docs_title"`
 	DocsSubtitle      string   `json:"docs_subtitle"`
+	PaymentMethods    []string `json:"payment_methods"`
 }
 type Customer struct {
 	ID            string       `json:"id"`

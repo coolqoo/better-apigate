@@ -60,6 +60,7 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 		FooterText:        values.Get(settings.KeyCustomFooterText),
 		DocsTitle:         values.Get(settings.KeyCustomDocsHeroTitle),
 		DocsSubtitle:      values.Get(settings.KeyCustomDocsHeroSubtitle),
+		PaymentMethods:    paymentMethods(values.Get(settings.KeyCustomPaymentMethods)),
 	})
 }
 func (s *Server) authLimit(w http.ResponseWriter, r *http.Request) bool {

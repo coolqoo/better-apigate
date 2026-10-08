@@ -59,6 +59,8 @@ function AuthForm() {
     );
   if (status?.setup_required && mode !== "setup")
     return <Navigate to="/setup" replace />;
+  if (mode === "setup" && !status?.setup_required)
+    return <Navigate to="/" replace />;
   if (session && ["login", "signup", "setup"].includes(mode))
     return (
       <Navigate to={session.role === "admin" ? "/admin" : "/portal"} replace />

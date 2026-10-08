@@ -8,7 +8,7 @@ better-apigate provides a prepaid API gateway with a customer workspace at `/por
 2. Open `/setup`, enter the setup token, and create the initial administrator.
 3. In **Plans & Pricing**, configure the base pay-as-you-go unit price and rate limit, then add paid 30-day plans with their prices and included units.
 4. In **API Configuration**, add upstreams and routes. Enter each upstream's authentication credential directly in its form. Give each paid route a fixed positive integer unit cost. Mark a route public only when it is explicitly free.
-5. In **Settings**, configure available top-up amounts and enable the payment providers your merchant accounts support. Configure signed callback secrets and the gateway's public HTTPS origin before accepting payments. Add email delivery if verification or password reset is needed. SMTP requires TLS by default.
+5. In **Payment Providers**, configure suggested top-up amounts and enable the payment providers your merchant accounts support. Configure signed callback secrets and the gateway's public HTTPS origin before accepting payments. Add email delivery if verification or password reset is needed. SMTP requires TLS by default.
 
 Configuration is defined by the module YAML schemas. Wallets, ledger entries, purchased terms and usage reservations are changed through transactional billing actions rather than generic configuration forms.
 
@@ -16,7 +16,7 @@ Configuration is defined by the module YAML schemas. Wallets, ledger entries, pu
 
 In **API Configuration → Upstreams**, each service has its own URL and credential. Choose None, Custom header, Bearer token or Basic authentication. Timeout and connection pooling settings are available in the same form. **Check** reports whether the service responds; an HTTP error response still means it was reached.
 
-Enable or disable a saved route directly with its **Status** switch in the routes table. The change is saved immediately.
+Enable or disable saved upstreams and routes directly with their **Status** switches in the tables. The change is saved immediately.
 
 The route editor has six sections:
 
@@ -63,15 +63,17 @@ Overview shows available balance, included units, the next renewal or term end, 
 
 **Payments → Unresolved requests** preserves holds older than five minutes. Inspect upstream evidence before choosing charge or release. Holds left by a crash never expire into spendable funds automatically. **Payments → Audit trail** records who made financial/access decisions, the affected record and the reason. All three views support pagination.
 
-**Settings → Branding & customization** lets you set the application name, a public logo URL, brand color, support email/link, footer text and documentation title/description. The name, logo, color and footer apply to sign-in pages, the customer portal, administration and public docs. Choose a color with the picker or enter a six-digit hex value; **Reset** restores the default indigo. Optional blank fields use the default appearance. Footer and documentation copy are plain text. Save settings to apply changes immediately; no container restart is needed.
+**Branding → Branding & customization** lets you set the application name, a public logo URL, brand color, support email/link, footer text and documentation title/description. The name, logo, color and footer apply to sign-in pages, the customer portal, administration and public docs. Choose a color with the picker or enter a six-digit hex value; **Reset** restores the default indigo. Optional blank fields use the default appearance. Footer and documentation copy are plain text. Save settings to apply changes immediately; no container restart is needed.
 
-**Settings** also groups payment, billing, email and account options. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
+**Branding → Pay with** selects the card and cryptocurrency logos shown on the homepage at `/`. Clear every checkbox to hide the section. These display choices do not enable checkout providers.
+
+**Payment Providers** contains merchant credentials and suggested top-up amounts. **Settings** contains email delivery and verification preferences. Each page saves only its own fields. After the first administrator is created, `/setup` redirects to the homepage. Deployment-level changes, such as connection pools or upstream secret values, belong in the environment. Recreate the gateway container after changing `.env`.
 
 The [generated OpenAPI contract](openapi-v2.json) documents the versioned browser APIs. The same Go models generate the frontend TypeScript types.
 
 ## Payment configuration
 
-Enable providers in **Settings** and configure their webhook secrets. The callback address is `/api/v1/payment-webhooks/{provider}` on your public origin.
+Enable providers in **Payment Providers** and configure their webhook secrets. The callback address is `/api/v1/payment-webhooks/{provider}` on your public origin.
 
 - **Stripe:** use one-time Checkout and configure successful checkout, refund and dispute events.
 - **Paddle:** configure a top-up product, a non-recurring price, webhook secret, client token and merchant checkout origin. Use sandbox mode with sandbox credentials.
