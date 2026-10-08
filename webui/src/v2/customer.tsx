@@ -1037,25 +1037,17 @@ export function WalletPage() {
   });
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [customAmount, setCustomAmount] = useState("");
-  const [custom, setCustom] = useState(false);
-  const selectedAmount = custom ? customAmount : amount;
   const validAmount =
-    (custom ? /^\d+(?:\.\d{1,2})?$/ : /^\d+(?:\.\d{1,6})?$/).test(
-      selectedAmount,
-    ) &&
-    micros(selectedAmount) > 0n &&
-    micros(selectedAmount) <= 9_223_372_036_854_775_807n &&
-    micros(selectedAmount) % 10_000n === 0n;
+    /^\d+(?:\.\d{1,2})?$/.test(amount) &&
+    micros(amount) > 0n &&
+    micros(amount) <= 9_223_372_036_854_775_807n;
   const [provider, setProvider] = useState("");
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [op, setOp] = useState(operation);
   const begin = () => {
-    setAmount(status?.top_up_amounts[0] || "10.000000");
-    setCustomAmount("");
-    setCustom(false);
+    setAmount(dollars(status?.top_up_amounts[0] || "10").replace(/[$,]/g, ""));
     setProvider(providers.data?.[0]?.id || "");
     setStep(1);
     setError(null);
@@ -1066,12 +1058,7 @@ export function WalletPage() {
     setBusy(true);
     setError(null);
     try {
-      const o = await api<Order>(
-        "/top-ups",
-        "POST",
-        { amount: selectedAmount, provider },
-        op,
-      );
+      const o = await api<Order>("/top-ups", "POST", { amount, provider }, op);
       await qc.invalidateQueries({ queryKey: ["/orders"] });
       if (o.checkout_url) {
         if (o.provider === "paddle" && status?.paddle_client_token) {
@@ -1349,58 +1336,57 @@ export function WalletPage() {
           {error !== null && <Failure error={error} />}{" "}
           {step === 1 ? (
             <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
-                {status?.top_up_amounts.map((v) => (
-                  <Button
-                    key={v}
-                    variant="outline"
-                    className={`h-20 text-xl ${!custom && amount === v ? "border-primary bg-accent text-accent-foreground" : ""}`}
-                    aria-pressed={!custom && amount === v}
-                    onClick={() => {
-                      setAmount(v);
-                      setCustom(false);
-                    }}
-                  >
-                    {dollars(v)}
-                  </Button>
-                ))}
-              </div>
               <Field
-                label="Or enter a custom amount"
-                id="custom-top-up"
+                label="Amount (USD)"
+                id="top-up-amount"
                 hint="USD, with up to two decimal places."
               >
                 <div className="relative">
                   <span
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-muted-foreground"
                     aria-hidden="true"
                   >
                     $
                   </span>
                   <Input
-                    id="custom-top-up"
+                    id="top-up-amount"
                     type="text"
                     inputMode="decimal"
-                    className={`pl-7 ${custom ? "border-primary" : ""}`}
+                    className="h-14 pl-9 text-2xl font-semibold tabular-nums md:text-2xl"
                     placeholder="25.00"
-                    value={customAmount}
-                    aria-invalid={custom && customAmount !== "" && !validAmount}
+                    value={amount}
+                    aria-invalid={amount !== "" && !validAmount}
                     aria-describedby={
-                      custom && customAmount !== "" && !validAmount
-                        ? "custom-top-up-error"
+                      amount !== "" && !validAmount
+                        ? "top-up-amount-error"
                         : undefined
                     }
-                    onFocus={() => setCustom(true)}
-                    onChange={(e) => {
-                      setCustom(true);
-                      setCustomAmount(e.target.value);
-                    }}
+                    onChange={(e) => setAmount(e.target.value)}
                   />
                 </div>
+                <div className="flex flex-wrap gap-2">
+                  {status?.top_up_amounts.map((v) => (
+                    <Button
+                      key={v}
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className={
+                        validAmount && micros(amount) === micros(v)
+                          ? "border-primary bg-accent text-accent-foreground"
+                          : ""
+                      }
+                      aria-pressed={validAmount && micros(amount) === micros(v)}
+                      onClick={() => setAmount(dollars(v).replace(/[$,]/g, ""))}
+                    >
+                      {dollars(v)}
+                    </Button>
+                  ))}
+                </div>
               </Field>
-              {custom && customAmount !== "" && !validAmount && (
+              {amount !== "" && !validAmount && (
                 <p
-                  id="custom-top-up-error"
+                  id="top-up-amount-error"
                   role="alert"
                   className="text-sm text-destructive"
                 >
@@ -1412,7 +1398,7 @@ export function WalletPage() {
             <div className="space-y-3">
               <div className="mb-5 flex justify-between rounded-lg bg-muted p-4 text-sm">
                 <span>USD wallet credit</span>
-                <strong>{dollars(selectedAmount)} USD</strong>
+                <strong>{dollars(amount)} USD</strong>
               </div>
               {providers.data?.map((p) => (
                 <button
