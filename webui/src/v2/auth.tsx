@@ -29,6 +29,8 @@ function AuthForm() {
   const [error, setError] = useState<unknown>(null);
   const [complete, setComplete] = useState(false);
   const mode = location.pathname.slice(1) || "login";
+  const showPayments =
+    ["login", "signup"].includes(mode) && !!status?.payment_methods.length;
   const title: Record<string, string> = {
     login: "Welcome back",
     signup: "Build something great",
@@ -101,34 +103,43 @@ function AuthForm() {
         <Logo />
         <ThemeToggle />
       </div>
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-10 md:grid-cols-2 md:gap-24 md:py-20">
-        <div className="hidden self-center md:block">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
-            <Zap className="size-3.5" />A better way to power your API
-          </div>
-          <h1 className="max-w-md text-5xl font-semibold leading-[1.15] tracking-tight">
-            One gateway.
-            <br />
-            <span className="text-primary">Every possibility.</span>
-          </h1>
-          <p className="mt-6 max-w-sm text-base leading-7 text-muted-foreground">
-            A clear view of your usage, straightforward pricing, and API access
-            that grows with you.
-          </p>
-          <div className="mt-10 space-y-5">
-            {[
-              "Know your costs before every request",
-              "One wallet, flexible payment options",
-              "Secure API keys and shared account limits",
-            ].map((t) => (
-              <div key={t} className="flex items-center gap-3 text-sm">
-                <div className="rounded-full bg-primary/10 p-1">
-                  <Check className="size-3 text-primary" />
+      <div
+        className={`mx-auto grid max-w-6xl px-6 md:grid-cols-2 md:gap-24 ${showPayments ? "gap-8 py-6 md:py-8" : "gap-12 py-10 md:py-20"}`}
+      >
+        <div
+          className={
+            showPayments ? "min-w-0 self-center" : "hidden self-center md:block"
+          }
+        >
+          <div className="hidden md:block">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary">
+              <Zap className="size-3.5" />A better way to power your API
+            </div>
+            <h1 className="max-w-md text-5xl font-semibold leading-[1.15] tracking-tight">
+              One gateway.
+              <br />
+              <span className="text-primary">Every possibility.</span>
+            </h1>
+            <p className="mt-6 max-w-sm text-base leading-7 text-muted-foreground">
+              A clear view of your usage, straightforward pricing, and API
+              access that grows with you.
+            </p>
+            <div className="mt-10 space-y-5">
+              {[
+                "Know your costs before every request",
+                "One wallet, flexible payment options",
+                "Secure API keys and shared account limits",
+              ].map((t) => (
+                <div key={t} className="flex items-center gap-3 text-sm">
+                  <div className="rounded-full bg-primary/10 p-1">
+                    <Check className="size-3 text-primary" />
+                  </div>
+                  {t}
                 </div>
-                {t}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+          {showPayments && <PayWith selected={status!.payment_methods} />}
         </div>
         <Card className="self-start border shadow-sm">
           <CardContent className="p-7 sm:p-9">
@@ -264,11 +275,6 @@ function AuthForm() {
           </CardContent>
         </Card>
       </div>
-      {["login", "signup"].includes(mode) && (
-        <div className="mx-auto max-w-6xl px-6">
-          <PayWith selected={status?.payment_methods || []} />
-        </div>
-      )}
       <BrandFooter className="mx-auto max-w-6xl px-6" />
     </div>
   );

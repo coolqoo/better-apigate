@@ -31,16 +31,24 @@ const methods = [
   { id: "ltc", name: "Litecoin", icon: ltc, crypto: true },
 ];
 
-function PaymentLogo({ method }: { method: (typeof methods)[number] }) {
+function PaymentLogo({
+  method,
+  compact = false,
+}: {
+  method: (typeof methods)[number];
+  compact?: boolean;
+}) {
   return (
     <img
       src={method.icon}
       alt=""
       className={
-        method.crypto ? "size-8 shrink-0" : "h-8 w-12 shrink-0 object-contain"
+        method.crypto
+          ? `${compact ? "size-6" : "size-8"} shrink-0`
+          : `${compact ? "h-6 w-9" : "h-8 w-12"} shrink-0 object-contain`
       }
-      width={method.crypto ? 32 : 48}
-      height={32}
+      width={method.crypto ? (compact ? 24 : 32) : compact ? 36 : 48}
+      height={compact ? 24 : 32}
     />
   );
 }
@@ -49,29 +57,24 @@ export function PayWith({ selected }: { selected: string[] }) {
   const visible = methods.filter((method) => selected.includes(method.id));
   if (!visible.length) return null;
   return (
-    <section
-      aria-labelledby="pay-with-title"
-      className="border-t py-10 md:py-12"
-    >
-      <div className="mb-6 text-center">
+    <section aria-labelledby="pay-with-title" className="border-t pt-4 md:mt-6">
+      <div className="mb-3 text-center md:text-left">
         <h2
           id="pay-with-title"
-          className="text-xl font-semibold tracking-tight"
+          className="text-sm font-semibold tracking-tight"
         >
           Pay with
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Flexible ways to fund your wallet.
-        </p>
       </div>
-      <ul className="mx-auto flex max-w-4xl flex-wrap justify-center gap-3">
+      <ul className="flex flex-wrap justify-center gap-2 md:justify-start">
         {visible.map((method) => (
           <li
             key={method.id}
-            className="flex min-w-28 items-center justify-center gap-2.5 rounded-xl border bg-card px-4 py-3"
+            title={method.name}
+            className="flex h-10 w-12 items-center justify-center rounded-lg border bg-card"
           >
-            <PaymentLogo method={method} />
-            <span className="text-xs font-medium">{method.name}</span>
+            <PaymentLogo method={method} compact />
+            <span className="sr-only">{method.name}</span>
           </li>
         ))}
       </ul>
