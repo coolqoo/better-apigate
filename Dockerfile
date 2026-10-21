@@ -5,7 +5,7 @@ RUN npm ci
 COPY webui/ ./
 RUN npm run build
 
-FROM golang:1.27.1-alpine3.23 AS backend
+FROM golang:1.27.3-alpine3.23 AS backend
 ARG VERSION=dev
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64

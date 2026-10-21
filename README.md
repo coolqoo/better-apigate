@@ -52,7 +52,7 @@ To upgrade, change the image version in `docker-compose.yaml`, then pull and sta
 
 ## Build from source
 
-Requires Go 1.27.1 and Node 22.23.2.
+Requires Go 1.27.3 and Node 22.23.2.
 
 ```sh
 npm ci --prefix webui
