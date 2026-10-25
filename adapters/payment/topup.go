@@ -264,7 +264,9 @@ func (p *TopUp) verifyEPUSDT(body []byte) (wallet.PaymentEvent, error) {
 	if err != nil {
 		return wallet.PaymentEvent{}, err
 	}
-	if params["trade_id"] == "" || params["order_id"] == "" || params["block_transaction_id"] == "" {
+	// EPUSDT notifies the parent order when a child order pays it. The parent's
+	// transaction hash can be empty; the signed trade ID identifies the payment.
+	if params["trade_id"] == "" || params["order_id"] == "" {
 		return wallet.PaymentEvent{}, wallet.ErrInvalid
 	}
 	if params["status"] != "2" {

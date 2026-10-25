@@ -578,7 +578,7 @@ func (s *WalletStore) SetCheckout(ctx context.Context, id string, c wallet.Check
 	return err
 }
 func (s *WalletStore) ApplyPayment(ctx context.Context, provider string, e wallet.PaymentEvent) error {
-	if e.EventID == "" || e.OrderID == "" || e.ProviderID == "" || provider == "epusdt" && e.Paid && e.TransactionID == "" {
+	if e.EventID == "" || e.OrderID == "" || e.ProviderID == "" {
 		return wallet.ErrInvalid
 	}
 	tx, err := s.db.BeginTx(ctx, nil)

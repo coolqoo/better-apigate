@@ -59,6 +59,8 @@ __pycache__/
 
 # Local test files
 *_test.go
+!adapters/payment/topup_test.go
+!adapters/postgres/walletstore_test.go
 !core/storage/values_test.go
 *.test.ts
 *.test.tsx
