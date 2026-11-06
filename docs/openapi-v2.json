@@ -614,7 +614,13 @@
           "state": {
             "type": "string"
           },
+          "user_email": {
+            "type": "string"
+          },
           "user_id": {
+            "type": "string"
+          },
+          "user_name": {
             "type": "string"
           }
         },
@@ -2142,6 +2148,21 @@
               "maxLength": 200,
               "type": "string"
             }
+          },
+          {
+            "description": "Sort all matching customers before pagination; prefix with - for descending order. Ties use descending customer ID.",
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "-created_at",
+              "enum": [
+                "created_at",
+                "-created_at",
+                "balance",
+                "-balance"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3115,7 +3136,13 @@
                               "state": {
                                 "type": "string"
                               },
+                              "user_email": {
+                                "type": "string"
+                              },
                               "user_id": {
+                                "type": "string"
+                              },
+                              "user_name": {
                                 "type": "string"
                               }
                             },
@@ -3272,7 +3299,13 @@
                             "state": {
                               "type": "string"
                             },
+                            "user_email": {
+                              "type": "string"
+                            },
                             "user_id": {
+                              "type": "string"
+                            },
+                            "user_name": {
                               "type": "string"
                             }
                           },
@@ -3453,7 +3486,13 @@
                             "state": {
                               "type": "string"
                             },
+                            "user_email": {
+                              "type": "string"
+                            },
                             "user_id": {
+                              "type": "string"
+                            },
+                            "user_name": {
                               "type": "string"
                             }
                           },
@@ -6343,7 +6382,13 @@
                               "state": {
                                 "type": "string"
                               },
+                              "user_email": {
+                                "type": "string"
+                              },
                               "user_id": {
+                                "type": "string"
+                              },
+                              "user_name": {
                                 "type": "string"
                               }
                             },
@@ -6492,7 +6537,13 @@
                             "state": {
                               "type": "string"
                             },
+                            "user_email": {
+                              "type": "string"
+                            },
                             "user_id": {
+                              "type": "string"
+                            },
+                            "user_name": {
                               "type": "string"
                             }
                           },
@@ -7599,7 +7650,13 @@
                             "state": {
                               "type": "string"
                             },
+                            "user_email": {
+                              "type": "string"
+                            },
                             "user_id": {
+                              "type": "string"
+                            },
+                            "user_name": {
                               "type": "string"
                             }
                           },
@@ -7687,7 +7744,13 @@
                             "state": {
                               "type": "string"
                             },
+                            "user_email": {
+                              "type": "string"
+                            },
                             "user_id": {
+                              "type": "string"
+                            },
+                            "user_name": {
                               "type": "string"
                             }
                           },
@@ -7775,7 +7838,13 @@
                             "state": {
                               "type": "string"
                             },
+                            "user_email": {
+                              "type": "string"
+                            },
                             "user_id": {
+                              "type": "string"
+                            },
+                            "user_name": {
                               "type": "string"
                             }
                           },

@@ -146,8 +146,11 @@ type LedgerEntry struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 type Order struct {
-	ID           string     `json:"id"`
-	UserID       string     `json:"user_id"`
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+	// Customer identity is populated only for administrator order listings.
+	UserName     string     `json:"user_name,omitempty"`
+	UserEmail    string     `json:"user_email,omitempty"`
 	Provider     string     `json:"provider"`
 	Amount       Money      `json:"amount"`
 	Currency     string     `json:"currency"`

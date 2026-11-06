@@ -1,6 +1,6 @@
 {
   "index.html": {
-    "file": "assets/index-DSBU4ts3.js",
+    "file": "assets/index-DnHGsGNb.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -9,7 +9,7 @@
       "src/v2/admin.tsx"
     ],
     "css": [
-      "assets/index-mAqQ0Mb6.css"
+      "assets/index-DDe8I8J_.css"
     ],
     "assets": [
       "assets/mastercard-Cqhzqgus.svg",
@@ -25,7 +25,7 @@
     "src": "src/assets/payments/mastercard.svg"
   },
   "src/v2/admin.tsx": {
-    "file": "assets/admin-CqHvXTRl.js",
+    "file": "assets/admin-8ggt0Lpu.js",
     "name": "admin",
     "src": "src/v2/admin.tsx",
     "isDynamicEntry": true,
@@ -35,7 +35,7 @@
     ]
   },
   "src/v2/customer.tsx": {
-    "file": "assets/customer-DywtHANX.js",
+    "file": "assets/customer-DxvEWlbI.js",
     "name": "customer",
     "src": "src/v2/customer.tsx",
     "isDynamicEntry": true,

@@ -144,6 +144,7 @@ func Document() map[string]any {
 		}
 		if e.Path == "/admin/customers" {
 			params = append(params, map[string]any{"name": "q", "in": "query", "description": "Case-insensitive customer name or email search", "schema": map[string]any{"type": "string", "maxLength": 200}})
+			params = append(params, map[string]any{"name": "sort", "in": "query", "description": "Sort all matching customers before pagination; prefix with - for descending order. Ties use descending customer ID.", "schema": map[string]any{"type": "string", "enum": []string{"created_at", "-created_at", "balance", "-balance"}, "default": "-created_at"}})
 		}
 		if e.Method != "get" && !e.Public {
 			params = append(params, map[string]any{"name": "X-CSRF-Token", "in": "header", "required": true, "schema": map[string]any{"type": "string"}})

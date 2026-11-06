@@ -3,6 +3,9 @@ import { GatewayConfiguration } from "./gateway-config";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CreditCard,
   Plus,
   RefreshCw,
@@ -198,12 +201,52 @@ export function AdminOverview() {
     </>
   );
 }
+type CustomerSortField = "created_at" | "balance";
+type CustomerSort = CustomerSortField | `-${CustomerSortField}`;
+
+function CustomerSortHead({
+  field,
+  label,
+  sort,
+  onSort,
+}: {
+  field: CustomerSortField;
+  label: string;
+  sort: CustomerSort;
+  onSort: (field: CustomerSortField) => void;
+}) {
+  const ascending = sort === field;
+  const descending = sort === `-${field}`;
+  const Icon = ascending ? ArrowUp : descending ? ArrowDown : ArrowUpDown;
+  return (
+    <TableHead
+      aria-sort={ascending ? "ascending" : descending ? "descending" : "none"}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="-ml-3"
+        onClick={() => onSort(field)}
+      >
+        {label}
+        <Icon className="size-4" aria-hidden="true" />
+      </Button>
+    </TableHead>
+  );
+}
+
 export function Customers() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<CustomerSort>("-created_at");
   const q = useHistory<Customer>(
-    `/admin/customers${query ? "?q=" + encodeURIComponent(query) : ""}`,
+    `/admin/customers?sort=${sort}${query ? "&q=" + encodeURIComponent(query) : ""}`,
   );
+  const changeSort = (field: CustomerSortField) => {
+    q.setPage(1);
+    setSort((current) => (current === `-${field}` ? field : `-${field}`));
+  };
   const plans = useData<Plan[]>("/admin/plans");
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Customer>();
@@ -308,7 +351,18 @@ export function Customers() {
                 <TableRow>
                   <TableHead>Customer</TableHead>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Balance</TableHead>
+                  <CustomerSortHead
+                    field="balance"
+                    label="Balance"
+                    sort={sort}
+                    onSort={changeSort}
+                  />
+                  <CustomerSortHead
+                    field="created_at"
+                    label="Registered"
+                    sort={sort}
+                    onSort={changeSort}
+                  />
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -333,6 +387,9 @@ export function Customers() {
                           Frozen · {dollars(c.shortfall)} shortfall
                         </p>
                       )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {date(c.created_at)}
                     </TableCell>
                     <TableCell>
                       <StatusBadge state={c.status} />
@@ -444,6 +501,7 @@ function OrderTable({
       <TableHeader>
         <TableRow>
           <TableHead>Order</TableHead>
+          <TableHead>Customer</TableHead>
           <TableHead>Provider</TableHead>
           <TableHead>Wallet credit</TableHead>
           <TableHead>Status</TableHead>
@@ -457,6 +515,16 @@ function OrderTable({
               <p className="font-mono text-xs">{o.id.slice(0, 12)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {date(o.created_at)}
+              </p>
+            </TableCell>
+            <TableCell>
+              {o.user_name && <p className="font-medium">{o.user_name}</p>}
+              <p
+                className={
+                  o.user_name ? "mt-1 text-xs text-muted-foreground" : "text-sm"
+                }
+              >
+                {o.user_email || "—"}
               </p>
             </TableCell>
             <TableCell className="capitalize">{o.provider}</TableCell>

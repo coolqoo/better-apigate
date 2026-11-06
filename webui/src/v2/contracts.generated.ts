@@ -136,6 +136,8 @@ export interface MeteredUsage {
 export interface Order {
   id: string
   user_id: string
+  user_name?: string
+  user_email?: string
   provider: string
   amount: Money
   currency: string

@@ -61,6 +61,7 @@ __pycache__/
 *_test.go
 !adapters/payment/topup_test.go
 !adapters/postgres/walletstore_test.go
+!adapters/http/v1/admin_test.go
 !core/storage/values_test.go
 *.test.ts
 *.test.tsx

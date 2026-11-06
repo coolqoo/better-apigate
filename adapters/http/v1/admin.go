@@ -37,6 +37,19 @@ func (s *Server) customers(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	orderBy := "u.created_at DESC"
+	switch r.URL.Query().Get("sort") {
+	case "", "-created_at":
+	case "created_at":
+		orderBy = "u.created_at ASC"
+	case "balance":
+		orderBy = "COALESCE(w.balance_micros,0) ASC"
+	case "-balance":
+		orderBy = "COALESCE(w.balance_micros,0) DESC"
+	default:
+		jsonapi.WriteBadRequest(w, "Sort customers by created_at, -created_at, balance, or -balance.")
+		return
+	}
 	search := strings.TrimSpace(r.URL.Query().Get("q"))
 	if len(search) > 200 {
 		jsonapi.WriteBadRequest(w, "Use a customer search of at most 200 characters.")
@@ -47,7 +60,7 @@ func (s *Server) customers(w http.ResponseWriter, r *http.Request) {
 		failure(w, err)
 		return
 	}
-	rows, err := s.DB.QueryContext(r.Context(), `SELECT u.id,u.name,u.email,u.role,u.status,u.plan_id,u.email_verified,u.created_at,COALESCE(w.balance_micros,0),COALESCE(w.shortfall_micros,0),COALESCE(w.frozen,FALSE) FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE `+filter+` ORDER BY u.created_at DESC,u.id DESC LIMIT ? OFFSET ?`, search, page.Limit(), page.Offset())
+	rows, err := s.DB.QueryContext(r.Context(), `SELECT u.id,u.name,u.email,u.role,u.status,u.plan_id,u.email_verified,u.created_at,COALESCE(w.balance_micros,0),COALESCE(w.shortfall_micros,0),COALESCE(w.frozen,FALSE) FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE `+filter+` ORDER BY `+orderBy+`,u.id DESC LIMIT ? OFFSET ?`, search, page.Limit(), page.Offset())
 	if err != nil {
 		failure(w, err)
 		return
@@ -192,6 +205,41 @@ func (s *Server) adminOrders(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		failure(w, err)
 		return
+	}
+	if len(out) > 0 {
+		customers := map[string]portal.Customer{}
+		userIDs := []any{}
+		placeholders := []string{}
+		for _, order := range out {
+			if _, exists := customers[order.UserID]; !exists {
+				customers[order.UserID] = portal.Customer{}
+				userIDs = append(userIDs, order.UserID)
+				placeholders = append(placeholders, "?")
+			}
+		}
+		rows, err := s.DB.QueryContext(r.Context(), "SELECT id,name,email FROM users WHERE id IN ("+strings.Join(placeholders, ",")+")", userIDs...)
+		if err != nil {
+			failure(w, err)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var customer portal.Customer
+			if err := rows.Scan(&customer.ID, &customer.Name, &customer.Email); err != nil {
+				failure(w, err)
+				return
+			}
+			customers[customer.ID] = customer
+		}
+		if err := rows.Err(); err != nil {
+			failure(w, err)
+			return
+		}
+		for i := range out {
+			customer := customers[out[i].UserID]
+			out[i].UserName = customer.Name
+			out[i].UserEmail = customer.Email
+		}
 	}
 	collectionPage(w, "payment-order", out, page)
 }

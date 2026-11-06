@@ -1,8 +1,23 @@
-> **better-apigate history:** `/api/v1/ledger`, `/api/v1/orders`, `/api/v1/admin/customers`, `/api/v1/admin/orders`, `/api/v1/admin/reservations` and `/api/v1/admin/audit` use `page[number]` (default 1) and `page[size]` (default 50, maximum 100). Values must be positive integers; malformed values return 400. Responses contain `meta.total`, `meta.page`, `meta.per_page`, `meta.pages` and JSON:API navigation links. Customers can search by name or email with `q` on the admin customer endpoint. History queries order by creation time and record ID so records with matching timestamps have a stable order. Customer-owned collections always filter by the authenticated user before counting or returning records. The generated [OpenAPI contract](../openapi-v2.json) defines the current API.
+> **better-apigate history:** `/api/v1/ledger`, `/api/v1/orders`, `/api/v1/admin/customers`, `/api/v1/admin/orders`, `/api/v1/admin/reservations` and `/api/v1/admin/audit` use `page[number]` (default 1) and `page[size]` (default 50, maximum 100). Values must be positive integers; malformed values return 400. Responses contain `meta.total`, `meta.page`, `meta.per_page`, `meta.pages` and JSON:API navigation links. Customers can search by name or email with `q` on the admin customer endpoint. By default, history queries order by creation time and record ID so records with matching timestamps have a stable order. Customer-owned collections always filter by the authenticated user before counting or returning records. The generated [OpenAPI contract](../openapi-v2.json) defines the current API.
 
 # Pagination Specification
 
 > Implementation: `pkg/jsonapi/pagination.go`
+
+## Admin Customer Sorting and Order Identity
+
+`GET /api/v1/admin/customers` accepts a single `sort` value: `created_at`,
+`-created_at`, `balance`, or `-balance`. The default is `-created_at` (newest
+registrations first); a leading `-` selects descending order. Unsupported values
+return 400. Sorting applies to all customers matching `q` before pagination.
+Balances use exact stored integer millionths, with missing wallets treated as
+zero. Equal sort values are ordered by customer ID descending. Pagination links
+retain the search and sorting parameters.
+
+`GET /api/v1/admin/orders` additionally returns `user_name` and `user_email`
+when available, resolved from each order's current user account. These optional
+fields are populated only for the administrator order list; customer order
+responses retain their existing fields.
 
 All collection endpoints support pagination using JSON:API style parameters.
 
